@@ -63,7 +63,14 @@ The user can correct any part. **Never proceed without confirmation.**
 
 ### Step 3 — Load provider(s) and setup check
 
-For each provider, read `${CLAUDE_SKILL_DIR}/references/providers/{provider}.md` and verify readiness:
+For each provider, resolve the provider file in this order:
+
+1. `.hyper/team/providers/{provider}.md` in the current project root (project-local teammates).
+2. `${CLAUDE_SKILL_DIR}/references/providers/{provider}.md` (bundled teammates).
+
+Use the first file that exists. If neither location has `{provider}.md`, stop and tell the user: list every available provider — the union of `.hyper/team/providers/*.md` and `${CLAUDE_SKILL_DIR}/references/providers/*.md`, excluding `_template.md` — and ask which to use. Never guess.
+
+Once the file is loaded, verify readiness:
 
 1. **CLI installed?** — Run the check command from the provider file. If not installed, show the install command and offer to run it (ask first — system-level change). Verify with `--version` after.
 2. **Authenticated?** — If installed but not authenticated, show the auth command and offer to run it.
@@ -71,6 +78,18 @@ For each provider, read `${CLAUDE_SKILL_DIR}/references/providers/{provider}.md`
 4. **Self-delegation warning** — If the lead agent and requested teammate are the same provider (Claude asking Claude), warn: *"You're asking me to review my own work — this won't give you an independent perspective. Proceed anyway?"* Only proceed on explicit confirmation.
 
 If a CLI can't be installed or authenticated, stop — do not proceed without a working CLI.
+
+#### Adding a project-local teammate
+
+To add a teammate that only exists in this project (e.g. a sandboxed Claude reached over `docker exec` or SSH):
+
+1. Create `.hyper/team/providers/<name>.md` in the project root.
+2. Start from the bundled template at `${CLAUDE_SKILL_DIR}/references/providers/_template.md` — copy it to the new path and fill in every section. Project-local files use the same contract as bundled ones.
+3. Invoke the teammate by name: "ask `<name>` to review …".
+
+A project-local file fully replaces the bundled one when both define the same `<name>` — there is no section-level merge. To tweak a bundled provider locally, copy the whole file and edit the copy.
+
+Note: `.hyper/` is gitignored by default. To share project-local teammates across a team, either add an explicit un-ignore (`!.hyper/team/providers/` in `.gitignore`) or commit individual files.
 
 ### Step 4 — Gather context
 

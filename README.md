@@ -25,7 +25,7 @@ Six skills are user-facing. Five phase skills run internally — dispatched by `
 | `hyper-backlog` | Manages the idea-triage inbox at `.hyper/backlog.md`: add, list, promote to task, drop. |
 | `hyper-handoff` | Writes a session handoff for resuming later. |
 | `hyper-retro` | Reflects on what worked and didn't. |
-| `team` | Delegates a task (code-review, design-review, research, verify) to another AI agent CLI for a second opinion. Human-triggered. |
+| `team` | Delegates a task (code-review, design-review, research, verify) to another AI agent CLI for a second opinion. Ships with Claude, Codex, Gemini, Copilot; extend with [project-local teammates](#adding-a-project-local-teammate-to-team). Human-triggered. |
 
 **Internal (invoked by `hyper`):**
 
@@ -107,9 +107,28 @@ After first use, your project has:
   archive/            # tasks that reached done or cancelled (moved here automatically)
   memory.md           # durable decisions across tasks
   backlog.md          # idea-triage inbox (manage with /hyper-backlog)
+  team/               # team skill output (only when you use /team)
+    providers/        # project-local teammate definitions (optional)
 ```
 
 Add `.hyper/` to `.gitignore` unless you want to share task history with your team.
+
+### Adding a project-local teammate to `team`
+
+The `team` skill ships with bundled providers for Claude, Codex, Gemini, and Copilot. To add a teammate that only exists in one project — e.g. a sandboxed Claude reached over `docker exec` or SSH — drop a provider file at:
+
+```
+.hyper/team/providers/<name>.md
+```
+
+Copy the bundled template as a starting point:
+
+```bash
+cp ~/.claude/skills/team/references/providers/_template.md .hyper/team/providers/sandbox-claude.md
+# then edit the file to fill in binary path, install/auth commands, invocation, etc.
+```
+
+Invoke by name: *"ask sandbox-claude to review the diff"*. A project-local file fully replaces the bundled one when both define the same name. Since `.hyper/` is gitignored by default, add `!.hyper/team/providers/` to your `.gitignore` to share teammates across a team.
 
 ## Scope drives the flow
 
