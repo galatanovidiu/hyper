@@ -1,13 +1,32 @@
 ---
 name: install-hyper
-description: Installs, uninstalls, or checks the status of Hyper skills in Claude Code's personal skills directory (~/.claude/skills/). Symlinks the skill folders from this repo so local edits take effect immediately. Use when the user asks to install Hyper, set up Hyper for testing, refresh the installed skills, uninstall Hyper, or check whether Hyper is installed. Only meaningful when Claude Code is running inside the hyper7 development repo. Keywords: install, hyper, setup, symlink, refresh, uninstall, status.
+description: Installs, uninstalls, or checks the status of Hyper skills across every supported agent skill directory on this machine — Claude Code (~/.claude/skills/), Codex (~/.codex/skills/), ~/.agents/skills/, and PI (~/.pi/agent/skills/). Symlinks the skill folders from this repo so local edits take effect immediately. Use when the user asks to install Hyper, set up Hyper for testing, refresh the installed skills, uninstall Hyper, or check whether Hyper is installed. Only meaningful when Claude Code (or another agent) is running inside the hyper7 development repo. Keywords: install, hyper, setup, symlink, refresh, uninstall, status, codex, claude, pi.
 ---
 
 # install-hyper
 
-Dev-loop helper for working on Hyper itself. Install the nine skills under `skills/` into `~/.claude/skills/` as symlinks, so Claude Code picks up edits live without reinstalling.
+Dev-loop helper for working on Hyper itself. Install the nine skills under `skills/` into every supported agent skills directory on this machine as symlinks, so agents pick up edits live without reinstalling.
 
-This skill is not part of the distributed Hyper package — it lives in `.claude/skills/install-hyper/` inside this repo and only shows up when Claude Code is running in the hyper7 directory.
+This skill is not part of the distributed Hyper package — it lives in `.claude/skills/install-hyper/` inside this repo and only surfaces when Claude Code is running in the hyper7 directory.
+
+## Targets
+
+By default, the script installs into every one of the following whose parent directory exists:
+
+| Path | Agent |
+|------|-------|
+| `~/.claude/skills/` | Claude Code |
+| `~/.codex/skills/` | Codex |
+| `~/.agents/skills/` | agent-common location (some tools read from here) |
+| `~/.pi/agent/skills/` | PI |
+
+Targets whose parent is missing (e.g. no `.codex/` folder on this machine) are skipped silently — Hyper only lands where an agent is actually set up.
+
+Override with `HYPER_INSTALL_TARGETS` (colon-separated absolute paths):
+
+```bash
+HYPER_INSTALL_TARGETS=/path/one:/path/two bash scripts/install.sh install
+```
 
 ## Routing
 
@@ -23,7 +42,7 @@ If the user's intent isn't one of these, ask.
 
 ## Running
 
-All three operations are handled by `scripts/install.sh` bundled with this skill. Run it from this skill's directory:
+All three operations are handled by `scripts/install.sh` bundled with this skill:
 
 ```bash
 bash scripts/install.sh install
@@ -31,38 +50,30 @@ bash scripts/install.sh uninstall
 bash scripts/install.sh status
 ```
 
-The script self-resolves its paths — it finds the `skills/` source directory relative to its own location, so the caller's CWD doesn't matter.
+The script self-resolves its paths — it finds the source `skills/` directory relative to its own location, so the caller's CWD doesn't matter.
 
 ### Reporting back
 
-The script prints one line per skill with the action taken (`link`, `unlink`, `ok`, `skip`, etc.). After it finishes, summarize to the user:
+The script prints a header per target, then one line per skill with the action taken (`link`, `unlink`, `ok`, `skip`). After it finishes, summarize to the user:
 
-- For `install`: report how many skills were newly linked vs already linked, and any that were skipped (with the reason).
-- For `uninstall`: report how many symlinks were removed.
-- For `status`: pass through the table; it's already readable.
+- **`install`** — how many targets were touched, how many skills newly linked vs already linked, and any skips (with the reason).
+- **`uninstall`** — how many symlinks were removed per target.
+- **`status`** — pass through the table; it's already readable.
 
-If Claude Code is running, remind the user: newly installed skills show up without a restart (Claude Code watches `~/.claude/skills/` for changes), but the slash-menu may take a moment to refresh. Verify with `/hyper` autocomplete.
-
-## Custom install target
-
-For project-scoped installs, set `HYPER_INSTALL_TARGET` before invoking:
-
-```bash
-HYPER_INSTALL_TARGET=/path/to/other-project/.claude/skills bash scripts/install.sh install
-```
-
-Default is `~/.claude/skills/`.
+For Claude Code specifically: newly installed skills show up without a restart (Claude Code watches `~/.claude/skills/` for changes), but the slash-menu may take a moment to refresh. Verify with `/hyper` autocomplete. Other agents may need a reload — check their docs.
 
 ## Rules
 
-- **Symlinks only.** The script never copies files. If a target path exists but isn't our symlink, the script skips it — it won't overwrite real files.
+- **Symlinks only.** The script never copies files. If a target path already exists but isn't our symlink, the script skips it — it won't overwrite real files.
 - **Uninstall is safe.** Only removes symlinks that point back into this repo. Non-symlinks at the target are left alone.
-- **This script is not the production install method.** It's for developing Hyper itself. End users follow the README's `cp -r` or symlink-the-installed-repo flow.
+- **One source of truth.** All targets symlink to the same folders under `skills/` in this repo. Edit once, every agent picks it up.
+- **This script is not the production install method.** It's for developing Hyper itself. End users follow the README's copy-based flow or an agent-specific install mechanism.
 
 ## Key principles
 
-- Dev loop wins. Install once, edit freely, refresh is a no-op because symlinks.
-- Idempotent. Running `install` twice is safe and says so.
+- Dev loop wins. Install once, edit freely. Symlinks mean refresh is a no-op.
+- Idempotent. Running `install` twice is safe and reports "already linked" rather than erroring.
+- Multi-agent by default. The same Hyper skills work across Claude Code, Codex, PI — install lands in all of them.
 - Transparent. The script output is plain and auditable; the agent just interprets and summarizes.
 
 ## Additional resources
