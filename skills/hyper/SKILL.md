@@ -123,7 +123,9 @@ Read the task's `phase` field and route:
 | `done` | Report completion and task folder path. Stop. |
 | `cancelled` | Report the cancellation and reason. Stop. |
 
-When a phase skill finishes, it updates `phase:` in frontmatter and returns control. Re-run this `hyper` skill to pick the next phase — do not chain phases yourself.
+Remember the phase value you just dispatched (call it `dispatched_phase`) — the **After the phase returns** block uses it to decide whether to auto-advance or checkpoint.
+
+When a phase skill finishes, it updates `phase:` in frontmatter and returns control to this block. Don't chain phase skills yourself — the routing below handles it.
 
 ## After the phase returns
 
@@ -131,16 +133,17 @@ When a phase skill finishes, it updates `phase:` in frontmatter and returns cont
 2. If `phase: done` — announce completion and stop.
 3. If `phase: cancelled` — announce cancellation and stop.
 4. If `awaiting` is set — present the label to the user and stop.
-5. Otherwise — ask: *"T<N> is ready for <next phase>. Continue?"* When the user says yes, re-run this skill.
+5. If `dispatched_phase` was `explore` or `plan` — the user already approved this transition at the phase's gate. Re-enter **Dispatch phase** directly with the new phase value. No extra checkpoint.
+6. Otherwise — ask: *"T<N> is ready for <next phase>. Continue?"* When the user says yes, re-run this skill.
 
-This step-then-check pattern exists so the user always has a visible checkpoint. Do not silently chain explore → plan → implement in one uninterrupted run.
+The auto-advance in step 5 is scoped to approval-gated phases (`explore`, `plan`) because their "Approves" branch IS the user's "proceed to next phase" signal. Agent-completion transitions (`implement` → `verify`, `verify` pass → `docs`) still hit step 6 — the user hasn't confirmed them, so the checkpoint gives them a chance to inspect the diff or `checks.md` first.
 
 ## Rules
 
 - **You dispatch, you don't implement.** This skill never writes code, runs tests, or reviews diffs.
 - **State lives in `task.md` frontmatter.** The phase skill edits `phase:` to advance. Don't track phases anywhere else.
 - **The user is the approval gate.** When a phase sets `awaiting`, stop. Silence is not consent.
-- **One phase per run.** Finish a phase, return control, let the user see the checkpoint.
+- **Auto-advance only on user approval.** Approval-gated phases (`explore`, `plan`) auto-advance into the next Dispatch when they return. Agent-completion phases (`implement`, `verify`, `docs`) return to a checkpoint so the user can inspect the result.
 - **Terminal tasks stay terminal.** `done` and `cancelled` don't re-run from here. If the user wants to reopen a cancelled task, they clear the cancel fields manually.
 
 ## Key principles
