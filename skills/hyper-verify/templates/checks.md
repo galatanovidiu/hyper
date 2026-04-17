@@ -34,10 +34,3 @@
 | <criterion from spec> | pass / fail | <command output, screenshot path, HTTP response> |
 
 <If not-applicable: "No user-facing changes — QA skipped.">
-
-## docs
-
-**Verdict:** updated | no-changes-needed
-
-<If updated: list files + what changed.>
-<If no-changes-needed: one-sentence rationale.>
