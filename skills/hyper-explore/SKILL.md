@@ -36,6 +36,8 @@ read task.md
   │
   ├── write exploration.md
   │
+  ├── serialize any open questions (one per message, record answers in the file)
+  │
   └── set awaiting: user-approval and stop
 ```
 
@@ -95,11 +97,27 @@ For **research** tasks: this section becomes **Findings & Recommendation**. Stru
 
 ## Step 5 — Write `exploration.md`
 
-Use the shape in `templates/exploration.md` (bundled with this skill). It has two sections — **Findings** and **Approach** — with subsections for files to change and out-of-scope. For research tasks, rename **Approach** to **Findings & Recommendation** and omit the "Files to change" subsection.
+Use the shape in `templates/exploration.md` (bundled with this skill). It has two sections — **Findings** and **Approach** — with subsections for files to change and out-of-scope, plus an optional **Open questions** section. For research tasks, rename **Approach** to **Findings & Recommendation** and omit the "Files to change" subsection.
 
-## Step 6 — Set approval gate and stop
+If any assumption in the approach could change the design depending on the user's answer, add a `## Open questions` section listing one question per list item. Prefer surfacing the assumption as an explicit question over burying it as a hidden default — see the Key principles below.
 
-Update `task.md` frontmatter: `awaiting: user-approval`.
+## Step 6 — Serialize open questions
+
+If `exploration.md` has no `## Open questions` section, or the section is empty, skip to Step 7.
+
+Otherwise, set `task.md` frontmatter `awaiting: user-input` and work through the questions one at a time, following these rules:
+
+- **One question per message.** Never batch. Ask Q1, stop, wait for the answer.
+- Present the question verbatim from the file. If it has multiple plausible answers, offer numbered-question + lettered-option shorthand ("1A", "1B", …) so the user can reply quickly.
+- When the user answers, record the answer under the question in `exploration.md` (indented bullet or a short paragraph beneath the list item — the artifact must stay the durable record of both question and answer).
+- If the user requests changes to the approach or asks a meta question instead of answering, treat it like any other "requests changes / asks a question" response: stop the loop, revise, and restart Step 6 with the updated questions.
+- Move to the next unanswered question. Repeat until none remain.
+
+Once every question has an answer, rename the section heading from `## Open questions` to `## Resolved questions` (or delete the section entirely if the answers are already captured in the approach). Then proceed to Step 7.
+
+## Step 7 — Set approval gate and stop
+
+Update `task.md` frontmatter: `awaiting: user-approval` (replacing `user-input` if it was set during Step 6).
 
 Tell the user: *"Wrote `exploration.md`. Scope: <quick|feature|research>. Please read it and tell me to proceed, or what to change."*
 

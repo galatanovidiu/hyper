@@ -78,10 +78,11 @@ To manually re-run a phase on a task, edit `phase:` in the task's frontmatter an
 
 ## `exploration.md`
 
-Written by the `hyper-explore` skill. Two sections:
+Written by the `hyper-explore` skill. Two required sections plus one optional:
 
 1. **Findings** — what exists in the code that matters for this task, bullet-point style. File paths + line numbers when relevant. Facts, not opinions.
 2. **Approach** — how we'll do the work. For `quick`, two or three sentences. For `feature`, one or two paragraphs plus alternatives considered. For `research`, this is where the recommendation goes.
+3. **Open questions** (optional) — a list of questions for the user whose answers would change the approach. When present, `hyper-explore` asks them serially in chat (one per message) and records each answer under the question in this file, renaming the section to `Resolved questions` once all are answered. While questions are pending, `awaiting: user-input`; once answered, it transitions to `awaiting: user-approval`.
 
 `exploration.md` is the approval artifact for the explore phase. Once the user approves, phase advances.
 
@@ -93,6 +94,7 @@ Written by the `hyper-plan` skill for `feature`-scope tasks. Contains:
 2. **Subtasks** — a markdown checklist. Each item is small enough to do in one sitting.
 3. **Out of scope** — explicit list of things *not* being done.
 4. **Edge cases** — known tricky scenarios the implementer must handle.
+5. **Open questions** (optional) — a list of questions for the user. Used both at planning time (before approval) and mid-implementation (when `hyper-implement` hits a blocker). Same serialization rule as in `exploration.md`: asked one per message, answers recorded in-file, section renamed to `Resolved questions` when done. While questions are pending, `awaiting: user-input`.
 
 Subtasks live in this file as `- [ ] T1.1 — Install bcrypt`. The `hyper-implement` skill walks the list and checks boxes. No nested task folders.
 

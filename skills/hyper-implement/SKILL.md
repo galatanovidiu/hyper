@@ -54,9 +54,18 @@ For each subtask:
 
 If you get stuck:
 
-- **Blocker / unclear requirement** → set `awaiting: user-input` with a clear question in the task body or a `### Open questions` section of `spec.md`, and return to the `hyper` skill.
+- **Blocker / unclear requirement** → append the question as a list item under a `## Open questions` section of `spec.md` (create the section if it doesn't exist), set `task.md` frontmatter `awaiting: user-input`, surface the first unanswered question inline in chat (one question, not a batch — see **Resuming from an open question** below), then return to the `hyper` skill.
 - **Find something pre-existing that needs fixing but isn't in scope** → append a new entry to `.hyper/backlog.md`. Format: a `## B<N> — <short title>` heading followed by a body paragraph with the file:line reference and why it matters. Allocate `B<N>` by scanning `backlog.md` for the highest existing `^## B\d+ — ` heading and adding 1 (bootstrap the file with a `# Backlog` heading if it's missing). Don't fix inline.
 - **Realize the subtask is wrong** (missing a dependency, needs splitting, is no longer needed) → update `spec.md` (edit the checklist), note what you changed and why in the task, then continue.
+
+### Resuming from an open question (mid-implementation Q&A)
+
+When the user answers a question (either inline in chat after you surfaced it, or out of band), resume like this:
+
+- Record the answer under the question inside `spec.md`'s `## Open questions` section (indented bullet or short paragraph beneath the list item). The artifact stays the durable record of both question and answer.
+- **One question per message.** If more unanswered questions remain in the section, surface the next one inline in chat and keep `awaiting: user-input`. Never batch.
+- When the section has no unanswered questions left, rename the heading to `## Resolved questions` (or remove it if the answers are already folded into the spec text), clear `awaiting` in `task.md`, and resume the Subtask loop where you left off.
+- If the user's response is a change request or a meta question instead of an answer, don't record it as an answer. Make the requested change, then re-surface the first still-unanswered question.
 
 ## Safety checklists
 

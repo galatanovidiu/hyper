@@ -34,6 +34,8 @@ re-read exploration.md
   │
   ├── write spec.md
   │
+  ├── serialize any open questions (one per message, record answers in the file)
+  │
   └── set awaiting: user-approval and stop
 ```
 
@@ -109,9 +111,23 @@ Re-read `spec.md` from disk. Check:
 
 If you find problems, fix them. Then continue.
 
-## Step 7 — Set approval gate and stop
+## Step 7 — Serialize open questions
 
-Update `task.md` frontmatter: `awaiting: user-approval`.
+If `spec.md` has no `## Open questions` section, or the section is empty, skip to Step 8.
+
+Otherwise, set `task.md` frontmatter `awaiting: user-input` and work through the questions one at a time, following these rules:
+
+- **One question per message.** Never batch. Ask Q1, stop, wait for the answer.
+- Present the question verbatim from the file. If it has multiple plausible answers, offer numbered-question + lettered-option shorthand ("1A", "1B", …) so the user can reply quickly.
+- When the user answers, record the answer under the question in `spec.md` (indented bullet or a short paragraph beneath the list item — the artifact must stay the durable record of both question and answer).
+- If the user requests changes to the spec or asks a meta question instead of answering, treat it like any other "requests changes / asks a question" response: stop the loop, revise, and restart Step 7 with the updated questions.
+- Move to the next unanswered question. Repeat until none remain.
+
+Once every question has an answer, rename the section heading from `## Open questions` to `## Resolved questions` (or delete the section entirely if the answers are already captured elsewhere in the spec). Then proceed to Step 8.
+
+## Step 8 — Set approval gate and stop
+
+Update `task.md` frontmatter: `awaiting: user-approval` (replacing `user-input` if it was set during Step 7).
 
 Tell the user: *"Wrote `spec.md`. <N> subtasks. Please review the acceptance criteria and subtasks. Approve to start implementation, or tell me what to change."*
 

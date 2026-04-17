@@ -26,3 +26,15 @@ Number as T<N>.1, T<N>.2, … Note dependencies with "(depends on T<N>.X)".>
 <Known tricky scenarios the implementer needs to handle.>
 
 - <...>
+
+## Open questions
+
+<Optional. List questions the user must answer before approving the spec, or
+that the implementer raises mid-flight as blockers. Use list items — each
+item is one question. The hyper-plan skill (at planning time) and
+hyper-implement skill (mid-implementation) will ask them serially in chat
+(one per message) and record each answer under the question in this file.
+Delete this section if there are none.>
+
+- <question 1?>
+- <question 2?>

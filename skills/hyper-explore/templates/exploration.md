@@ -29,3 +29,14 @@ write the structured research answer with a clear final recommendation.>
 <Things this task explicitly will not do.>
 
 - <...>
+
+## Open questions
+
+<Optional. List questions the user must answer before approving the approach.
+Use list items — each item is one question. The hyper-explore skill will ask
+them serially in chat (one per message), record each answer under the question
+in this file, and rename the section to "Resolved questions" once all are
+answered. Delete this section if there are none.>
+
+- <question 1?>
+- <question 2?>
