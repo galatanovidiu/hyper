@@ -72,6 +72,7 @@ skills=(
   hyper-implement
   hyper-verify
   hyper-docs
+  team
 )
 
 install_one() {

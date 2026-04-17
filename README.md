@@ -1,6 +1,6 @@
 # Hyper
 
-A lightweight, structured development workflow for AI coding agents. Implemented as ten [Agent Skills](https://agentskills.io) — plain markdown files that any compatible agent can load. No CLI, no plugin, no server.
+A lightweight, structured development workflow for AI coding agents. Implemented as eleven [Agent Skills](https://agentskills.io) — plain markdown files that any compatible agent can load. No CLI, no plugin, no server.
 
 ## What it does
 
@@ -14,7 +14,7 @@ Each phase writes one markdown artifact on disk. Two phases pause for your appro
 
 ## The skills
 
-Five skills are user-facing. Five phase skills run internally — dispatched by `hyper` — and won't appear in your slash-command menu.
+Six skills are user-facing. Five phase skills run internally — dispatched by `hyper` — and won't appear in your slash-command menu.
 
 **User-facing:**
 
@@ -25,6 +25,7 @@ Five skills are user-facing. Five phase skills run internally — dispatched by 
 | `hyper-backlog` | Manages the idea-triage inbox at `.hyper/backlog.md`: add, list, promote to task, drop. |
 | `hyper-handoff` | Writes a session handoff for resuming later. |
 | `hyper-retro` | Reflects on what worked and didn't. |
+| `team` | Delegates a task (code-review, design-review, research, verify) to another AI agent CLI for a second opinion. Human-triggered. |
 
 **Internal (invoked by `hyper`):**
 
@@ -60,7 +61,7 @@ mkdir -p .claude/skills
 cp -r /path/to/hyper7/skills/* .claude/skills/
 ```
 
-**Verify**: open Claude Code in a project and type `/hyper` — you should see autocomplete for `hyper`, `hyper-task`, `hyper-backlog`, `hyper-handoff`, `hyper-retro`. (The five phase skills are internal and don't appear in the menu.)
+**Verify**: open Claude Code in a project and type `/hyper` — you should see autocomplete for `hyper`, `hyper-task`, `hyper-backlog`, `hyper-handoff`, `hyper-retro`, and `team`. (The five phase skills are internal and don't appear in the menu.)
 
 ### Codex, Cursor, Gemini CLI, generic agents
 
@@ -127,7 +128,7 @@ Hyper is the seventh iteration of an idea. Earlier versions had a CLI, a state d
 This version follows the [Agent Skills](https://agentskills.io) open standard:
 
 - **Markdown on disk, no CLI.** Agents edit markdown directly.
-- **Ten focused skills, each under 250 lines.** Five user-facing, five internal phase skills. Progressive disclosure through bundled `templates/` and `reference/` files.
+- **Eleven focused skills, each under 250 lines.** Six user-facing, five internal phase skills. Progressive disclosure through bundled `templates/` and `reference/` files.
 - **Scope triage up front.** Quick tasks stay quick. Features get the full workflow.
 - **Principles over gates.** A "should" with a reason is stronger than a "must" without one.
 

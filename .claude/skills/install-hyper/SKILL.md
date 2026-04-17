@@ -5,7 +5,7 @@ description: Installs, uninstalls, or checks the status of Hyper skills across e
 
 # install-hyper
 
-Dev-loop helper for working on Hyper itself. Install the ten skills under `skills/` into every supported agent skills directory on this machine as symlinks, so agents pick up edits live without reinstalling.
+Dev-loop helper for working on Hyper itself. Install the eleven skills under `skills/` into every supported agent skills directory on this machine as symlinks, so agents pick up edits live without reinstalling.
 
 This skill is not part of the distributed Hyper package — it lives in `.claude/skills/install-hyper/` inside this repo and only surfaces when Claude Code is running in the hyper7 directory.
 
