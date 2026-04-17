@@ -71,8 +71,7 @@ Resume that task. Jump to **Dispatch phase**.
 ### 8. No goal, multiple active tasks
 List them with `id`, `phase`, and `title`, then ask which to continue. Stop.
 
-### 9. Active task has `awaiting: <label>` set
-(This is checked in **Dispatch phase**, not here — but if detected while routing, stop and present the `awaiting` label. When the user responds, clear `awaiting` and re-run.)
+The `awaiting` gate is not a routing rule — it's a precondition of **Dispatch phase** below. Routing decides *which* task to work on; dispatch decides *whether* to run a phase on it.
 
 ## Resume by id
 
@@ -108,9 +107,9 @@ Given task id `T<N>`:
 
 ## Dispatch phase
 
-Before dispatching, check `awaiting`. If set, present the label to the user and stop — don't run a phase while a gate is open.
+**Precondition — `awaiting` gate.** Before doing anything else in this section, check the task's `awaiting` field. If it is set, present the label to the user and stop. Do not run a phase while a gate is open. This is the single source of truth for the gate; every path that reaches Dispatch passes through this check.
 
-Read the task's `phase` field and route:
+Once `awaiting` is clear, read the task's `phase` field and route:
 
 | `phase` | Next step |
 |---------|-----------|
