@@ -1,1 +1,7 @@
 .DS_Store
+
+# Global ~/.gitignore excludes .claude/, but in this repo .claude/skills/
+# holds project-level skills (e.g., install-hyper) that ARE part of the
+# project and must be tracked.
+!/.claude/
+!/.claude/**
