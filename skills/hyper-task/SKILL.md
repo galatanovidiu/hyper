@@ -76,7 +76,7 @@ Steps:
 
    If the content clearly looks idea-shaped, ask once: *"This is a rough sketch. Park in backlog for later triage, or create the task now anyway?"* If the user opts for backlog, recommend `/hyper-backlog "add: <goal>"` and stop. Otherwise proceed. One nudge, not a loop.
 3. Determine the next task id: scan **both** `.hyper/tasks/` and `.hyper/archive/` for the highest `T<N>` prefix across the two, use `T<N+1>`. Archived ids count — they are never reused.
-4. Derive a kebab-case slug from the title.
+4. Derive a kebab-case slug from the title (lowercase, spaces → hyphens, strip punctuation, ~40 chars).
 5. Create `.hyper/tasks/T<N>-<slug>/task.md` using the shape in `../hyper/templates/task.md`, with frontmatter:
    ```yaml
    ---

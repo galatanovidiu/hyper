@@ -21,7 +21,7 @@ All Hyper state lives on disk under `.hyper/` in the project root. Plain markdow
   backlog.md            # idea-triage inbox (managed via hyper-backlog)
 ```
 
-- Task folders are named `T<N>-<kebab-slug>`. `N` is a simple incrementing integer. Slug is derived from the title.
+- Task folders are named `T<N>-<kebab-slug>`. `N` is a simple incrementing integer. Slug is derived from the title: lowercase, spaces → hyphens, strip punctuation, ~40 chars.
 - Artifact filenames are fixed. A skill that writes `spec.md` always writes to that path.
 - When a task's `phase` flips to `done` or `cancelled`, the folder is moved from `.hyper/tasks/` to `.hyper/archive/`. The skill that flips the phase owns the move. By-id lookups (`hyper T<N>`, `hyper-task status`, `hyper-retro`) fall back to `archive/` when the id isn't in `tasks/`. Normal flows (listing active tasks, default routing) ignore archive.
 - Task ids are allocated by scanning `tasks/ ∪ archive/` for the highest `T<N>` and adding 1. Ids are never reused.
