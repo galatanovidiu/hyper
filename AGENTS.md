@@ -20,7 +20,7 @@ skills/<name>/
   reference/         # optional — reference material loaded on demand
 ```
 
-Every skill must be **self-contained**. No references from `skills/<name>/SKILL.md` to anything outside its own folder — because when a user installs a skill, only that folder gets copied/symlinked.
+Hyper installs as a suite — `install-hyper` symlinks every skill together, never one alone. So a Hyper skill may reference files in a sibling Hyper skill (e.g. `skills/hyper-task/SKILL.md` pointing at `skills/hyper/reference/data-model.md`) when that keeps a single source of truth. The constraint is suite-internal: don't reference anything outside `skills/`.
 
 ## User-facing vs internal skills
 
@@ -88,7 +88,7 @@ There's no test suite — the "tests" are exercising Hyper end-to-end on a real 
 - **`allowed-tools` without a reason.** It tightens what the host agent can do mid-skill. Only add when genuinely needed.
 - **Prose that restates the frontmatter.** If the body starts with "This skill does X and Y…", delete it — the description already said so.
 - **Deep reference chains.** `SKILL.md` → `advanced.md` → `details.md` breaks progressive disclosure (agents tend to partial-read nested references).
-- **Skill-to-skill dependencies via file path.** They work in Claude Code and break everywhere else.
+- **Referencing files outside `skills/`.** Suite-internal cross-references between Hyper skills are fine (see "What lives where"); references to repo files outside `skills/` are not — they don't ship to users.
 
 ## References
 
