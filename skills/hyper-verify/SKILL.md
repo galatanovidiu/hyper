@@ -26,7 +26,7 @@ One artifact: `checks.md`. One verdict.
 - `task.md` frontmatter updated:
   - `phase: docs` if feature scope with doc-relevant changes
   - `phase: done` if quick scope
-  - stays at `verify` with `awaiting: user-input` if critical issues block progress
+  - `phase: implement` with `awaiting: user-input` if critical issues block progress
 
 ## Before you start
 
@@ -97,7 +97,7 @@ Record as:
 ```markdown
 ## review
 
-**Verdict:** pass | needs-changes | critical
+**Verdict:** pass | needs-changes | blocked
 **Files reviewed:** <count> files, <+lines/-lines>
 
 ### Findings
@@ -113,9 +113,9 @@ The verdict:
 
 - `pass` — no critical, maybe warnings/notes. Move on.
 - `needs-changes` — warnings the user should see before shipping, but you as the agent are not going to fix them right now.
-- `critical` — at least one critical finding. You (or the user) must fix before the task can complete.
+- `blocked` — at least one critical finding. You (or the user) must fix before the task can complete.
 
-**If verdict is `critical`:** stop the phase. Update `task.md` with `phase: implement` and `awaiting: user-input`, and in the task body add a short pointer to the critical findings in `checks.md`. Return to the `hyper` skill. The user or next implement pass fixes the criticals, then verify runs again.
+**If verdict is `blocked`:** stop the phase. Update `task.md` with `phase: implement` and `awaiting: user-input`, and in the task body add a short pointer to the critical findings in `checks.md`. Return to the `hyper` skill. The user or next implement pass fixes the criticals, then verify runs again.
 
 ## Section 3 — QA (conditional)
 
@@ -151,7 +151,7 @@ Use the shape in `templates/checks.md` (bundled with this skill). All three sect
 
 - `pass` — tests pass, review has no critical, qa passes (or n/a). Ready to advance.
 - `needs-changes` — warnings exist but no criticals. Agent still advances; user sees the warnings.
-- `blocked` — at least one critical or qa failure. Phase stays at verify via implement; user must address.
+- `blocked` — at least one critical or qa failure. Phase moves to `implement` with `awaiting: user-input`; user must address.
 
 ## Advancing the phase
 

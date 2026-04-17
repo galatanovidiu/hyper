@@ -105,7 +105,7 @@ Written during verify and docs phases. Three sections appended in order:
 <test runner output summary, pass/fail, command used>
 
 ## review
-Verdict: pass | needs-changes | critical
+Verdict: pass | needs-changes | blocked
 <findings with file:line refs>
 
 ## qa

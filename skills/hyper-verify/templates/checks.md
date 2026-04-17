@@ -14,7 +14,7 @@
 
 ## review
 
-**Verdict:** pass | needs-changes | critical
+**Verdict:** pass | needs-changes | blocked
 **Files reviewed:** <count> files, <+lines/-lines>
 
 ### Findings
