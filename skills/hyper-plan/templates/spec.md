@@ -9,11 +9,13 @@
 
 ## Subtasks
 
-<Vertical slices. Each is a chunk of work that can be verified on its own.
-Number as T<N>.1, T<N>.2, … Note dependencies with "(depends on T<N>.X)".>
+<ToC-style index of subtask files. Titles + links only. No checkboxes, no
+status. The subtask files (sibling to this spec.md) are the source of truth
+for progress — this index is a human-readable table of contents written
+once at plan time.>
 
-- [ ] T<N>.1 — <short title> — <one-line description>
-- [ ] T<N>.2 — <short title> — <one line> (depends on T<N>.1)
+- **T<N>.1** — <short title> → [T<N>.1.md](T<N>.1.md)
+- **T<N>.2** — <short title> → [T<N>.2.md](T<N>.2.md)
 
 ## Out of scope
 
@@ -29,12 +31,12 @@ Number as T<N>.1, T<N>.2, … Note dependencies with "(depends on T<N>.X)".>
 
 ## Open questions
 
-<Optional. List questions the user must answer before approving the spec, or
-that the implementer raises mid-flight as blockers. Use list items — each
-item is one question. The hyper-plan skill (at planning time) and
-hyper-implement skill (mid-implementation) will ask them serially in chat
-(one per message) and record each answer under the question in this file.
-Delete this section if there are none.>
+<Optional. Planning-time questions the user must answer before approving the
+spec. Mid-implementation blockers go on the specific subtask file's
+`## Open questions` section, not here. Use list items — each item is one
+question. The hyper-plan skill will ask them serially in chat (one per
+message) and record each answer under the question in this file. Delete this
+section if there are none.>
 
 - <question 1?>
 - <question 2?>

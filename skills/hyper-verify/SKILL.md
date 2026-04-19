@@ -31,7 +31,7 @@ One artifact: `checks.md`. One verdict.
 
 ## Before you start
 
-Re-read `exploration.md` and `spec.md` so the acceptance criteria and approach are fresh in your mind. Look at the diff before you run anything:
+Re-read `exploration.md` and `spec.md` so the acceptance criteria and approach are fresh in your mind. For feature-scope tasks, the `## Completion` sections in each `T<N>.<M>.md` subtask file are a useful review companion — they tell you what each worker claims to have changed and why, which is faster context than re-deriving everything from the raw diff. Look at the diff before you run anything:
 
 ```bash
 git diff HEAD

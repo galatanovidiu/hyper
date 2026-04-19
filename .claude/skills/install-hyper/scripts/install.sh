@@ -70,6 +70,7 @@ skills=(
   hyper-explore
   hyper-plan
   hyper-implement
+  hyper-worker
   hyper-verify
   hyper-docs
   team

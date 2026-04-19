@@ -1,28 +1,28 @@
 ---
 name: hyper-implement
-description: Runs the implement phase of a Hyper task. For feature-scope tasks, walks the subtask checklist in spec.md and ticks each box as work completes. For quick-scope tasks, implements directly from the approach in exploration.md. Handles rename/refactor safety checks, delete safety, and basic security patterns. Use when a Hyper task is in the 'implement' phase. Keywords: hyper, implement, code, subtasks, worker, write code.
+description: Runs the implement phase of a Hyper task. For feature-scope tasks, orchestrates per-subtask workers — scans the task folder for T<N>.<M>.md subtask files, picks the next unblocked one, dispatches a sub-agent via the Task tool to run the hyper-worker skill on that file, then advances. For quick-scope tasks, implements directly from the approach in exploration.md. Use when a Hyper task is in the 'implement' phase. Keywords hyper, implement, orchestrator, dispatch, worker, subtasks, sub-agent.
 user-invocable: false
 ---
 
 # hyper-implement
 
-You are in the **implement** phase. Time to write code.
+You are in the **implement** phase. For `feature` scope, you orchestrate — you do not write code. For `quick` scope, you write the code yourself.
 
 ## Inputs
 
 - `task.md` (phase=implement)
 - `exploration.md` (approved approach)
-- `spec.md` (for `feature` scope — contains subtask checklist)
+- `spec.md` (for `feature` scope — acceptance criteria + ToC index of subtask files + out-of-scope + edge cases)
+- `T<N>.<M>.md` subtask files (for `feature` scope — one per vertical slice in the task folder, with frontmatter `status`, `depends`, `awaiting`)
 
 ## Outputs
 
-- Code changes in the project (not in `.hyper/`)
-- For `feature` scope: boxes ticked in `spec.md` as you finish subtasks
-- `task.md` frontmatter updated: `phase: verify` when all subtasks are done
+- For `feature` scope: subtask files flipped to `status: done` with `## Completion` sections written by workers; `task.md` frontmatter updated to `phase: verify` when every subtask is done
+- For `quick` scope: code changes directly; `task.md` frontmatter updated to `phase: verify`
 
 ## Flow for `quick` scope
 
-The approach in `exploration.md` is your whole brief. No spec, no subtasks. Go:
+The approach in `exploration.md` is your whole brief. No spec, no subtasks, no worker dispatch. Go:
 
 1. Re-read `exploration.md` and `task.md`.
 2. Make the change.
@@ -31,45 +31,117 @@ The approach in `exploration.md` is your whole brief. No spec, no subtasks. Go:
 5. Update `task.md` frontmatter: `phase: verify`.
 6. Return to the `hyper` skill.
 
-You do not need to log completion details — the diff is the record.
+You do not need to log completion details — the diff is the record. The safety checklists at the bottom of this file apply to quick-scope changes (no worker is dispatched to inherit them).
 
 ## Flow for `feature` scope
 
-1. Re-read `spec.md` and find the first unchecked subtask in order, respecting any `depends on` notes.
-2. Work on that subtask only (see **Subtask loop** below).
-3. When finished, tick the box in `spec.md` and optionally add a short outcome note on the same line (e.g., *"— done, added `UserService.verifyPassword`"*).
-4. Repeat from step 1 until all boxes are ticked.
-5. Update `task.md` frontmatter: `phase: verify`.
-6. Return to the `hyper` skill.
+You are an **orchestrator**. You read subtask files, dispatch one worker per subtask via the Task tool, and advance the phase when every subtask is done. You do not read, write, test, or review project code — that's the worker's job.
 
-### Subtask loop
+### Step 1 — Validate subtask files
 
-For each subtask:
+Scan the task folder for subtask files: `.hyper/tasks/T<N>-*/T<N>.*.md` (e.g. `T27.1.md`, `T27.2.md`). Task-level artifacts like `task.md`, `spec.md`, `checks.md`, `notes.md` do not match the `T<N>.*.md` pattern and are ignored.
 
-- **Research** — Read the files mentioned or implied by the subtask. Understand existing patterns before changing anything.
-- **Implement** — Make the change. Scope to this subtask only. Don't fix adjacent things you notice.
-- **Test** — Run the relevant tests. If the subtask adds new code, add or update tests for it.
-- **Self-review** — Read your own diff. Does it match the acceptance criterion the subtask supports? Any obvious bugs, missing edge cases, security issues? Any debug code left?
-- **Tick the box** in `spec.md`.
+Before picking anything to dispatch, validate. If any check fails, abort with an error naming the specific problem. Do not guess, default, or silently skip.
 
-If you get stuck:
+- At least one `T<N>.<M>.md` file exists in the task folder. (If none found: *"no subtask files found at the task folder root — this task is either legacy (checklist-in-spec model), scope-classified wrong, or missing plan output. Re-run hyper-plan or migrate manually."*)
+- Every matching file has parseable YAML frontmatter with required fields (`id`, `parent`, `status`, `depends`).
+- Every file's `parent` matches the current task id.
+- No two files claim the same `id`.
+- Every id in every `depends` list exists as a subtask file in the task folder.
+- The `depends` graph has no cycles.
+- Any subtask with `awaiting: user-input` has a `## Open questions` section in its body.
 
-- **Blocker / unclear requirement** → append the question as a list item under a `## Open questions` section of `spec.md` (create the section if it doesn't exist), set `task.md` frontmatter `awaiting: user-input`, surface the first unanswered question inline in chat (one question, not a batch — see **Resuming from an open question** below), then return to the `hyper` skill.
-- **Find something pre-existing that needs fixing but isn't in scope** → append a new entry to `.hyper/backlog.md`. Format: a `## B<N> — <short title>` heading followed by a body paragraph with the file:line reference and why it matters. Allocate `B<N>` by scanning `backlog.md` for the highest existing `^## B\d+ — ` heading and adding 1 (bootstrap the file with a `# Backlog` heading if it's missing). Don't fix inline.
-- **Realize the subtask is wrong** (missing a dependency, needs splitting, is no longer needed) → update `spec.md` (edit the checklist), note what you changed and why in the task, then continue.
+### Step 2 — Pick the next subtask
 
-### Resuming from an open question (mid-implementation Q&A)
+Scan subtask files (alphabetical by id):
 
-When the user answers a question (either inline in chat after you surfaced it, or out of band), resume like this:
+- If **all** have `status: done` → go to Step 5 (advance phase).
+- If any has `awaiting: user-input` → go to Step 4 (propagate blocker).
+- Otherwise pick the **first** file where `status: todo` and every id in `depends` has `status: done` in its own file.
 
-- Record the answer under the question inside `spec.md`'s `## Open questions` section (indented bullet or short paragraph beneath the list item). The artifact stays the durable record of both question and answer.
-- **One question per message.** If more unanswered questions remain in the section, surface the next one inline in chat and keep `awaiting: user-input`. Never batch.
-- When the section has no unanswered questions left, rename the heading to `## Resolved questions` (or remove it if the answers are already folded into the spec text), clear `awaiting` in `task.md`, and resume the Subtask loop where you left off.
-- If the user's response is a change request or a meta question instead of an answer, don't record it as an answer. Make the requested change, then re-surface the first still-unanswered question.
+If no file matches and no blocker is set, you have a deadlock — abort with an error naming the stuck subtasks and their unsatisfied deps.
 
-## Safety checklists
+### Step 3 — Dispatch a worker
 
-These apply to both quick and feature scope. Keep them visible while working.
+Dispatch the selected subtask to a sub-agent via the Task tool. Use `subagent_type: general-purpose`. The prompt must be self-contained — the sub-agent starts fresh with no memory of this conversation.
+
+Prompt template:
+
+```
+Load the `hyper-worker` skill and run it against this subtask file:
+
+  <absolute path to T<N>.<M>.md in the task folder>
+
+Parent task folder:
+
+  <absolute path to .hyper/tasks/T<N>-*/>
+
+Read the subtask file, the parent task.md, and spec.md. Follow the hyper-worker
+skill end-to-end: research, implement only this slice, run tests, self-review,
+write the ## Completion section, flip status: done in the frontmatter, and return.
+
+If you hit a blocker you cannot resolve from the spec and the code, set the
+subtask's frontmatter `awaiting: user-input`, add the question under a
+`## Open questions` section in the subtask body, and return without flipping
+status. Do not guess.
+
+Do not touch task.md, spec.md, or sibling subtask files — the orchestrator
+owns those.
+```
+
+Wait for the sub-agent to return. Then re-read the subtask file's frontmatter:
+
+- `status: done` → go back to Step 1 (validate + pick next).
+- `awaiting: user-input` with `## Open questions` populated → go to Step 4.
+- `status: todo` unchanged and `awaiting` still null → worker did not claim the subtask. Abort with: *"T<N>.<M> returned from dispatch with no state change. Investigate before re-dispatching."*
+- `status: done` but no `## Completion` section → surface a warning to the user, proceed to Step 1. The diff is still the record; the missing summary is best-effort.
+
+**Parallel dispatch is future work.** v1 dispatches one worker at a time. Once sequential dispatch is proven, independent unblocked subtasks may be dispatched in parallel by sending multiple Task calls in one message.
+
+### Step 4 — Propagate blocker to user
+
+The dispatched worker set its subtask's `awaiting: user-input` and added a question under `## Open questions` in the subtask body.
+
+1. Set `task.md` frontmatter `awaiting: user-input` (so the top-level `hyper` gate catches it).
+2. Read the first unanswered question from the blocked subtask's `## Open questions`.
+3. Surface it inline in chat — one question per message, never batch. Present the question verbatim. If it has multiple plausible answers, offer numbered-question + lettered-option shorthand so the user can reply quickly.
+4. Return to the `hyper` skill.
+
+When the user answers (next turn into this skill):
+
+- Record the answer under the question in the blocked subtask's `## Open questions` (indented bullet or short paragraph). The file is the durable record of both question and answer.
+- If more unanswered questions remain in that subtask's section, surface the next one inline and keep `awaiting: user-input`. Never batch.
+- When the section has no unanswered questions left, rename the heading to `## Resolved questions`, clear the subtask's `awaiting: null`, clear `task.md`'s `awaiting: null`, and re-dispatch that subtask (back to Step 3).
+- If the user's response is a change request or a meta question rather than an answer, apply the change, then re-surface the first still-unanswered question.
+
+### Step 5 — Advance the phase
+
+When every subtask has `status: done`:
+
+- Update `task.md` frontmatter: `phase: verify`.
+- Return to the `hyper` skill with a summary: *"T<N> implementation complete. <N> subtasks done. Ready for verify."*
+
+### Subtask file is wrong mid-flight
+
+If the orchestrator or a worker realizes a subtask is wrong — missing dependency, needs splitting, no longer needed — the orchestrator (not the worker) is the one who edits the file. Update the affected subtask file, update the ToC in `spec.md` if the title changed, note what you changed and why in a short line to the user, then continue dispatching.
+
+### Finding pre-existing problems
+
+Workers own the escalation path for out-of-scope findings (they append to `.hyper/backlog.md`). As an orchestrator, you don't see project code directly, so you will rarely add to the backlog yourself. If a worker reports one and you need to pass it along to the user, just relay.
+
+## Completion check
+
+Before flipping `phase: verify`:
+
+- **Feature scope:** every `T<N>.<M>.md` subtask file in the task folder has `status: done`. No `awaiting` set. No subtasks missing or unaccounted for.
+- **Quick scope:** the change is made, tests ran at least once and passed (or you explicitly told the user no test suite exists), no debug prints or stray TODOs left behind.
+- Scope did not expand beyond what `spec.md` (feature) or `exploration.md` (quick) described.
+
+## Safety checklists (quick scope only)
+
+For **feature** scope, these checklists live in the `hyper-worker` skill — every worker inherits them. Do not duplicate them here; dispatched workers are the ones touching project code.
+
+For **quick** scope, you touch the code yourself. Keep these visible while working:
 
 ### Rename / refactor
 
@@ -82,7 +154,7 @@ Before considering a rename complete, grep separately for each category:
 5. Re-exports and barrel files.
 6. Test files, mocks, fixtures.
 
-Assume a single grep missed something. Check all six.
+Assume one grep missed something. Check all six.
 
 ### Delete
 
@@ -97,18 +169,9 @@ Any code that touches external input (HTTP, CLI args, file contents, environment
 - Escape output at the render site, with the right context (HTML, attribute, URL, JSON).
 - Don't log secrets. Don't hardcode them. Env vars or a secret store only.
 
-## Completion check
-
-Before flipping `phase: verify`:
-
-- All subtasks ticked (feature scope) or the quick change is made.
-- You ran tests at least once and they passed (or you explicitly told the user no test suite exists).
-- You did not leave debug prints, commented-out code, or TODO markers for work that was supposed to happen in this task.
-- You did not expand scope beyond what `spec.md` (or for quick: `exploration.md`) described.
-
 ## Recording things worth remembering
 
-If during implementation you discovered a convention, constraint, or surprise that future tasks should know about, append a short note to `.hyper/memory.md`. Format:
+If during implementation (quick scope) or orchestration (feature scope) you discovered a convention, constraint, or surprise that future tasks should know about, append a short note to `.hyper/memory.md`. Format:
 
 ```markdown
 ## <date> — Pattern: <title>
@@ -122,16 +185,18 @@ Only save things that will matter to a *different* task. Details of the current 
 
 ## Rules
 
-- **Only what the subtask says — but deep, not shallow.** Do not widen scope by touching adjacent code, fixing pre-existing bugs, or adding features the subtask did not name. Do deepen the code you are writing: validation at boundaries, error-path handling, and edge-case guards for the subtask's change are part of the subtask, not scope creep. The fence is against widening, not against robustness.
-- **Test before ticking the box.** A ticked box with failing tests is a lie the verify phase has to unwind.
-- **Ask, don't guess.** If the spec contradicts itself or misses something critical, set `awaiting: user-input` and stop. Guessing usually costs more than a round-trip.
-- **Research before changing.** Read the files, understand the patterns, then write. Code that doesn't match existing conventions slows every future task in that area.
-- **Pre-existing bugs go to backlog.** Never fix them inline "while you're here".
+- **Feature scope: orchestrate, don't implement.** You do not write, test, or review project code in feature-scope mode. You dispatch workers and propagate their state. If you find yourself about to edit a `.ts` / `.php` / `.py` file outside `.hyper/`, stop — that's a sign you should be dispatching instead.
+- **Quick scope: stay scoped.** Do not widen scope by touching adjacent code, fixing pre-existing bugs, or adding features the approach did not name. Deepen the code you are writing: validation at boundaries, error-path handling, edge-case guards are part of the change, not scope creep.
+- **Fail loudly on malformed state.** No subtask files found, cycles in `depends`, unparseable frontmatter — abort with a specific error. Silent skips turn small bugs into mysterious ones.
+- **One question per message.** When propagating a worker's blocker, surface one question. Never batch.
+- **Ask, don't guess.** If `spec.md` contradicts itself or leaves a critical decision unmade, set `task.md` `awaiting: user-input` and stop. Guessing usually costs more than a round-trip.
+- **Pre-existing bugs go to backlog.** Workers escalate them; as orchestrator you just relay. In quick scope, you're the one escalating — same rule: backlog it, don't fix inline.
 
 ## Key principles
 
-- The spec decomposed the work; implementation respects that decomposition. If you find yourself wanting to merge subtasks together mid-flight, stop — re-read why they were split.
-- A subtask is not done when the code compiles. It's done when the acceptance criterion it serves can be verified.
-- The goal of this phase is a clean, reviewable diff. Everything you do should reduce surprise for whoever reads that diff next — including future you.
-- **Robustness before cleverness.** Handle error paths, validate at boundaries, fail loudly. Validation and error-path handling for the code you are writing are part of the work, not speculative scope — the default answer to "should I handle this edge case" is yes.
-- **Stay focused, park the drift.** Pre-existing problems go to `.hyper/backlog.md`, not inline "while I'm here" fixes. Deepen the subtask you were given; don't widen it into adjacent code the subtask didn't name.
+- **The plan decomposed the work; the orchestrator respects the decomposition.** If you want to merge subtasks mid-flight, stop — re-read why they were split.
+- **The subtask file is the contract.** What the worker reads at the start and writes at the end is the full record of each slice. Trust that record.
+- **A subtask is not done when `status: done` is in the file.** It's done when `## Done when` can be verified against real behavior. The worker's job is to make that true before flipping status; the orchestrator's job is to trust the worker did its job, then let verify double-check.
+- **Clean, reviewable diff.** Every piece of work should reduce surprise for whoever reads the diff next — including future you.
+- **Robustness before cleverness (quick scope).** Handle error paths, validate at boundaries, fail loudly. Validation is part of the work, not speculative scope.
+- **Stay focused, park the drift.** Pre-existing problems go to `.hyper/backlog.md`, not inline "while I'm here" fixes.

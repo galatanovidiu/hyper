@@ -14,7 +14,7 @@ Capture what this session knows that isn't already on disk, so the next session 
 - Passing work to a colleague or to a different agent.
 - The task has accumulated context (user decisions, half-investigated paths, things that almost worked) that would be lost when the conversation context is cleared.
 
-If the task is between clean phases (just finished explore, just finished plan) and the artifacts on disk are up to date, you usually don't need a handoff — the next session reads `task.md`, `exploration.md`, `spec.md` and is caught up.
+If the task is between clean phases (just finished explore, just finished plan) and the artifacts on disk are up to date, you usually don't need a handoff — the next session reads `task.md`, `exploration.md`, `spec.md`, and any `T<N>.<M>.md` subtask files and is caught up.
 
 ## Inputs
 
@@ -44,7 +44,7 @@ Write a short document covering only things that *aren't* already captured in th
 
 ## Current state
 
-- <Which subtask in spec.md is in progress (if any).>
+- <Which subtask file is in progress (`status: in-progress`) or blocked (`awaiting: user-input`), if any. Name the file path.>
 - <Any uncommitted changes — list the files.>
 - <Anything that's in a weird half-state: test running but not recorded, partial refactor, etc.>
 
@@ -60,7 +60,7 @@ and continue. Reference the files to read and the first action to take.>
 
 ## Rules
 
-- **Don't duplicate.** If it's in `task.md`, `exploration.md`, `spec.md`, or `checks.md`, don't repeat it here. Reference it.
+- **Don't duplicate.** If it's in `task.md`, `exploration.md`, `spec.md`, any `T<N>.<M>.md` subtask file, or `checks.md`, don't repeat it here. Reference it.
 - **Be specific.** "The user wanted something more secure" is not useful. "The user said bcrypt is required and argon2id is out of scope" is useful.
 - **Uncommitted work gets listed.** The next session needs to know what's dirty.
 - **One paragraph for the next step.** Don't write a plan; write a starting point.

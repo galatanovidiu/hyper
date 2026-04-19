@@ -1,6 +1,6 @@
 ---
 name: hyper-plan
-description: Runs the plan phase of a feature-scope Hyper task. Turns the approved exploration.md into a spec.md with independently-testable acceptance criteria, a vertical-slice subtask checklist, out-of-scope list, and known edge cases. Sets an approval gate for the user to review before implementation starts. Use when a Hyper task is in the 'plan' phase. Runs only for feature-scope tasks (quick and research tasks skip planning). Keywords: hyper, plan, spec, acceptance criteria, subtasks, checklist, spec.md.
+description: Runs the plan phase of a feature-scope Hyper task. Turns the approved exploration.md into a spec.md (acceptance criteria + ToC-style subtask index + out-of-scope + edge cases) and one file per vertical slice named T<N>.<M>.md at the task folder root (each with status, depends, and what/why/done-when). Sets an approval gate for the user before implementation starts. Runs only for feature-scope tasks (quick and research skip planning). Keywords hyper, plan, spec, acceptance criteria, subtasks, subtask files, spec.md.
 user-invocable: false
 ---
 
@@ -17,7 +17,8 @@ This phase runs only for `scope: feature` tasks. Quick tasks skip to implement. 
 
 ## Outputs
 
-- `spec.md` with acceptance criteria + subtask checklist
+- `spec.md` with acceptance criteria + ToC-style subtask index + out-of-scope + edge cases
+- `T<N>.<M>.md` — one file per vertical slice, stored directly in the task folder (alongside `task.md` and `spec.md`), each with frontmatter (`id`, `parent`, `title`, `status: todo`, `depends: [...]`, `awaiting: null`) and body sections (`## What`, `## Why`, `## Done when`)
 - `task.md` frontmatter: `awaiting: user-approval`
 - Phase stays at `plan` until the user approves
 
@@ -29,10 +30,11 @@ re-read exploration.md
   ├── write acceptance criteria (testable)
   │
   ├── break work into subtasks (vertical slices, each independently verifiable)
+  │    └── write one T<N>.<M>.md file per subtask at the task folder root
   │
   ├── list out-of-scope + edge cases
   │
-  ├── write spec.md
+  ├── write spec.md (acceptance criteria + ToC index of subtask files + out-of-scope + edge cases)
   │
   ├── serialize any open questions (one per message, record answers in the file)
   │
@@ -59,29 +61,45 @@ Aim for 3–7 criteria. If you have more, you probably have multiple tasks bundl
 
 ## Step 3 — Subtasks
 
-Break the work into a checklist. Each item is a vertical slice — a chunk of work that can be verified on its own and implemented in roughly one sitting.
+Decompose the work into vertical slices — chunks each verifiable on its own and implementable in roughly one sitting. Create one file per slice directly in the task folder (`.hyper/tasks/T<N>-*/T<N>.<M>.md`), using the `templates/subtask.md` template. The dotted id in the filename keeps subtask files visually distinct from task-level artifacts (`task.md`, `spec.md`, `checks.md`) without needing a subdirectory.
 
 **Vertical (good):**
-```
-- [ ] T<N>.1 — Add bcrypt dependency + password hashing to User model (write unit test)
-- [ ] T<N>.2 — Add POST /auth/login endpoint with credential check (integration test)
-- [ ] T<N>.3 — Add login form component + wire to endpoint (manual verify)
-```
+
+- `T<N>.1` — Add bcrypt dependency + password hashing to User model (unit test).
+- `T<N>.2` — Add POST /auth/login endpoint with credential check (integration test).
+- `T<N>.3` — Add login form component + wire to endpoint (manual verify).
 
 **Horizontal (bad):**
-```
-- [ ] Write all models
-- [ ] Write all routes
-- [ ] Write all UI
-```
+
+- All models.
+- All routes.
+- All UI.
 
 Horizontal decomposition leaves subtasks that cannot be independently verified — the first slice doesn't actually work until the last slice lands.
 
-Number subtasks as `T<N>.1`, `T<N>.2`, … where `T<N>` is the parent task id. If a subtask depends on another being done first, note it:
+### Writing each subtask file
 
-```
-- [ ] T5.3 — Wire login endpoint (depends on T5.1, T5.2)
-```
+Number subtasks as `T<N>.1`, `T<N>.2`, … where `T<N>` is the parent task id. For each one, write a file with:
+
+- **Frontmatter.**
+  - `id: T<N>.<M>`
+  - `parent: T<N>`
+  - `title: <short title>`
+  - `status: todo`
+  - `depends: []` — or `[T<N>.1, T<N>.2]` when this slice can only run after others are `done`. Empty list means independently dispatchable.
+  - `awaiting: null`
+- **Body sections.**
+  - `## What` — specific change: files, functions, behavior. Concrete enough that a worker sub-agent can start without re-deriving the decomposition. Include file:line refs from `exploration.md` when helpful.
+  - `## Why` — which acceptance criterion from `spec.md` this slice supports, and context from exploration that matters for doing it right.
+  - `## Done when` — one or more testable criteria. What the worker checks before flipping `status: done`. "Code compiles" is not a criterion; "the new test case asserts X and passes" is.
+
+Do **not** pre-write `## Completion` or `## Open questions` — those sections are added by the worker during/after execution.
+
+### Dependencies
+
+Express dependencies only in the `depends` frontmatter field — the orchestrator reads them there. Prose dependency notes in `## What` are fine as human context but not load-bearing.
+
+### Counts
 
 **Minimum: one subtask.** If the work is genuinely one atomic change, fine — one subtask. But never zero.
 
@@ -98,18 +116,30 @@ Both sections prevent scope creep and missed cases during implement.
 
 ## Step 5 — Write `spec.md`
 
-Use the shape in `templates/spec.md` (bundled with this skill): acceptance criteria, subtask checklist, out-of-scope, edge cases.
+Use the shape in `templates/spec.md` (bundled with this skill): acceptance criteria, ToC-style subtask index, out-of-scope, edge cases.
 
-For each subtask, the `hyper-implement` skill will read back to `spec.md` to get details. If a subtask needs more than a one-liner to describe, write a short paragraph under the checklist item rather than expanding the one-liner.
+The `## Subtasks` section is a human-readable table of contents, not a progress tracker. One list item per subtask file, title + link (relative to `spec.md`, so just the filename), no checkboxes:
+
+```markdown
+- **T<N>.1** — <short title> → [T<N>.1.md](T<N>.1.md)
+- **T<N>.2** — <short title> → [T<N>.2.md](T<N>.2.md)
+```
+
+Progress lives in each subtask file's `status` frontmatter. The orchestrator in `hyper-implement` scans those files to decide what to dispatch; it does not re-read `spec.md` for progress. Drift between the ToC and the actual subtask files is cosmetic — correctness lives in the files.
 
 ## Step 6 — Self-review before presenting
 
-Re-read `spec.md` from disk. Check:
+Re-read `spec.md` and every `T<N>.<M>.md` subtask file from disk. Check:
 
-- Every criterion is independently testable.
-- Every subtask is a vertical slice with a verifiable outcome.
+- Every acceptance criterion is independently testable.
+- Every subtask file has a non-empty `## Done when` with at least one testable criterion. An empty or hand-wavy "done when" is not ready to implement.
+- Every `depends` list references ids that exist as subtask files in the task folder. No dangling refs.
+- No cycles in the `depends` graph.
+- `parent` on every subtask matches the task id (`T<N>`), and `id` follows `T<N>.<M>`.
+- Each subtask is a vertical slice with a verifiable outcome, not a horizontal layer.
 - Scope matches what the user approved in `exploration.md`. If the spec is significantly bigger than the approach described, something drifted — fix before presenting.
-- No implementation code in the spec. The spec says *what* and *done when*, not *how in detail*.
+- No implementation code in the spec or subtask files. They say *what* and *done when*, not *how in detail*.
+- The `## Subtasks` ToC in `spec.md` lists every `T<N>.<M>.md` file in the task folder, and every subtask file appears in the ToC.
 
 If you find problems, fix them. Then continue.
 
@@ -131,7 +161,7 @@ Once every question has an answer, rename the section heading from `## Open ques
 
 Update `task.md` frontmatter: `awaiting: user-approval` (replacing `user-input` if it was set during Step 7).
 
-Tell the user: *"Wrote `spec.md`. <N> subtasks. Please review the acceptance criteria and subtasks. Approve to start implementation, or tell me what to change."*
+Tell the user: *"Wrote `spec.md` and <N> subtask files (`T<N>.1.md` … `T<N>.<M>.md`) at the task folder root. Please review the acceptance criteria and subtasks. Approve to start implementation, or tell me what to change."*
 
 **Stop.**
 
@@ -151,10 +181,11 @@ Tell the user: *"Wrote `spec.md`. <N> subtasks. Please review the acceptance cri
 
 ## Key principles
 
-- The spec is a contract between you (the planner now) and you (the implementer later). Write it so future-you cannot misread it.
-- A human should be able to read `spec.md` and predict the size and shape of the PR that lands.
-- "Done when" for each subtask is the single most valuable line in the spec. If a subtask has no clear "done when", it's not ready to implement.
+- The spec + subtask files are a contract between you (the planner now) and the workers (the implementers later). Write them so a fresh sub-agent reading one subtask file can start without re-deriving the decomposition.
+- A human should be able to read `spec.md` and predict the size and shape of the PR that lands. The subtask files show the sequencing.
+- "Done when" for each subtask is the single most valuable line in the file. If a subtask has no clear "done when", it's not ready to implement.
 
 ## Additional resources
 
-- `templates/spec.md` — ready-to-fill template for the artifact this skill produces.
+- `templates/spec.md` — template for the acceptance-criteria + ToC + out-of-scope + edge-cases artifact.
+- `templates/subtask.md` — template for individual subtask files.

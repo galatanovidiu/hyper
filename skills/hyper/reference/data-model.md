@@ -10,7 +10,9 @@ All Hyper state lives on disk under `.hyper/` in the project root. Plain markdow
     T20-add-backlog-archive/
       task.md           # status + what the user asked for
       exploration.md    # what exists in the code + how we'll approach it
-      spec.md           # acceptance criteria + subtask checklist
+      spec.md           # acceptance criteria + subtask index + out-of-scope + edge cases
+      T20.1.md          # subtask file (feature scope): id, parent, status, depends, awaiting + what/why/done-when/completion
+      T20.2.md          # subtask file
       checks.md         # test results, review findings, qa notes
       notes.md          # (optional) free-form working notes
   archive/              # terminal tasks (phase: done or cancelled)
@@ -91,12 +93,86 @@ Written by the `hyper-explore` skill. Two required sections plus one optional:
 Written by the `hyper-plan` skill for `feature`-scope tasks. Contains:
 
 1. **Acceptance criteria** — testable statements that define "done".
-2. **Subtasks** — a markdown checklist. Each item is small enough to do in one sitting.
+2. **Subtasks** — a ToC-style index listing each subtask with its title and a link to its file in the task folder (e.g. `T1.1.md`). No checkboxes, no status indicators. This index is a human-readable table of contents, not the source of truth for progress — the subtask files' frontmatter is.
 3. **Out of scope** — explicit list of things *not* being done.
 4. **Edge cases** — known tricky scenarios the implementer must handle.
-5. **Open questions** (optional) — a list of questions for the user. Used both at planning time (before approval) and mid-implementation (when `hyper-implement` hits a blocker). Same serialization rule as in `exploration.md`: asked one per message, answers recorded in-file, section renamed to `Resolved questions` when done. While questions are pending, `awaiting: user-input`.
+5. **Open questions** (optional) — a list of questions for the user. Used at planning time (before approval). Mid-implementation blockers are recorded on the specific subtask's `## Open questions` section instead of here — the blocked subtask, not the whole spec, is what pauses. Same serialization rule as in `exploration.md`: asked one per message, answers recorded in-file, section renamed to `Resolved questions` when done. While questions are pending, `awaiting: user-input`.
 
-Subtasks live in this file as `- [ ] T1.1 — Install bcrypt`. The `hyper-implement` skill walks the list and checks boxes. No nested task folders.
+## Subtask files
+
+Feature-scope tasks decompose into subtask files named `T<N>.<M>.md`, one file per vertical slice, stored directly in the task folder alongside `task.md` and `spec.md`. Each file has frontmatter carrying orchestration state and a body describing the work. The dotted-id filename prevents collision with task-level artifacts (`task.md`, `spec.md`, etc.) — no subdirectory is needed.
+
+```markdown
+---
+id: T1.3
+parent: T1
+title: Wire login endpoint
+status: todo
+depends: [T1.1, T1.2]
+awaiting: null
+---
+
+# T1.3 — Wire login endpoint
+
+## What
+<Specific change — files, functions, behavior.>
+
+## Why
+<Context from spec — which acceptance criterion this slice supports.>
+
+## Done when
+<Testable criterion — what the worker checks before flipping status to done.>
+
+## Open questions
+<Optional. Added mid-work by the worker when blocked. Removed or renamed
+to "Resolved questions" once answered.>
+
+## Completion
+<Written by the worker when status flips to done. File-grouped bullets:
+
+- `<project-relative path>` — <change count summary>:
+  - <what changed + brief why>
+  - <another change if applicable>
+- `<another path>` — <summary>:
+  - <...>
+>
+```
+
+### Subtask frontmatter fields
+
+| Field | Values | Meaning |
+|-------|--------|---------|
+| `id` | `T<N>.<M>` | Full dotted id. `N` is the parent task id, `M` is a per-task incrementing integer starting at 1. |
+| `parent` | `T<N>` | Parent task id. Must match the id of the task folder that owns this file. |
+| `title` | short string | Human-readable title. Mirrored in the `spec.md` ToC index. |
+| `status` | `todo` · `in-progress` · `done` · `blocked` | Current state. Orchestrator picks the next `todo` whose `depends` are all `done`. `blocked` means user intervention is required even after clearing `awaiting`. |
+| `depends` | list of sibling ids | Subtask ids (e.g. `[T1.1, T1.2]`) that must have `status: done` before this one can be dispatched. Empty list means independently dispatchable. |
+| `awaiting` | `null` · `user-input` | Subtask-level gate. When `user-input`, the worker hit a clarification blocker; the orchestrator propagates this to the parent `task.md`'s `awaiting` so the top-level `hyper` gate stops dispatch. Cleared when the user answers. |
+
+### Awaiting propagation
+
+Subtask-level `awaiting: user-input` propagates up to `task.md`'s `awaiting: user-input` so the top-level routing gate catches it. On resume, the orchestrator records the user's answer under the question in the blocked subtask file, clears the subtask's `awaiting`, clears the task-level `awaiting`, and re-dispatches the blocked subtask's worker. Subtask-level is the source of truth — if they diverge, the orchestrator re-propagates from the subtask.
+
+### Dispatch rules
+
+The orchestrator in `hyper-implement` selects subtasks by scanning frontmatter:
+
+- Pick the first file (alphabetical by id) where `status: todo` and every id listed in `depends` has `status: done` in its own file.
+- If nothing matches and at least one subtask is still `todo`, either a dependency chain is unsatisfied (expected — other subtasks are still running or blocked) or there's a deadlock (abort with error).
+- If every subtask is `status: done`, advance the parent task to `phase: verify` and return.
+
+### Validation
+
+Before each dispatch iteration, the orchestrator scans the task folder for subtask files (`T<parent>.*.md`, where `<parent>` is the parent task id like `T27`) and aborts with a specific error if any of the following are true:
+
+- No subtask files exist on a feature-scope task.
+- Any subtask file's YAML frontmatter is unparseable or missing required fields (`id`, `parent`, `status`).
+- Two files claim the same `id`.
+- A `depends` list references an id that doesn't exist as a file in the task folder.
+- Cycles exist in the `depends` graph.
+- A subtask has `awaiting: user-input` but no `## Open questions` section in its body.
+
+Fail loudly beats silent skip. Malformed state is a bug that needs human attention, not a condition to route around.
 
 ## `checks.md`
 
