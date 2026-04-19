@@ -24,6 +24,19 @@ If the task is between clean phases (just finished explore, just finished plan) 
 
 - `.hyper/tasks/T<N>-<slug>/handoff.md`
 
+## Resolve the task
+
+1. If the user gave a task id, resolve it under `.hyper/tasks/T<N>-*/`.
+2. Otherwise, if exactly one active task exists, use it.
+3. Otherwise, if there are no active tasks, say so and stop.
+4. Otherwise, list the active tasks and ask which one to write the handoff for. Stop.
+
+Handoffs are for active work. If the id resolves only in `.hyper/archive/`, tell the user the task is already terminal and usually does not need a new handoff.
+
+## Write policy
+
+Overwrite `handoff.md` with the latest snapshot. This file is current-state rescue, not append-only history.
+
 ## What to include
 
 Write a short document covering only things that *aren't* already captured in the other artifacts. Don't restate the goal or the approach — those are in `task.md` and `exploration.md`.

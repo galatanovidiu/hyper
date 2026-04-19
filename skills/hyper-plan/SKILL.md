@@ -163,9 +163,11 @@ Update `task.md` frontmatter: `awaiting: user-approval` (replacing `user-input` 
 
 Tell the user: *"Wrote `spec.md` and <N> subtask files (`T<N>.1.md` … `T<N>.<M>.md`) at the task folder root. Please review the acceptance criteria and subtasks. Approve to start implementation, or tell me what to change."*
 
-**Stop.**
+**Stop.** `hyper` owns the open gate and will route the later reply back into this skill while `phase: plan` remains in `task.md`.
 
 ## When the user responds
+
+On a later turn, `hyper` routes the reply back into this skill because the task is still `phase: plan` with `awaiting` set.
 
 - **Approves** → clear `awaiting`, update `phase:` to `implement`, return to the `hyper` skill.
 - **Requests changes** → clear `awaiting`, stay in `plan`, revise `spec.md`, re-set `awaiting: user-approval` and stop.

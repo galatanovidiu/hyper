@@ -1,6 +1,6 @@
 # Hyper
 
-A lightweight, structured development workflow for AI coding agents. Implemented as twelve [Agent Skills](https://agentskills.io) — plain markdown files that any compatible agent can load. No CLI, no plugin, no server.
+A lightweight, structured development workflow for AI coding agents. Implemented as eleven Hyper [Agent Skills](https://agentskills.io) — plus the companion `team` skill bundled in this repo — plain markdown files that any compatible agent can load. No CLI, no plugin, no server.
 
 ## What it does
 
@@ -14,9 +14,9 @@ Each phase writes one markdown artifact on disk. Two phases pause for your appro
 
 ## The skills
 
-Six skills are user-facing. Six internal skills run under the hood — dispatched by `hyper` and `hyper-implement` — and won't appear in your slash-command menu.
+Five Hyper skills are user-facing. Six internal Hyper skills run under the hood — dispatched by `hyper` and `hyper-implement` — and won't appear in your slash-command menu. This repo also ships the standalone `team` companion skill.
 
-**User-facing:**
+**User-facing Hyper skills:**
 
 | Skill | Purpose |
 |-------|---------|
@@ -25,18 +25,23 @@ Six skills are user-facing. Six internal skills run under the hood — dispatche
 | `hyper-backlog` | Manages the idea-triage inbox at `.hyper/backlog.md`: add, list, promote to task, drop. |
 | `hyper-handoff` | Writes a session handoff for resuming later. |
 | `hyper-retro` | Reflects on what worked and didn't. |
-| `team` | Delegates a task (code-review, design-review, research, verify) to another AI agent CLI for a second opinion. Ships with Claude, Codex, Gemini, Copilot; extend with [project-local teammates](#adding-a-project-local-teammate-to-team). Human-triggered. |
 
-**Internal (invoked by `hyper`):**
+**Internal Hyper skills (invoked by `hyper`):**
 
 | Skill | Purpose |
 |-------|---------|
 | `hyper-explore` | Clarifies goal, scans code, proposes approach. Writes `exploration.md`. |
 | `hyper-plan` | Turns approach into acceptance criteria + one `T<N>.<M>.md` file per vertical slice at the task folder root. Writes `spec.md`. |
-| `hyper-implement` | For feature scope: orchestrates — dispatches one `hyper-worker` sub-agent per subtask file. For quick scope: implements directly. |
+| `hyper-implement` | For feature scope: orchestrates — dispatches one `hyper-worker` sub-agent per subtask file. For quick scope: implements directly. If verify sends work back blocked, handles the remediation pass from `checks.md`. |
 | `hyper-worker` | Dispatched by `hyper-implement` to finish one subtask end-to-end in a fresh sub-agent — research, implement, test, write a `## Completion` record, flip `status: done`. |
 | `hyper-verify` | Runs tests, reviews the diff, verifies behavior. Writes `checks.md`. |
 | `hyper-docs` | Updates any affected documentation. |
+
+**Companion skill shipped in this repo:**
+
+| Skill | Purpose |
+|-------|---------|
+| `team` | Delegates a task (code-review, design-review, research, verify) to another AI agent CLI for a second opinion. Ships with Claude, Codex, Gemini, Copilot; extend with [project-local teammates](#adding-a-project-local-teammate-to-team). Human-triggered. |
 
 To rerun a phase manually, edit `phase:` in the task's `task.md` and invoke `hyper`. To re-run a single subtask, edit its file's `status:` back to `todo` and invoke `hyper` — the orchestrator picks it up on the next iteration.
 
@@ -107,9 +112,12 @@ After first use, your project has:
       T1.1.md         # subtask (feature scope): status, depends, what/why/done-when, worker's completion record
       T1.2.md         # subtask
       checks.md       # tests, review, qa, docs results
+      handoff.md      # optional session handoff snapshot
+      retro.md        # optional task-scoped retrospective
   archive/            # tasks that reached done or cancelled (moved here automatically)
   memory.md           # durable decisions across tasks
   backlog.md          # idea-triage inbox (manage with /hyper-backlog)
+  retro.md            # optional project-scoped retrospectives
   team/               # team skill output (only when you use /team)
     providers/        # project-local teammate definitions (optional)
 ```
@@ -150,7 +158,7 @@ Hyper is the seventh iteration of an idea. Earlier versions had a CLI, a state d
 This version follows the [Agent Skills](https://agentskills.io) open standard:
 
 - **Markdown on disk, no CLI.** Agents edit markdown directly.
-- **Twelve focused skills, each under ~300 lines.** Six user-facing, six internal (five phase skills + `hyper-worker` for per-subtask dispatch). Progressive disclosure through bundled `templates/` and `reference/` files.
+- **Eleven focused Hyper skills, each under ~300 lines — plus the bundled `team` companion skill.** Five are user-facing, six are internal (five phase skills + `hyper-worker` for per-subtask dispatch). Progressive disclosure through bundled `templates/` and `reference/` files.
 - **Scope triage up front.** Quick tasks stay quick. Features get the full workflow.
 - **Principles over gates.** A "should" with a reason is stronger than a "must" without one.
 

@@ -10,6 +10,21 @@ Manage tasks without running the workflow. This skill handles listing, status ch
 
 Active tasks live at `.hyper/tasks/T<N>-<slug>/task.md`. Terminal (`done` / `cancelled`) task folders are moved to `.hyper/archive/T<N>-<slug>/` — same shape, different location. The frontmatter is documented in `skills/hyper/reference/data-model.md` (bundled with the `hyper` skill). Read it if you need to verify any field.
 
+## First-use bootstrap
+
+For write operations (`Create`, `Cancel`), if `.hyper/` does not exist yet, create:
+
+```
+.hyper/
+  tasks/
+  memory.md   # with top-level "# Memory"
+  backlog.md  # with top-level "# Backlog" and the standard HTML comment
+```
+
+`archive/` stays lazy — the first archive move creates it with `mkdir -p .hyper/archive`.
+
+For read-only operations (`List`, `Status`), a missing `.hyper/` just means there are no tasks yet.
+
 ## Routing
 
 Read the user's request and pick exactly one operation. When the intent is unclear, ask.

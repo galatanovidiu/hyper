@@ -13,7 +13,9 @@ All Hyper state lives on disk under `.hyper/` in the project root. Plain markdow
       spec.md           # acceptance criteria + subtask index + out-of-scope + edge cases
       T20.1.md          # subtask file (feature scope): id, parent, status, depends, awaiting + what/why/done-when/completion
       T20.2.md          # subtask file
-      checks.md         # test results, review findings, qa notes
+      checks.md         # test results, review findings, qa notes; docs phase appends docs outcome
+      handoff.md        # (optional) latest session handoff snapshot
+      retro.md          # (optional) task-scoped retrospective entries
       notes.md          # (optional) free-form working notes
   archive/              # terminal tasks (phase: done or cancelled)
     T1-add-login-page/
@@ -21,6 +23,7 @@ All Hyper state lives on disk under `.hyper/` in the project root. Plain markdow
       ...
   memory.md             # durable decisions across tasks
   backlog.md            # idea-triage inbox (managed via hyper-backlog)
+  retro.md              # (optional) project-scoped retrospective entries
 ```
 
 - Task folders are named `T<N>-<kebab-slug>`. `N` is a simple incrementing integer. Slug is derived from the title: lowercase, spaces → hyphens, strip punctuation, ~40 chars.
@@ -56,7 +59,7 @@ artifacts below say how it gets done.>
 | `phase` | `deferred` · `explore` · `plan` · `implement` · `verify` · `docs` · `done` · `cancelled` | Current phase. The entry skill reads this to route. `done` and `cancelled` are terminal. `deferred` means the task exists but the user hasn't started it yet (created by `hyper-task`). |
 | `scope` | `quick` · `feature` · `research` · `unknown` | Set during explore. Drives which phases run. `unknown` before explore classifies it. |
 | `created` | ISO date | When the task was created. |
-| `awaiting` | `null` · `user-approval` · `user-input` · `<custom label>` | When set, the entry skill stops and asks the user instead of running the phase. Cleared when the user responds. |
+| `awaiting` | `null` · `user-approval` · `user-input` · `<custom label>` | When set, the gate is open. `hyper` pauses normal routing, surfaces the gate on blank / generic resume turns, and routes the next substantive reply back to the current phase skill, which clears or updates the field. |
 | `cancelled_at` | ISO date | Present only when `phase: cancelled`. Date the task was cancelled. |
 | `cancelled_reason` | short string | Present only when `phase: cancelled`. One-line reason. |
 
@@ -74,7 +77,9 @@ A task in `phase: deferred` skips straight to `explore` the first time `hyper` i
 
 ### Internal vs user-facing skills
 
-Users invoke four skills directly: `hyper`, `hyper-task`, `hyper-handoff`, `hyper-retro`. The phase skills (`hyper-explore`, `hyper-plan`, `hyper-implement`, `hyper-verify`, `hyper-docs`) are internal — invoked only by `hyper`. They are marked `user-invocable: false` so they don't clutter the slash-command menu.
+Users invoke five Hyper skills directly: `hyper`, `hyper-task`, `hyper-backlog`, `hyper-handoff`, `hyper-retro`. The phase skills (`hyper-explore`, `hyper-plan`, `hyper-implement`, `hyper-verify`, `hyper-docs`) plus `hyper-worker` are internal — invoked by `hyper` or `hyper-implement`, not by the user. They are marked `user-invocable: false` so they don't clutter the slash-command menu.
+
+This repo also ships the companion `team` skill, but it sits outside the Hyper task-state model described in this file.
 
 To manually re-run a phase on a task, edit `phase:` in the task's frontmatter and invoke `hyper`. The filesystem is the primary interface.
 
@@ -151,7 +156,7 @@ to "Resolved questions" once answered.>
 
 ### Awaiting propagation
 
-Subtask-level `awaiting: user-input` propagates up to `task.md`'s `awaiting: user-input` so the top-level routing gate catches it. On resume, the orchestrator records the user's answer under the question in the blocked subtask file, clears the subtask's `awaiting`, clears the task-level `awaiting`, and re-dispatches the blocked subtask's worker. Subtask-level is the source of truth — if they diverge, the orchestrator re-propagates from the subtask.
+Subtask-level `awaiting: user-input` propagates up to `task.md`'s `awaiting: user-input` so the top-level routing gate catches it. On a later user reply, `hyper` routes back into `hyper-implement`; the orchestrator records the user's answer under the question in the blocked subtask file, clears the subtask's `awaiting`, clears the task-level `awaiting`, and re-dispatches the blocked subtask's worker. Subtask-level is the source of truth — if they diverge, the orchestrator re-propagates from the subtask.
 
 ### Dispatch rules
 
@@ -160,6 +165,8 @@ The orchestrator in `hyper-implement` selects subtasks by scanning frontmatter:
 - Pick the first file (alphabetical by id) where `status: todo` and every id listed in `depends` has `status: done` in its own file.
 - If nothing matches and at least one subtask is still `todo`, either a dependency chain is unsatisfied (expected — other subtasks are still running or blocked) or there's a deadlock (abort with error).
 - If every subtask is `status: done`, advance the parent task to `phase: verify` and return.
+
+If verify later sends the task back with `checks.md` overall `blocked`, `hyper-implement` runs a remediation pass directly from `checks.md` instead of reopening or renumbering completed subtask files.
 
 ### Validation
 
@@ -176,9 +183,12 @@ Fail loudly beats silent skip. Malformed state is a bug that needs human attenti
 
 ## `checks.md`
 
-Written during verify and docs phases. Three sections appended in order:
+Written during verify and docs phases. Verify writes the first three sections in order; docs appends the fourth:
 
 ```markdown
+**Overall:** pass | needs-changes | blocked
+**Date:** <YYYY-MM-DD>
+
 ## tests
 <test runner output summary, pass/fail, command used>
 
@@ -187,13 +197,24 @@ Verdict: pass | needs-changes | blocked
 <findings with file:line refs>
 
 ## qa
-<functional checks against acceptance criteria — only for UI or user-facing work>
+<Verdict + evidence table, or not-applicable with rationale>
 
 ## docs
 <which docs were updated or rationale for no update>
 ```
 
-Each section gets written when its phase runs. Missing a section means the phase hasn't completed yet.
+Missing `## docs` means the docs phase hasn't completed yet. Missing one of the earlier sections means verify hasn't completed yet.
+
+## `handoff.md`
+
+Optional. Written by `hyper-handoff` for an active task as the latest current-state rescue. Lives in the task folder, is overwritten on each new handoff, and captures only session context that is not already recorded elsewhere in the task artifacts.
+
+## `retro.md`
+
+Optional. Retrospectives written by `hyper-retro`:
+
+- task-scoped retros append dated entries to `<task-folder>/retro.md`
+- project-scoped retros append dated entries to `.hyper/retro.md`
 
 ## `memory.md`
 
@@ -221,11 +242,10 @@ Format — each entry is a `## B<N> — <title>` heading with free-form markdown
 
 <!-- Ideas that might become tasks. Manage with /hyper-backlog. -->
 
-## B1 — Resolve ownership of docs section in checks.md template
+## B1 — Consolidate auth error enum names
 
-From T1 audit finding I1 (Tier 2). `skills/hyper-verify/templates/checks.md`
-has four sections but `skills/hyper-verify/SKILL.md:148` tells the agent to
-write only the first three. Fix: drop section 4 or annotate docs-phase-only.
+`src/auth/errors.ts` and `src/api/auth.ts` use slightly different names for
+the same failure states. Pick one set before adding more auth flows.
 
 ## B2 — Unify slug derivation rule for task folders
 
@@ -244,7 +264,7 @@ An entry begins at `^## B\d+ — ` and ends at the next such heading (or EOF). B
 
 ### Promotion
 
-`hyper-backlog promote B<N>` turns an idea into a task: it creates `.hyper/tasks/T<M>-<slug>/task.md` seeded from the backlog entry's title and body, removes the entry from `backlog.md`, and hands off to `hyper` to start the explore phase. The `B<N>` id is not reused; the new task gets a fresh `T<M>`.
+`hyper-backlog promote B<N>` turns an idea into a task: it creates `.hyper/tasks/T<M>-<slug>/task.md` seeded from the backlog entry's title and body with `phase: deferred`, removes the entry from `backlog.md`, and waits for the user to start it later with `hyper T<M>`. The `B<N>` id is not reused; the new task gets a fresh `T<M>`.
 
 ## What's *not* here
 

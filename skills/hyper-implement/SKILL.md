@@ -1,12 +1,12 @@
 ---
 name: hyper-implement
-description: Runs the implement phase of a Hyper task. For feature-scope tasks, orchestrates per-subtask workers — scans the task folder for T<N>.<M>.md subtask files, picks the next unblocked one, dispatches a sub-agent via the Task tool to run the hyper-worker skill on that file, then advances. For quick-scope tasks, implements directly from the approach in exploration.md. Use when a Hyper task is in the 'implement' phase. Keywords hyper, implement, orchestrator, dispatch, worker, subtasks, sub-agent.
+description: Runs the implement phase of a Hyper task. For feature-scope tasks, orchestrates per-subtask workers — scans the task folder for T<N>.<M>.md subtask files, picks the next unblocked one, dispatches a sub-agent via the Task tool to run the hyper-worker skill on that file, then advances. For quick-scope tasks, implements directly from the approach in exploration.md. If verify sends a task back blocked, runs a remediation pass from checks.md and returns to verify. Use when a Hyper task is in the 'implement' phase. Keywords hyper, implement, orchestrator, dispatch, worker, subtasks, sub-agent.
 user-invocable: false
 ---
 
 # hyper-implement
 
-You are in the **implement** phase. For `feature` scope, you orchestrate — you do not write code. For `quick` scope, you write the code yourself.
+You are in the **implement** phase. For `feature` scope, you usually orchestrate — you do not write code. For `quick` scope, you write the code yourself. The one exception: if verify sent the task back with a blocked `checks.md`, this invocation is a **remediation pass** and you implement the fixes directly from `checks.md` before returning to verify.
 
 ## Inputs
 
@@ -19,6 +19,22 @@ You are in the **implement** phase. For `feature` scope, you orchestrate — you
 
 - For `feature` scope: subtask files flipped to `status: done` with `## Completion` sections written by workers; `task.md` frontmatter updated to `phase: verify` when every subtask is done
 - For `quick` scope: code changes directly; `task.md` frontmatter updated to `phase: verify`
+- For a verify remediation pass (any scope): only the fixes needed to resolve blocked test/review/QA findings in `checks.md`; `task.md` frontmatter cleared of any stale `awaiting` gate and updated to `phase: verify`
+
+## Preflight — verify remediation pass
+
+Before choosing the normal quick/feature flow, check whether verify already sent this task back.
+
+If `checks.md` exists in the task folder and its top-level overall verdict is `blocked`, treat this invocation as a remediation pass from verify:
+
+1. Read `checks.md` first. Its failing tests, critical review findings, and QA failures are the brief.
+2. Make only the changes needed to resolve those findings. Do not widen scope.
+3. Re-run the commands named in `checks.md` plus any targeted follow-up checks needed to confirm the fix.
+4. Clear `task.md` `awaiting`, set `phase: verify`, and return to the `hyper` skill.
+
+For `feature` scope, do **not** reopen or renumber completed subtask files just to fix verify findings. The subtask files stay as the historical record of the first implementation pass; `checks.md` is the active brief for the remediation pass.
+
+If `checks.md` is absent or not blocked, continue with the normal flow below.
 
 ## Flow for `quick` scope
 
@@ -107,7 +123,7 @@ The dispatched worker set its subtask's `awaiting: user-input` and added a quest
 3. Surface it inline in chat — one question per message, never batch. Present the question verbatim. If it has multiple plausible answers, offer numbered-question + lettered-option shorthand so the user can reply quickly.
 4. Return to the `hyper` skill.
 
-When the user answers (next turn into this skill):
+When the user answers on a later turn, `hyper` routes that reply back into this skill because the task is still `phase: implement` with `awaiting` set:
 
 - Record the answer under the question in the blocked subtask's `## Open questions` (indented bullet or short paragraph). The file is the durable record of both question and answer.
 - If more unanswered questions remain in that subtask's section, surface the next one inline and keep `awaiting: user-input`. Never batch.
@@ -185,7 +201,7 @@ Only save things that will matter to a *different* task. Details of the current 
 
 ## Rules
 
-- **Feature scope: orchestrate, don't implement.** You do not write, test, or review project code in feature-scope mode. You dispatch workers and propagate their state. If you find yourself about to edit a `.ts` / `.php` / `.py` file outside `.hyper/`, stop — that's a sign you should be dispatching instead.
+- **Feature scope: orchestrate, don't implement — except on a verify remediation pass.** In the normal feature flow you do not write, test, or review project code. You dispatch workers and propagate their state. If you find yourself about to edit a `.ts` / `.php` / `.py` file outside `.hyper/`, stop — unless you are explicitly fixing blocked findings from `checks.md`.
 - **Quick scope: stay scoped.** Do not widen scope by touching adjacent code, fixing pre-existing bugs, or adding features the approach did not name. Deepen the code you are writing: validation at boundaries, error-path handling, edge-case guards are part of the change, not scope creep.
 - **Fail loudly on malformed state.** No subtask files found, cycles in `depends`, unparseable frontmatter — abort with a specific error. Silent skips turn small bugs into mysterious ones.
 - **One question per message.** When propagating a worker's blocker, surface one question. Never batch.
@@ -194,7 +210,7 @@ Only save things that will matter to a *different* task. Details of the current 
 
 ## Key principles
 
-- **The plan decomposed the work; the orchestrator respects the decomposition.** If you want to merge subtasks mid-flight, stop — re-read why they were split.
+- **The plan decomposed the work; the orchestrator respects the decomposition.** If you want to merge subtasks mid-flight, stop — re-read why they were split. Only a verify remediation pass bypasses the normal worker-per-subtask flow.
 - **The subtask file is the contract.** What the worker reads at the start and writes at the end is the full record of each slice. Trust that record.
 - **A subtask is not done when `status: done` is in the file.** It's done when `## Done when` can be verified against real behavior. The worker's job is to make that true before flipping status; the orchestrator's job is to trust the worker did its job, then let verify double-check.
 - **Clean, reviewable diff.** Every piece of work should reduce surprise for whoever reads the diff next — including future you.

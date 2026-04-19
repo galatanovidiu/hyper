@@ -10,6 +10,21 @@ Manage `.hyper/backlog.md` — the idea-triage inbox that sits alongside `.hyper
 
 Tasks live at `.hyper/tasks/T<N>-<slug>/task.md`; the data model is documented in `skills/hyper/reference/data-model.md` (bundled with `hyper`). This skill assumes that background.
 
+## First-use bootstrap
+
+For write operations (`Add`, `Promote`, `Drop`), if `.hyper/` does not exist yet, create:
+
+```
+.hyper/
+  tasks/
+  memory.md   # with top-level "# Memory"
+  backlog.md  # with top-level "# Backlog" and the standard HTML comment
+```
+
+`archive/` stays lazy — the first archive move creates it with `mkdir -p .hyper/archive`.
+
+For `List`, a missing `.hyper/backlog.md` just means the backlog is empty.
+
 ## Routing
 
 Read the user's request and pick exactly one operation. When the intent is unclear, ask.
@@ -111,9 +126,9 @@ Steps:
 2. Parse every `^## B\d+ — ` heading, sorted by id ascending.
 3. **Default view** — one line per entry:
    ```
-   B1  — Resolve ownership of docs section in checks.md template
+   B1  — Consolidate auth error enum names
    B2  — Unify slug derivation rule for task folders
-   B7  — Decide whether quick scope can route through docs
+   B7  — Audit retry behavior for webhook delivery
    ```
    Ids may have gaps (promoted or dropped entries leave holes). That's expected.
 4. **Full view** — if the user asked for details ("show full", "list --full", "with bodies"), print each heading plus its body block as-is, separated by blank lines.
@@ -137,7 +152,7 @@ Steps:
    ---
    id: T<M>
    title: <title from backlog entry>
-   phase: explore
+   phase: deferred
    scope: unknown
    created: <today's ISO date>
    awaiting: null
@@ -149,9 +164,9 @@ Steps:
    ```
    If the backlog entry had no body, write a one-line body: *"Promoted from backlog entry B<N>."*
 6. **Remove the entry** from `.hyper/backlog.md` — delete the heading line and all lines until (not including) the next `## B<N>` heading or EOF. Collapse the two blank lines this leaves into one so the file stays tidy.
-7. **Report:** *"Promoted B<N> → T<M> — <title>. Start it with `/hyper T<M>`."*
+7. **Report:** *"Promoted B<N> → T<M> — <title> (deferred). Start it with `/hyper T<M>` when you're ready."*
 
-Do **not** invoke `hyper` or start the explore phase yourself. The user decides when to start the task — promotion just creates the folder.
+Do **not** invoke `hyper` or start the explore phase yourself. Promotion creates a deferred task folder; the user decides when to start it later.
 
 The promoted `B<N>` id is not reused. A future `add` allocates `B<N+1>` where N+1 is the new max, skipping the gap.
 
@@ -171,7 +186,7 @@ Dropped ids are not reused. No undo — the user would need to re-add manually.
 ## Rules
 
 - **One operation per invocation.** Don't chain add + list in one run. Each natural-language request maps to one thing.
-- **Never start work on a promoted task.** `promote` creates the task folder and returns. The user decides when to run `/hyper T<M>` to begin explore.
+- **Never start work on a promoted task.** `promote` creates a deferred task folder and returns. The user decides when to run `/hyper T<M>` to begin explore.
 - **Ids are immutable.** Never renumber entries after promote/drop. Gaps are fine.
 - **Respect explicit labels.** If the user says "this is just an idea" or "create a task for this", skip the triage prompt.
 - **Single-writer assumption.** Don't try to defend against the user editing `backlog.md` by hand while the skill is running. If the file looks unexpected, read fresh and retry once.

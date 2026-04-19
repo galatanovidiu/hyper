@@ -69,7 +69,7 @@ Write the scope into `task.md` frontmatter (`scope: quick | feature | research`)
 
 ## Step 3 — Scan the codebase
 
-Use Grep/Glob/Read to find what matters for this task:
+Use your search/read tools to find what matters for this task:
 
 - Files the change will touch
 - Existing patterns to follow (how similar things are done elsewhere)
@@ -126,9 +126,11 @@ Update `task.md` frontmatter: `awaiting: user-approval` (replacing `user-input` 
 
 Tell the user: *"Wrote `exploration.md`. Scope: <quick|feature|research>. Please read it and tell me to proceed, or what to change."*
 
-**Stop.** Do not advance to the next phase. The user must read the file and respond.
+**Stop.** Do not advance to the next phase. The user must read the file and respond. `hyper` owns the open gate and will route that later reply back into this skill while `phase: explore` remains in `task.md`.
 
 ## When the user responds
+
+On a later turn, `hyper` routes the reply back into this skill because the task is still `phase: explore` with `awaiting` set.
 
 - **Approves** → clear `awaiting`, update `phase:` to the next value (`plan` for feature, `implement` for quick, `done` for research), write the approval decision into the body of `exploration.md` if useful. For research (terminal `done`), archive the task folder (see below) before returning. For non-terminal transitions, return control to the `hyper` skill.
 - **Requests changes** → clear `awaiting`, stay in `explore`, revise `exploration.md`, then re-set `awaiting: user-approval` and stop again. If the change reframes the problem (not just a detail correction), rewrite the artifact cleanly rather than patching it; carry forward every resolved question with its answer and a short note on why the framing shifted, so the artifact stays the durable record of both directions.
