@@ -1,6 +1,7 @@
 ---
 name: hyper-retro
-description: Runs a retrospective on recent Hyper work. Captures what worked, what didn't, and what to do differently next time, scoped either to a specific task (writes to the task's retro.md) or to the project overall (appends to .hyper/retro.md). Use when the user wants to reflect after finishing a task, at the end of a working session with multiple tasks done, or when Hyper itself helped or got in the way in an unexpected place. Human-triggered only. Keywords: hyper, retro, retrospective, reflection, lessons learned.
+description: >
+  Runs a retrospective on recent Hyper work. Captures what worked, what didn't, and what to do differently next time, scoped either to a specific task (writes to the task's retro.md) or to the project overall (appends to .hyper/retro.md). Use when the user wants to reflect after finishing a task, at the end of a working session with multiple tasks done, or when Hyper itself helped or got in the way in an unexpected place. Human-triggered only. Keywords: hyper, retro, retrospective, reflection, lessons learned.
 ---
 
 # hyper-retro

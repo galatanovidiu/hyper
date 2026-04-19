@@ -1,6 +1,7 @@
 ---
 name: hyper-backlog
-description: Manages the Hyper backlog — an idea-triage inbox at .hyper/backlog.md where items live before they become formal tasks. Adds, lists, promotes (converts an idea to a task), and drops backlog entries. Use when the user says "add to backlog", "what's on the backlog", "show the backlog", "promote B3 to a task", "drop B5", "make this idea a task", or similar. Decides between idea→backlog and idea→task when the user's intent is ambiguous, using a triage heuristic. Keywords: hyper, backlog, idea, triage, promote, inbox, B1.
+description: >
+  Manages the Hyper backlog — an idea-triage inbox at .hyper/backlog.md where items live before they become formal tasks. Adds, lists, promotes (converts an idea to a task), and drops backlog entries. Use when the user says "add to backlog", "what's on the backlog", "show the backlog", "promote B3 to a task", "drop B5", "make this idea a task", or similar. Decides between idea→backlog and idea→task when the user's intent is ambiguous, using a triage heuristic. Keywords: hyper, backlog, idea, triage, promote, inbox, B1.
 ---
 
 # hyper-backlog

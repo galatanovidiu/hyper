@@ -1,6 +1,7 @@
 ---
 name: hyper-task
-description: Manages Hyper tasks outside the execution workflow. Lists active tasks, creates a deferred task (exists but not started), cancels an in-progress task with a reason, or shows the status of a specific task. Use when the user asks "what tasks do I have", "list my tasks", "show my tasks", "what am I working on", "create a task for later", "cancel T<N>", "drop T<N>", "status of T<N>", or similar. Do not use for starting or continuing work — that's the `hyper` skill. Keywords: hyper, task, list, status, cancel, create, manage, deferred.
+description: >
+  Manages Hyper tasks outside the execution workflow. Lists active tasks, creates a deferred task (exists but not started), cancels an in-progress task with a reason, or shows the status of a specific task. Use when the user asks "what tasks do I have", "list my tasks", "show my tasks", "what am I working on", "create a task for later", "cancel T<N>", "drop T<N>", "status of T<N>", or similar. Do not use for starting or continuing work — that's the `hyper` skill. Keywords: hyper, task, list, status, cancel, create, manage, deferred.
 ---
 
 # hyper-task

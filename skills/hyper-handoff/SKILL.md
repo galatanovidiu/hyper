@@ -1,6 +1,7 @@
 ---
 name: hyper-handoff
-description: Writes a session handoff document (handoff.md) for an active Hyper task, capturing context a future session needs to resume — decisions made in conversation, investigation paths already ruled out, uncommitted work, open questions, and the immediate next step. Use when the user wants to pause a Hyper task mid-flight, end a long session before work is complete, or pass work to another person or agent. Human-triggered only — not called by hyper. Keywords: hyper, handoff, session, resume, pause, context rescue.
+description: >
+  Writes a session handoff document (handoff.md) for an active Hyper task, capturing context a future session needs to resume — decisions made in conversation, investigation paths already ruled out, uncommitted work, open questions, and the immediate next step. Use when the user wants to pause a Hyper task mid-flight, end a long session before work is complete, or pass work to another person or agent. Human-triggered only — not called by hyper. Keywords: hyper, handoff, session, resume, pause, context rescue.
 ---
 
 # hyper-handoff

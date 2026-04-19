@@ -1,6 +1,7 @@
 ---
 name: hyper-docs
-description: Runs the docs phase of a feature-scope Hyper task. Finds documentation affected by the change (README, CHANGELOG, API references, inline docstrings, architecture docs), updates what is stale or incomplete, and appends a docs section to checks.md with the outcome. Records a no-op result with rationale when nothing needs updating. Use when a Hyper task is in the 'docs' phase. Keywords: hyper, docs, documentation, README, changelog.
+description: >
+  Runs the docs phase of a feature-scope Hyper task. Finds documentation affected by the change (README, CHANGELOG, API references, inline docstrings, architecture docs), updates what is stale or incomplete, and appends a docs section to checks.md with the outcome. Records a no-op result with rationale when nothing needs updating. Use when a Hyper task is in the 'docs' phase. Keywords: hyper, docs, documentation, README, changelog.
 user-invocable: false
 ---
 

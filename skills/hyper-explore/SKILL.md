@@ -1,6 +1,7 @@
 ---
 name: hyper-explore
-description: Runs the explore phase of a Hyper task. Clarifies the user's goal, scans the codebase for relevant files and patterns, classifies scope (quick, feature, or research), and writes an approved exploration.md with findings and a proposed approach. Use when a Hyper task is in the 'explore' phase (check task.md frontmatter), or when the user wants to investigate a problem before implementing. Invoked by the `hyper` skill — not user-facing. Keywords: hyper, explore, investigate, clarify, approach, scope, exploration.md.
+description: >
+  Runs the explore phase of a Hyper task. Clarifies the user's goal, scans the codebase for relevant files and patterns, classifies scope (quick, feature, or research), and writes an approved exploration.md with findings and a proposed approach. Use when a Hyper task is in the 'explore' phase (check task.md frontmatter), or when the user wants to investigate a problem before implementing. Invoked by the `hyper` skill — not user-facing. Keywords: hyper, explore, investigate, clarify, approach, scope, exploration.md.
 user-invocable: false
 ---
 
