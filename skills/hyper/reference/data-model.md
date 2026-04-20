@@ -52,7 +52,7 @@ artifacts below say how it gets done.>
 
 ## Why
 
-<1–3 sentences on the motivation or triggering incident behind the task.>
+<1–3 sentences on the motivation, constraint, or triggering incident behind the task.>
 ```
 
 `## Why` is required on tasks created after this rule was introduced. Existing tasks that pre-date the rule are grandfathered and do not need backfill unless they are otherwise being repaired.

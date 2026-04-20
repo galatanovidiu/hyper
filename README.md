@@ -160,6 +160,8 @@ Agent: [implement remediation pass from checks.md, then returns to verify]
 You: add to backlog: maybe replace Redis locks with DB-backed locks
 Agent: Added B7 — Replace Redis locks with DB-backed locks.
 You: promote B7
+Agent: Why this task? One or two sentences — motivation, constraint, or triggering incident.
+You: Redis is becoming a reliability bottleneck in local dev and CI, so we need a simpler lock path.
 Agent: Promoted B7 → T6 — Replace Redis locks with DB-backed locks (deferred).
 You: /hyper T6
 Agent: Starting T6 — Replace Redis locks with DB-backed locks.
@@ -173,7 +175,7 @@ After first use, your project has:
 .hyper/
   tasks/              # active tasks
     T1-add-login-page/
-      task.md         # goal + current phase
+      task.md         # goal + why + current phase
       exploration.md  # findings + approach (approved)
       spec.md         # acceptance criteria + subtask index + out-of-scope + edge cases
       T1.1.md         # subtask (feature scope): status, depends, what/why/done-when, worker's completion record

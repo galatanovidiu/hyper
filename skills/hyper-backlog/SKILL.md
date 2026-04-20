@@ -137,10 +137,12 @@ Steps:
 4. **Derive a kebab-case slug** from the title (lowercase, spaces → hyphens, strip punctuation, ~40 chars).
 5. **Elicit the Why.** Ask the user once, verbatim: *"Why this task? One or two sentences — motivation, constraint, or triggering incident. This is the durable record of why the task exists."* Stop and wait for the answer.
 
-   When the user answers, trim leading and trailing whitespace and decide:
+   When the user answers, classify it before writing anything:
 
-   - **Non-empty answer after trimming:** build the task body from the backlog entry body, verbatim. If the backlog entry had no body, use the one-line body *"Promoted from backlog entry B<N>."* Then append a blank line, `## Why`, a blank line, and the answer verbatim. Do not reformat or truncate either the backlog body or the user's answer, even if they contain Markdown. Continue to step 6.
-   - **Empty or whitespace-only answer, or explicit refusal ("skip", "no", "none", "n/a", etc.):** do **not** create the task folder, do **not** write `task.md`, and do **not** remove the backlog entry. Stop and report: *"Cannot promote B<N> without a Why. The backlog entry is unchanged. Re-run `/hyper-backlog promote B<N>` when you have the motivation."*
+   - **Substantive reason:** if the reply clearly gives a motivation, constraint, or triggering incident, build the task body from the backlog entry body, verbatim. If the backlog entry had no body, use the one-line body *"Promoted from backlog entry B<N>."* Then append a blank line, `## Why`, a blank line, and the answer verbatim. Do not reformat or truncate either the backlog body or the user's answer, even if they contain Markdown. Continue to step 6.
+   - **Follow-up question:** answer briefly, do **not** create the task folder, do **not** write `task.md`, and keep waiting for the Why.
+   - **Explicit refusal or empty answer** ("skip", "no", "none", "n/a", etc.): do **not** create the task folder, do **not** write `task.md`, and do **not** remove the backlog entry. Stop and report: *"Cannot promote B<N> without a Why. The backlog entry is unchanged. Re-run `/hyper-backlog promote B<N>` when you have the motivation."*
+   - **Acknowledgement, filler, or other non-reason reply** (for example: "yes", "ok", "continue", "idk", or emoji-only): ask once more for the reason. If the next reply still does not give a substantive reason, stop and report the same refusal message.
 6. **Create the task folder** `.hyper/tasks/T<M>-<slug>/task.md` using the `task.md` shape from the bundled Hyper data model, with:
    ```markdown
    ---

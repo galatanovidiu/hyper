@@ -70,6 +70,8 @@ A good rule of thumb:
 - `maybe later` → backlog
 - `ship this` → task
 
+When Hyper creates or promotes a task, expect one short `Why` prompt. That answer is written into `task.md` so the task keeps its motivation even if you resume it much later.
+
 ## What to do when the repo is already dirty
 
 If git state is already dirty before Hyper starts:

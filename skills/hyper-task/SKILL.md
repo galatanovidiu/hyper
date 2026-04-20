@@ -100,10 +100,12 @@ Steps:
 6. Draft the body: one paragraph capturing the user's intent in their words. Hold the draft in memory — do not write `task.md` yet.
 7. **Elicit the Why.** Ask the user once, verbatim: *"Why this task? One or two sentences — motivation, constraint, or triggering incident. This is the durable record of why the task exists."* Stop and wait for the answer. Same synchronous pattern as the title elicitation in step 1 — do not proceed until the user responds.
 
-   When the user answers, trim leading and trailing whitespace and decide:
+   When the user answers, classify it before writing anything:
 
-   - **Non-empty answer after trimming:** append `## Why\n\n<answer verbatim>\n` to the body drafted in step 6. Preserve the user's input exactly — do not reformat, truncate, or rewrap, even if it spans multiple paragraphs or contains Markdown. Now create `.hyper/tasks/T<N>-<slug>/task.md` using the shape in `../hyper/templates/task.md` with the frontmatter from step 5 and the composed body. Continue to step 8.
-   - **Empty or whitespace-only answer, or explicit refusal ("skip", "no", "none", "n/a", etc.):** do **not** create the folder or write `task.md`. Stop and report: *"Cannot create T<N> without a Why. Re-run `/hyper-task create <goal>` when you have the motivation, or add to backlog with `/hyper-backlog add: <goal>`."* No task.md is written in this case — the artifact must never land without a Why.
+   - **Substantive reason:** if the reply clearly gives a motivation, constraint, or triggering incident, append a blank line followed by `## Why`, a blank line, and the answer verbatim to the body drafted in step 6. Preserve the user's input exactly — do not reformat, truncate, or rewrap, even if it spans multiple paragraphs or contains Markdown. Now create `.hyper/tasks/T<N>-<slug>/task.md` using the shape in `../hyper/templates/task.md` with the frontmatter from step 5 and the composed body. Continue to step 8.
+   - **Follow-up question:** answer briefly, do **not** create the folder or write `task.md` yet, and keep waiting for the Why.
+   - **Explicit refusal or empty answer** ("skip", "no", "none", "n/a", etc.): do **not** create the folder or write `task.md`. Stop and report: *"Cannot create T<N> without a Why. Re-run `/hyper-task create <goal>` when you have the motivation, or add to backlog with `/hyper-backlog add: <goal>`."* No task.md is written in this case — the artifact must never land without a Why.
+   - **Acknowledgement, filler, or other non-reason reply** (for example: "yes", "ok", "continue", "idk", or emoji-only): ask once more for the reason. If the next reply still does not give a substantive reason, stop and report the same refusal message.
 
 8. Report to the user: *"Created T<N> — <title> (deferred). Invoke `hyper T<N>` when you're ready to start it."*
 
