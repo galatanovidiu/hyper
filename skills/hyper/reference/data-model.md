@@ -30,6 +30,7 @@ All Hyper state lives on disk under `.hyper/` in the project root. Plain markdow
 - Artifact filenames are fixed. A skill that writes `spec.md` always writes to that path.
 - When a task's `phase` flips to `done` or `cancelled`, the folder is moved from `.hyper/tasks/` to `.hyper/archive/`. The skill that flips the phase owns the move. By-id lookups (`hyper T<N>`, `hyper-task status`, `hyper-retro`) fall back to `archive/` when the id isn't in `tasks/`. Normal flows (listing active tasks, default routing) ignore archive.
 - Task ids are allocated by scanning `tasks/ ∪ archive/` for the highest `T<N>` and adding 1. Ids are never reused.
+- Work that the intake heuristic classifies as direct-handling sized never enters `.hyper/` at all — no task folder, no backlog entry unless the user asks for one.
 
 ## `task.md`
 
@@ -59,7 +60,7 @@ artifacts below say how it gets done.>
 | `phase` | `deferred` · `explore` · `plan` · `implement` · `verify` · `docs` · `done` · `cancelled` | Current phase. The entry skill reads this to route. `done` and `cancelled` are terminal. `deferred` means the task exists but the user hasn't started it yet (created by `hyper-task`). |
 | `scope` | `quick` · `feature` · `research` · `unknown` | Set during explore. Drives which phases run. `unknown` before explore classifies it. |
 | `created` | ISO date | When the task was created. |
-| `awaiting` | `null` · `user-approval` · `user-input` · `<custom label>` | When set, the gate is open. `hyper` pauses normal routing, surfaces the gate on blank / generic resume turns, and routes the next substantive reply back to the current phase skill, which clears or updates the field. |
+| `awaiting` | `null` · `user-approval` · `user-input` · `<custom label>` | When set, the gate is open. `hyper` pauses normal routing, surfaces the gate on blank / generic resume turns, and routes the next substantive reply back to the current phase skill, which clears or updates the field. See `reference/gates.md` for the shared gate protocol. |
 | `cancelled_at` | ISO date | Present only when `phase: cancelled`. Date the task was cancelled. |
 | `cancelled_reason` | short string | Present only when `phase: cancelled`. One-line reason. |
 
@@ -74,6 +75,8 @@ artifacts below say how it gets done.>
 Phases are skipped by scope, not by agent judgment. If a feature task has no docs to update, `docs` phase still runs and writes `checks.md` recording "no docs changed, rationale: …".
 
 A task in `phase: deferred` skips straight to `explore` the first time `hyper` is invoked on it — users "start" a deferred task the same way they continue any other task.
+
+Requests that the shared intake heuristic classifies as direct-handling work never become tasks. Requests that are future-looking or sketchy may become backlog entries instead of tasks.
 
 ### Internal vs user-facing skills
 
@@ -205,9 +208,11 @@ Verdict: pass | needs-changes | blocked
 
 Missing `## docs` means the docs phase hasn't completed yet. Missing one of the earlier sections means verify hasn't completed yet.
 
+Direct verify remediation is allowed only for local fixes that do not change decomposition, planning, or user-visible scope. Larger blocked findings return through `implement` using `checks.md` as the remediation brief.
+
 ## `handoff.md`
 
-Optional. Written by `hyper-handoff` for an active task as the latest current-state rescue. Lives in the task folder, is overwritten on each new handoff, and captures only session context that is not already recorded elsewhere in the task artifacts.
+Optional. Written by `hyper-handoff` for an active task as the latest current-state rescue. Lives in the task folder, is overwritten on each new handoff, and captures only session context that is not already recorded elsewhere in the task artifacts. It is retained until replaced; if the task archives, the latest handoff archives with it.
 
 ## `retro.md`
 
@@ -215,6 +220,8 @@ Optional. Retrospectives written by `hyper-retro`:
 
 - task-scoped retros append dated entries to `<task-folder>/retro.md`
 - project-scoped retros append dated entries to `.hyper/retro.md`
+
+Task retros archive with their task. Project retros stay append-only at `.hyper/retro.md`.
 
 ## `memory.md`
 
@@ -228,6 +235,8 @@ See: T3, src/services/user-service.ts
 ```
 
 Each entry: date + category + title + one paragraph. Categories: `Decision`, `Pattern`, `Lesson`, `Constraint`.
+
+Use memory sparingly. Only store things a different future task should know; task-local implementation facts stay in the task artifacts. See `reference/memory.md` for the bar and examples.
 
 ## `backlog.md`
 
@@ -265,6 +274,10 @@ An entry begins at `^## B\d+ — ` and ends at the next such heading (or EOF). B
 ### Promotion
 
 `hyper-backlog promote B<N>` turns an idea into a task: it creates `.hyper/tasks/T<M>-<slug>/task.md` seeded from the backlog entry's title and body with `phase: deferred`, removes the entry from `backlog.md`, and waits for the user to start it later with `hyper T<M>`. The `B<N>` id is not reused; the new task gets a fresh `T<M>`.
+
+## Repairing malformed state
+
+When `.hyper/` files are malformed, partial, or clearly legacy, stop normal execution and repair deliberately. Prefer fail-loudly over silent skips. The repair playbook lives in `reference/state-recovery.md`.
 
 ## What's *not* here
 

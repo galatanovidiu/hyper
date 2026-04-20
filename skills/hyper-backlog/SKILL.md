@@ -70,19 +70,7 @@ the idea needs. Body ends at the next `## B<N>` heading or EOF.>
 
 ## Triage: idea or task?
 
-Backlog is for **ideas**: rough items that might become work later. A task is for work the user is committing to. When input sits between those two, ask before committing to either — once an entry is on the backlog or a task folder exists, reshuffling is annoying.
-
-Signals to weigh before adding or creating:
-
-| Signal | Lean toward |
-|--------|-------------|
-| One line, vague wording ("we should...") | Idea → backlog |
-| No file:line refs, no investigation done | Idea → backlog |
-| User uses "someday", "maybe", "future" | Idea → backlog |
-| Multiple paragraphs of specific detail | Task |
-| Concrete file paths + proposed fix already drafted | Task |
-| User uses committed language ("I need to ship X") | Task |
-| User explicitly labels it ("just an idea" / "create a task") | Trust the label |
+Backlog is for **ideas**: rough items that might become work later. A task is for work the user is committing to. Apply the shared intake heuristic in `../hyper/reference/intake-triage.md`.
 
 **Default behavior:** honor the user's explicit request. The triage prompt is a soft nudge when the content pushes the other direction, not a gate.
 
@@ -100,7 +88,7 @@ Capture a new idea into `.hyper/backlog.md`.
 Steps:
 
 1. **Parse the user's input.** Extract a short title (≤60 chars, imperative phrasing when possible) and any body text. The body is optional — a one-line idea is fine.
-2. **Triage check.** If the input looks task-shaped per the signals table above and the user didn't explicitly say "this is just an idea", ask the oversized-backlog-add prompt. If the user opts for a task, stop and recommend `/hyper <goal>` or `/hyper-task create ...`.
+2. **Triage check.** If the shared intake heuristic says the input looks task-shaped and the user didn't explicitly say "this is just an idea", ask the oversized-backlog-add prompt. If the user opts for a task, stop and recommend `/hyper <goal>` or `/hyper-task create ...`.
 3. **Bootstrap the file** if needed. If `.hyper/backlog.md` does not exist, create it with:
    ```markdown
    # Backlog
@@ -196,3 +184,8 @@ Dropped ids are not reused. No undo — the user would need to re-add manually.
 - Backlog is lighter than tasks on purpose. No lifecycle, no phases, no artifacts beyond the entry itself. If an item needs more than a paragraph of investigation to describe, it's probably a task.
 - The file is human-readable first and machine-parseable second. Keep `## B<N> — <title>` headings clean; put the interesting content in the body.
 - Promotion is a one-way door in the easy direction: idea → task. Going back (task → idea) requires the user to cancel the task and re-add manually.
+
+## Additional resources
+
+- `../hyper/reference/intake-triage.md` — shared heuristic for backlog idea vs task.
+- `../hyper/reference/state-recovery.md` — repair path when backlog or task state is malformed.

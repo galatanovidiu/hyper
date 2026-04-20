@@ -189,5 +189,6 @@ On a later turn, `hyper` routes the reply back into this skill because the task 
 
 ## Additional resources
 
+- `../hyper/reference/gates.md` — shared gate protocol for planning questions and approval replies.
 - `templates/spec.md` — template for the acceptance-criteria + ToC + out-of-scope + edge-cases artifact.
 - `templates/subtask.md` — template for individual subtask files.

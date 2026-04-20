@@ -40,7 +40,14 @@ git status --short
 
 Include untracked files in your mental model — they're part of the change.
 
-If a check uncovers a small, local problem directly caused by the change under review, you may make a narrow remediation edit during verify and then re-run the affected checks. Cap yourself at two remediation rounds total across this phase; if the problem is larger than that, stop and send the task back to implement.
+If a check uncovers a problem directly caused by the change under review, you may make a narrow remediation edit during verify **only when all of these are true**:
+
+- the fix is local to the finding you already have in hand
+- no new acceptance criterion, design branch, or user decision is needed
+- no subtask decomposition or spec rewrite is needed
+- the resulting diff stays small and reviewable
+
+If any of those are false, do not patch during verify. Stop and send the task back to implement. Cap yourself at two remediation rounds total across this phase.
 
 ## Section 1 — Tests
 
@@ -160,7 +167,7 @@ Use the shape in `templates/checks.md` (bundled with this skill). This phase wri
 
 - `pass` — tests pass, review has no critical, qa passes (or n/a). Ready to advance.
 - `needs-changes` — warnings exist but no criticals. Agent still advances; user sees the warnings.
-- `blocked` — at least one critical or qa failure remains after up to two remediation rounds. Phase moves to `implement` with `awaiting: user-input`; the next implement pass addresses `checks.md`.
+- `blocked` — at least one critical or qa failure remains after up to two remediation rounds, or the fix is too large / structural for verify to patch directly. Phase moves to `implement` with `awaiting: user-input`; the next implement pass addresses `checks.md`.
 
 ## Advancing the phase
 
@@ -193,6 +200,7 @@ Return to the `hyper` skill.
 - **Run the tests.** Static analysis is not a test run. If you can't run tests (no runner, env issues), record that explicitly — don't fake a pass.
 - **Review the diff, not the file.** Pre-existing code is out of scope unless the change makes it worse.
 - **Critical means critical.** Don't inflate severity to look thorough, and don't downgrade real findings to ship faster.
+- **Verify only patches local fixes.** If the needed fix changes decomposition, planning, or user-visible scope, bounce back to implement instead of patching here.
 - **Max two remediation rounds.** Across tests/review/QA combined, you get at most two fix-and-rerun loops in this phase. After that, escalate — looping agents make bugs worse, not better.
 - **QA tests behavior, not code.** Reading the implementation is review, not QA. Run the feature.
 - **Evidence over assertion.** Every QA row has real output. "I checked, it works" is not evidence.

@@ -29,6 +29,14 @@ If `checks.md` exists in the task folder and its top-level overall verdict is `b
 
 1. Read `checks.md` first. Its failing tests, critical review findings, and QA failures are the brief.
 2. Make only the changes needed to resolve those findings. Do not widen scope.
+
+   Direct remediation is allowed only when **all** of these are true:
+   - the fix is local to findings already named in `checks.md`
+   - no new acceptance criterion, user decision, or design branch is needed
+   - no subtask decomposition or spec rewrite is needed
+   - the diff stays small and reviewable
+
+   If any of those are false, stop. Keep `phase: implement`, set `awaiting: user-input`, and ask the user whether to revisit planning or broaden the task. Do not guess.
 3. Re-run the commands named in `checks.md` plus any targeted follow-up checks needed to confirm the fix.
 4. Clear `task.md` `awaiting`, set `phase: verify`, and return to the `hyper` skill.
 
@@ -187,15 +195,7 @@ Any code that touches external input (HTTP, CLI args, file contents, environment
 
 ## Recording things worth remembering
 
-If during implementation (quick scope) or orchestration (feature scope) you discovered a convention, constraint, or surprise that future tasks should know about, append a short note to `.hyper/memory.md`. Format:
-
-```markdown
-## <date> — Pattern: <title>
-
-Why: <what led to this>
-See: T<N>, <file path>
-<1–2 sentence description>
-```
+If during implementation (quick scope) or orchestration (feature scope) you discovered a convention, constraint, or surprise that future tasks should know about, first apply the bar in `../hyper/reference/memory.md`. If it clears that bar, append a short note to `.hyper/memory.md` in the documented format.
 
 Only save things that will matter to a *different* task. Details of the current change belong in commit messages, not memory.
 
@@ -203,7 +203,7 @@ Only save things that will matter to a *different* task. Details of the current 
 
 - **Feature scope: orchestrate, don't implement — except on a verify remediation pass.** In the normal feature flow you do not write, test, or review project code. You dispatch workers and propagate their state. If you find yourself about to edit a `.ts` / `.php` / `.py` file outside `.hyper/`, stop — unless you are explicitly fixing blocked findings from `checks.md`.
 - **Quick scope: stay scoped.** Do not widen scope by touching adjacent code, fixing pre-existing bugs, or adding features the approach did not name. Deepen the code you are writing: validation at boundaries, error-path handling, edge-case guards are part of the change, not scope creep.
-- **Fail loudly on malformed state.** No subtask files found, cycles in `depends`, unparseable frontmatter — abort with a specific error. Silent skips turn small bugs into mysterious ones.
+- **Fail loudly on malformed state.** No subtask files found, cycles in `depends`, unparseable frontmatter — abort with a specific error. Silent skips turn small bugs into mysterious ones. Use `../hyper/reference/state-recovery.md` for the repair path.
 - **One question per message.** When propagating a worker's blocker, surface one question. Never batch.
 - **Ask, don't guess.** If `spec.md` contradicts itself or leaves a critical decision unmade, set `task.md` `awaiting: user-input` and stop. Guessing usually costs more than a round-trip.
 - **Pre-existing bugs go to backlog.** Workers escalate them; as orchestrator you just relay. In quick scope, you're the one escalating — same rule: backlog it, don't fix inline.
@@ -216,3 +216,9 @@ Only save things that will matter to a *different* task. Details of the current 
 - **Clean, reviewable diff.** Every piece of work should reduce surprise for whoever reads the diff next — including future you.
 - **Robustness before cleverness (quick scope).** Handle error paths, validate at boundaries, fail loudly. Validation is part of the work, not speculative scope.
 - **Stay focused, park the drift.** Pre-existing problems go to `.hyper/backlog.md`, not inline "while I'm here" fixes.
+
+## Additional resources
+
+- `../hyper/reference/gates.md` — shared gate protocol for blocked-subtask questions and later replies.
+- `../hyper/reference/state-recovery.md` — repair path for malformed, partial, or legacy task state.
+- `../hyper/reference/memory.md` — what belongs in `.hyper/memory.md`, and what does not.

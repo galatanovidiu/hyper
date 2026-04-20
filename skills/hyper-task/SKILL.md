@@ -79,19 +79,9 @@ Create a task the user doesn't want to start right now — it queues up for late
 Steps:
 
 1. Get the title from the user's request. If they said "create a task to migrate v2", the title is "Migrate to v2". Clean it up (trim filler, keep it under ~60 chars).
-2. **Triage: is this really a task, or an idea?** The user said "create a task", so the default is task — but if the content is a one-line hunch with no detail, offer backlog instead:
+2. **Triage: is this really a task, or an idea?** Apply the shared intake heuristic in `../hyper/reference/intake-triage.md`.
 
-   | Signal | Lean toward |
-   |--------|-------------|
-   | One line, vague wording ("we should...") | Idea → backlog |
-   | No file:line refs, no investigation done | Idea → backlog |
-   | User uses "someday", "maybe", "future" | Idea → backlog |
-   | Multiple paragraphs of specific detail | Task |
-   | Concrete file paths + proposed fix already drafted | Task |
-   | User uses committed language ("I need to ship X") | Task |
-   | User explicitly labels it ("just an idea" / "create a task") | Trust the label |
-
-   If the content clearly looks idea-shaped, ask once: *"This is a rough sketch. Park in backlog for later triage, or create the task now anyway?"* If the user opts for backlog, recommend `/hyper-backlog "add: <goal>"` and stop. Otherwise proceed. One nudge, not a loop.
+   The user already said "create a task", so task is the default. Only nudge toward backlog if the content is clearly idea-shaped. Ask once: *"This is a rough sketch. Park in backlog for later triage, or create the task now anyway?"* If the user opts for backlog, recommend `/hyper-backlog "add: <goal>"` and stop. Otherwise proceed. One nudge, not a loop.
 3. Determine the next task id: scan **both** `.hyper/tasks/` and `.hyper/archive/` for the highest `T<N>` prefix across the two, use `T<N+1>`. Archived ids count — they are never reused.
 4. Derive a kebab-case slug from the title (lowercase, spaces → hyphens, strip punctuation, ~40 chars).
 5. Create `.hyper/tasks/T<N>-<slug>/task.md` using the shape in `../hyper/templates/task.md`, with frontmatter:
@@ -152,3 +142,8 @@ Steps:
 - This skill is optimization for the user. Everything it does could be accomplished by manually editing files under `.hyper/` — the skill just makes the common operations fast and consistent.
 - The output is for a human to read. List output, status output, confirmation messages — all designed for at-a-glance parsing, not machine consumption.
 - Deferred tasks are a planning tool, not a to-do list. If the user's "later" list is getting long, that's a sign to prune or move items to `.hyper/backlog.md` instead.
+
+## Additional resources
+
+- `../hyper/reference/intake-triage.md` — shared heuristic for task vs backlog idea at creation time.
+- `../hyper/reference/state-recovery.md` — repair path when task files are malformed, partial, or clearly legacy.

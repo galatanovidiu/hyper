@@ -54,29 +54,39 @@ Jump to **Resume by id**.
 ### 2. Reply to an open gate
 Scan active tasks for `awaiting != null`.
 
+Apply the gate protocol in `reference/gates.md`:
+
 - If exactly one active task has an open gate and the user's message looks like a reply to that gate — approval (`yes`, `continue`, `looks good`), direct answer, change request, or follow-up question about the current task — resume that task and jump to **Dispatch phase**.
 - If multiple active tasks have open gates and the user didn't name an id, ask which task the reply is for. Stop.
 - If the user clearly supplied a new unrelated goal, keep going through this routing table.
 
-### 3. No goal, no active task
+### 3. Clearly micro-sized ask, no active task, no explicit request for tracking
+Apply the shared intake heuristic in `reference/intake-triage.md`.
+
+If the request is direct-handling shaped — tiny, low-risk, and not in a sensitive area — ask once: *"This looks micro-sized and probably faster outside Hyper. Handle it directly without task tracking, or track it in Hyper anyway?"*
+
+- If the user chooses direct handling, stop. Do not create Hyper state.
+- If the user says to track it anyway, continue through this routing table.
+
+### 4. No goal, no active task
 If any deferred tasks exist, tell the user ("You have deferred tasks: T5, T7. Start one with `/hyper T5`, or give me a new goal."). Otherwise ask what they want to work on. Stop.
 
-### 4. Goal provided, no active task
+### 5. Goal provided, no active task
 Create a new task. Jump to **Create task**, then route to explore.
 
-### 5. Goal provided, active task, goals clearly match
+### 6. Goal provided, active task, goals clearly match
 Resume the active task. Jump to **Dispatch phase**.
 
-### 6. Goal provided, active task, goals clearly differ
+### 7. Goal provided, active task, goals clearly differ
 Ask: *"T{id} is in progress on '<title>'. Is this new work, or part of T{id}?"* Stop and wait.
 
-### 7. Goal provided, active task, relationship is ambiguous
+### 8. Goal provided, active task, relationship is ambiguous
 Same as above — ask. Do not guess.
 
-### 8. No goal, exactly one active task
+### 9. No goal, exactly one active task
 Resume that task. Jump to **Dispatch phase**.
 
-### 9. No goal, multiple active tasks
+### 10. No goal, multiple active tasks
 List them with `id`, `phase`, `awaiting` (if set), and `title`, then ask which to continue. Stop.
 
 Routing decides *which* task to work on, including replies to open gates. **Dispatch phase** below decides which phase skill to invoke for that task.
@@ -94,19 +104,14 @@ Given task id `T<N>`:
 
 ## Create task
 
-1. **Triage: is this really a task, or an idea?** If the user's goal is a thin one-liner with no investigation done, no file refs, and no concrete fix sketched, it may fit better as a `hyper-backlog` entry for later. Weigh the signals below:
+1. **Triage: is this really a task, an idea, or direct-handling work?** Apply the shared intake heuristic in `reference/intake-triage.md`.
 
-   | Signal | Lean toward |
-   |--------|-------------|
-   | One line, vague wording ("we should...") | Idea → backlog |
-   | No file:line refs, no investigation done | Idea → backlog |
-   | User uses "someday", "maybe", "future" | Idea → backlog |
-   | Multiple paragraphs of specific detail | Task |
-   | Concrete file paths + proposed fix already drafted | Task |
-   | User uses committed language ("I need to ship X") | Task |
-   | User explicitly labels it ("just an idea" / "create a task") | Trust the label |
+   For `Create task`, you only care about two outcomes here:
 
-   If the input clearly looks idea-shaped and the user didn't explicitly say "create a task", ask once: *"This is a rough sketch. Park in backlog for later triage, or create the task now anyway?"* If the user opts for backlog, recommend `/hyper-backlog "add: <goal>"` and stop. Otherwise proceed. One nudge, not a loop — never ask twice.
+   - **Backlog-shaped** → ask once: *"This is a rough sketch. Park in backlog for later triage, or create the task now anyway?"* If the user opts for backlog, recommend `/hyper-backlog "add: <goal>"` and stop.
+   - **Task-shaped** → continue.
+
+   If the user explicitly said to create or track a task, trust that label unless it would be unsafe.
 2. Determine the next task id: scan **both** `.hyper/tasks/` and `.hyper/archive/` for the highest `T<N>` prefix across both, use `T<N+1>`. Archived ids count — they are never reused.
 3. Derive a short title from the user's goal (trim filler, keep it under ~60 chars, imperative phrasing when possible).
 4. Derive a kebab-case slug from the title (lowercase, spaces → hyphens, strip punctuation, ~40 chars).
@@ -156,8 +161,10 @@ The auto-advance in step 5 is scoped to approval-gated phases (`explore`, `plan`
 - **You dispatch, you don't implement.** This skill never writes code, runs tests, or reviews diffs.
 - **State lives in `task.md` frontmatter.** The phase skill edits `phase:` to advance. Don't track phases anywhere else.
 - **`hyper` owns gate routing.** When a phase sets `awaiting`, this skill is the router for the later reply. It decides which task the reply belongs to, then re-dispatches to the current phase skill.
+- **Use the smallest workflow that fits.** If the intake heuristic says the request is micro-sized and the user does not want tracking, nudge once toward direct handling outside Hyper.
 - **The user is the approval gate.** Silence is not consent.
 - **Auto-advance only on user approval.** Approval-gated phases (`explore`, `plan`) auto-advance into the next Dispatch when they return. Agent-completion phases (`implement`, `verify`, `docs`) return to a checkpoint so the user can inspect the result.
+- **Repair malformed state deliberately.** If `.hyper/` files are malformed or contradictory, stop and consult `reference/state-recovery.md` rather than guessing.
 - **Terminal tasks stay terminal.** `done` and `cancelled` don't re-run from here. If the user wants to reopen a cancelled task, they clear the cancel fields manually.
 
 ## Key principles
@@ -169,4 +176,7 @@ The auto-advance in step 5 is scoped to approval-gated phases (`explore`, `plan`
 ## Additional resources
 
 - `reference/data-model.md` — exact shape of `.hyper/`, `task.md` frontmatter, artifact filenames, and all phase values. Read when verifying structural details.
+- `reference/gates.md` — shared gate-routing contract: `hyper` routes replies, phase skills mutate the gate.
+- `reference/intake-triage.md` — shared heuristic for direct-handling vs task vs backlog idea.
+- `reference/state-recovery.md` — repair path for malformed, legacy, or contradictory `.hyper/` state.
 - `templates/task.md` — ready-to-fill template used in **Create task**.

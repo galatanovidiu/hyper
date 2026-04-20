@@ -170,4 +170,5 @@ Research tasks terminate at this phase (no plan/implement/verify/docs). By-id lo
 
 ## Additional resources
 
+- `../hyper/reference/gates.md` — shared gate protocol for open questions and approval replies.
 - `templates/exploration.md` — ready-to-fill template for the artifact this skill produces.

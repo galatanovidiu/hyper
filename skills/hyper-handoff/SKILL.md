@@ -37,6 +37,12 @@ Handoffs are for active work. If the id resolves only in `.hyper/archive/`, tell
 
 Overwrite `handoff.md` with the latest snapshot. This file is current-state rescue, not append-only history.
 
+Retention:
+
+- keep the latest handoff until a newer one replaces it
+- do not auto-delete it on resume
+- if the task later archives, the last handoff archives with it as historical context
+
 ## What to include
 
 Write a short document covering only things that *aren't* already captured in the other artifacts. Don't restate the goal or the approach — those are in `task.md` and `exploration.md`.

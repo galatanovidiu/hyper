@@ -8,8 +8,10 @@ description: >
 
 Look back at recent work and capture lessons. Two places the output can go:
 
-- **Project-scoped** — append to `.hyper/retro.md` when the lesson is about this project's code, conventions, or team.
+- **Project-scoped** — append to `.hyper/retro.md` when the lesson is about this project's code, conventions, team, or repeated workflow friction across multiple tasks.
 - **Task-scoped** — append to the task's folder as `retro.md` when the lesson is specific to what happened on that task.
+
+Prefer task-scoped when in doubt. Move to project-scoped only when the same lesson would matter even if you never reopened the original task.
 
 ## When to use
 
@@ -62,6 +64,8 @@ Paths:
 
 - Task-scoped: resolve the task folder by id. Look first in `.hyper/tasks/T<N>-*/`, then fall back to `.hyper/archive/T<N>-*/` for terminal tasks. Write `retro.md` inside whichever folder holds the task, appending a new dated block each time.
 - Project-scoped: `.hyper/retro.md` (create if missing, append new dated block).
+
+Retention: retros are append-only. Task retros archive with their task; project retros stay at `.hyper/retro.md`.
 
 ## Rules
 
