@@ -45,6 +45,7 @@ When re-entered on a reply:
 When the gate is `user-input`:
 
 - ask **one question per message**
+- if the question has multiple plausible answers, recommend one answer and give a one-line reason grounded in the task, code, or the user's stated goal; keep short accept / override replies possible (`yes`, `1A`, `1B`)
 - record the answer in the artifact before moving on
 - if more unanswered questions remain, keep the gate open and ask the next one
 - once all are answered, rename `Open questions` → `Resolved questions` (or delete the section if redundant) and move to the next gate or phase

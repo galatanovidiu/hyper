@@ -70,7 +70,7 @@ Read the task body. Does it unambiguously describe what to do?
 
 - **Clear** → continue to scope classification.
 - **One likely interpretation** → state it and ask one question: *"I read this as X. Sound right?"*
-- **Multiple plausible interpretations** → ask *one* multiple-choice question with a default.
+- **Multiple plausible interpretations** → ask *one* multiple-choice question that recommends one option and gives a one-line reason.
 - **Vague / no goal** → summarize your understanding in 4 bullets and ask the user to correct.
 
 Never ask more than one clarification question per message. Stop and wait for the answer. When you get it, continue.
@@ -133,7 +133,7 @@ If `exploration.md` has no `## Open questions` section, or the section is empty,
 Otherwise, set `task.md` frontmatter `awaiting: user-input` and work through the questions one at a time, following these rules:
 
 - **One question per message.** Never batch. Ask Q1, stop, wait for the answer.
-- Present the question verbatim from the file. If it has multiple plausible answers, offer numbered-question + lettered-option shorthand ("1A", "1B", …) so the user can reply quickly.
+- Present the question verbatim from the file. If it has multiple plausible answers, offer numbered-question + lettered-option shorthand ("1A", "1B", …), mark one option as the recommendation, and give a one-line reason grounded in the task, code, or the user's stated goal.
 - When the user answers, record the answer under the question in `exploration.md` (indented bullet or a short paragraph beneath the list item — the artifact must stay the durable record of both question and answer).
 - If the user requests changes to the approach or asks a meta question instead of answering, treat it like any other "requests changes / asks a question" response: stop the loop, revise, and restart Step 6 with the updated questions.
 - Move to the next unanswered question. Repeat until none remain.
@@ -177,7 +177,7 @@ Research tasks terminate at this phase (no plan/implement/verify/docs). By-id lo
 ## Rules
 
 - **Scan before asking.** Many "ambiguous" goals become clear after reading the code for two minutes. Don't fire off questions the codebase would answer.
-- **One question per message.** Always with a default or multiple choice.
+- **One question per message.** Use a direct question when there is one real answer to elicit; if there are multiple plausible answers, recommend one and explain why.
 - **Facts and design are separate.** Findings are what *is*. Approach is what we'll *do*. Don't mix them.
 - **Approval is explicit.** Agent judgment is not a substitute for "yes, go".
 - **Length proportional to scope.** A `quick` exploration.md fits on one screen. A `feature` one is a page or two. A `research` one is as long as the evidence demands.

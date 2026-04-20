@@ -128,7 +128,7 @@ The dispatched worker set its subtask's `awaiting: user-input` and added a quest
 
 1. Set `task.md` frontmatter `awaiting: user-input` (so the top-level `hyper` gate catches it).
 2. Read the first unanswered question from the blocked subtask's `## Open questions`.
-3. Surface it inline in chat — one question per message, never batch. Present the question verbatim. If it has multiple plausible answers, offer numbered-question + lettered-option shorthand so the user can reply quickly.
+3. Surface it inline in chat — one question per message, never batch. Present the question verbatim. If it has multiple plausible answers, offer numbered-question + lettered-option shorthand, mark one option as the recommendation, and give a one-line reason grounded in the task, code, or the user's stated goal.
 4. Return to the `hyper` skill.
 
 When the user answers on a later turn, `hyper` routes that reply back into this skill because the task is still `phase: implement` with `awaiting` set:

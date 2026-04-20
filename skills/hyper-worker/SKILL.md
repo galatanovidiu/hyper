@@ -60,7 +60,7 @@ Do **not** touch `task.md`, `spec.md`, or sibling subtask files. The orchestrato
 
 If you hit a question you cannot resolve from the spec, exploration, or the code, **stop** and escalate. Do not guess.
 
-1. Append (or create) a `## Open questions` section in the subtask body. Add your question as a list item. Include context if it helps the user answer: *"Q: Should the cache key use `post_id` or `post_id + locale`? Context: existing `PostCache::key()` uses post_id only, but `pages.get` crosses locales."*
+1. Append (or create) a `## Open questions` section in the subtask body. Add your question as a list item. If the blocker has multiple plausible answers, draft it so one option is explicitly recommended and include a one-line reason grounded in the task, code, or user goal; if it is genuinely a single direct question, keep it direct and do not invent fake `A/B` options. Include context if it helps the user answer: *"Q: Should the cache key use `post_id` or `post_id + locale`? Recommendation: `post_id + locale`, because `pages.get` crosses locales and reusing the single-locale key risks collisions. Context: existing `PostCache::key()` uses `post_id` only."*
 2. Set the subtask's frontmatter `awaiting: user-input`. Leave `status` unchanged.
 3. Return to the orchestrator with: *"T<N>.<M> blocked on <one-line question topic>"*. The orchestrator propagates `awaiting` up to `task.md`, surfaces the question to the user, records the answer, and re-dispatches you.
 

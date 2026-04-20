@@ -2,26 +2,6 @@
 
 This guide is for humans editing the Hyper repo itself.
 
-## Validate the suite locally
-
-Run:
-
-```bash
-python3 scripts/validate-hyper.py
-```
-
-The validator checks a small set of high-value repo contracts, including:
-
-- every `skills/*/SKILL.md` has parseable frontmatter structure
-- Hyper user-facing vs internal skill expectations are consistent
-- `user-invocable: false` is set on internal skills
-- README and the data model mention the right skill counts
-- referenced bundled files exist
-- named `hyper-*` skill invocations point to real skills
-- skill bodies stay under the line-count limit
-
-It is intentionally lightweight. It does not try to fully parse natural-language instructions.
-
 ## Most fragile contracts
 
 These areas are the most likely to drift:
@@ -60,8 +40,7 @@ Do all of these together:
 1. add/rename the folder under `skills/`
 2. update README skill tables and prose
 3. update `skills/hyper/reference/data-model.md` if the skill changes the workflow or state model
-4. run `python3 scripts/validate-hyper.py`
-5. grep for the old skill name and old path forms
+4. grep for the old skill name and old path forms
 
 ## When changing the data model
 

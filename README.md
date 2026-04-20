@@ -98,6 +98,8 @@ Agent: [dispatches one worker per subtask, then verifies and updates docs]
 
 Or invoke a skill directly with its slash command: `/hyper` (work), `/hyper-task` (list, create-deferred, cancel, status), `/hyper-backlog` (add, list, promote, drop ideas), `/hyper-handoff`, `/hyper-retro`. Resume a specific task with `/hyper T3`.
 
+When Hyper asks a clarifying question with multiple plausible answers, it recommends one option and gives a short reason. You can still override it with a short reply.
+
 ## When not to use Hyper
 
 Skip Hyper when the work is obviously micro-sized and tracking would add more ceremony than value.
@@ -139,7 +141,7 @@ Agent: [archives the task at done]
 ```text
 You: Add locale-aware page caching.
 Agent: [explore → plan → implement]
-       T4.2 is blocked: should the cache key include locale, or only post id?
+       T4.2 is blocked. Recommendation: include locale, because `pages.get` crosses locales and a post-id-only key risks collisions. If you want post id only instead, say so.
 You: include locale
 Agent: [records answer in T4.2.md, re-dispatches the worker]
 ```
@@ -246,9 +248,3 @@ The bullets above describe what Hyper is. These describe how an agent working in
 
 - [`docs/operating-hyper.md`](docs/operating-hyper.md) — how to use Hyper on real projects, including when not to use it.
 - [`docs/maintaining-hyper.md`](docs/maintaining-hyper.md) — how to maintain the Hyper repo itself.
-
-To validate this repo's own skill/docs contracts locally:
-
-```bash
-python3 scripts/validate-hyper.py
-```

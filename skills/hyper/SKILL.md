@@ -63,7 +63,7 @@ Apply the gate protocol in `reference/gates.md`:
 ### 3. Clearly micro-sized ask, no active task, no explicit request for tracking
 Apply the shared intake heuristic in `reference/intake-triage.md`.
 
-If the request is direct-handling shaped — tiny, low-risk, and not in a sensitive area — ask once: *"This looks micro-sized and probably faster outside Hyper. Handle it directly without task tracking, or track it in Hyper anyway?"*
+If the request is direct-handling shaped — tiny, low-risk, and not in a sensitive area — ask once: *"This looks micro-sized and probably faster outside Hyper. I recommend handling it directly without task tracking because <reason>. If you want it tracked in Hyper anyway, say so."*
 
 - If the user chooses direct handling, stop. Do not create Hyper state.
 - If the user says to track it anyway, continue through this routing table.
@@ -78,10 +78,10 @@ Create a new task. Jump to **Create task**, then route to explore.
 Resume the active task. Jump to **Dispatch phase**.
 
 ### 7. Goal provided, active task, goals clearly differ
-Ask: *"T{id} is in progress on '<title>'. Is this new work, or part of T{id}?"* Stop and wait.
+Ask: *"T{id} is in progress on '<title>'. I recommend treating this as new work because <reason>. If you want it folded into T{id} instead, say so."* Stop and wait.
 
 ### 8. Goal provided, active task, relationship is ambiguous
-Same as above — ask. Do not guess.
+Ask: *"T{id} is in progress on '<title>'. My read is this is <new work | part of T{id}> because <reason>. If you want the other path, say so."* Stop and wait.
 
 ### 9. No goal, exactly one active task
 Resume that task. Jump to **Dispatch phase**.
@@ -108,7 +108,7 @@ Given task id `T<N>`:
 
    For `Create task`, you only care about two outcomes here:
 
-   - **Backlog-shaped** → ask once: *"This is a rough sketch. Park in backlog for later triage, or create the task now anyway?"* If the user opts for backlog, recommend `/hyper-backlog "add: <goal>"` and stop.
+   - **Backlog-shaped** → ask once: *"This is a rough sketch. I recommend parking it in backlog for later triage because <reason>. If you want the task created now anyway, say so."* If the user opts for backlog, recommend `/hyper-backlog "add: <goal>"` and stop.
    - **Task-shaped** → continue.
 
    If the user explicitly said to create or track a task, trust that label unless it would be unsafe.

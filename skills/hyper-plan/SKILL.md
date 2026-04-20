@@ -150,7 +150,7 @@ If `spec.md` has no `## Open questions` section, or the section is empty, skip t
 Otherwise, set `task.md` frontmatter `awaiting: user-input` and work through the questions one at a time, following these rules:
 
 - **One question per message.** Never batch. Ask Q1, stop, wait for the answer.
-- Present the question verbatim from the file. If it has multiple plausible answers, offer numbered-question + lettered-option shorthand ("1A", "1B", …) so the user can reply quickly.
+- Present the question verbatim from the file. If it has multiple plausible answers, offer numbered-question + lettered-option shorthand ("1A", "1B", …), mark one option as the recommendation, and give a one-line reason grounded in the task, code, or the user's stated goal.
 - When the user answers, record the answer under the question in `spec.md` (indented bullet or a short paragraph beneath the list item — the artifact must stay the durable record of both question and answer).
 - If the user requests changes to the spec or asks a meta question instead of answering, treat it like any other "requests changes / asks a question" response: stop the loop, revise, and restart Step 7 with the updated questions.
 - Move to the next unanswered question. Repeat until none remain.

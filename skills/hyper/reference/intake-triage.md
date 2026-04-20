@@ -74,9 +74,9 @@ Signals that strengthen the case:
 
 If the user's request looks like it belongs in a different bucket than the words they used, ask **once**:
 
-- direct-handling nudge: `This looks micro-sized and probably faster outside Hyper. Handle it directly, or track it in Hyper anyway?`
-- backlog nudge: `This looks more like a future idea than active work. Park it in backlog, or create the task now anyway?`
-- task nudge: `This has enough concrete detail to be task-shaped. Create a task, or keep it as a backlog idea?`
+- direct-handling nudge: `This looks micro-sized and probably faster outside Hyper. I recommend handling it directly because <reason>. If you want it tracked in Hyper anyway, say so.`
+- backlog nudge: `This looks more like a future idea than active work. I recommend parking it in backlog because <reason>. If you want the task created now anyway, say so.`
+- task nudge: `This has enough concrete detail to be task-shaped. I recommend creating a task because <reason>. If you want to keep it as a backlog idea instead, say so.`
 
 After one nudge, honor the user's choice.
 
