@@ -194,7 +194,7 @@ Any code that touches external input (HTTP, CLI args, file contents, environment
 
 ## Recording things worth remembering
 
-If during implementation (quick scope) or orchestration (feature scope) you discovered a convention, constraint, or surprise that future tasks should know about, first apply the bar in `../hyper/reference/memory.md`. If it clears that bar, append a short note to `.hyper/memory.md` in the documented format.
+If during implementation (quick scope) or orchestration (feature scope) you discovered a convention, constraint, or surprise that future tasks should know about, first apply the bar in `../hyper/reference/memory.md`. If it clears that bar, append a short note to `.hyper/memory.md` in the documented format — for example `## <ISO date> — Decision: <short title>` (or `Pattern`, `Lesson`, `Constraint`).
 
 Only save things that will matter to a *different* task. Details of the current change belong in commit messages, not memory.
 
