@@ -15,7 +15,7 @@ patterns matter. What risks are lurking. No opinions yet — just what is.>
 For feature scope: 1–2 paragraphs covering what you'll change, why this over
 alternatives, any new abstractions or dependencies, and trade-offs.
 
-For research scope: rename this section to "Findings & Recommendation" and
+For research scope: rename this section to "Recommendation" and
 write the structured research answer with a clear final recommendation.>
 
 ### Files to change

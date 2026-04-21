@@ -44,7 +44,7 @@ read task.md
   │                 proof → disproven ledger → N=3 distinct-falsifications
   │                 hard stop with escalation bundle)
   │
-  ├── draft approach (or Findings & Recommendation for research)
+  ├── draft approach (or Recommendation for research)
   │
   ├── write exploration.md (bugfix structure when flag set, otherwise Findings/Approach)
   │
@@ -181,7 +181,7 @@ For **feature** tasks: one or two paragraphs covering:
 - Any new abstractions, dependencies, or test changes
 - Trade-offs the user should know about
 
-For **research** tasks: this section becomes **Findings & Recommendation**. Structured around the actual research question, with evidence from the code and external sources where relevant. End with a clear recommendation.
+For **research** tasks: this section becomes **Recommendation**. Structured around the actual research question, with evidence from the code and external sources where relevant. End with a clear recommendation.
 
 **YAGNI applies — for new features, not for robustness.** Remove scope you added for hypothetical features, abstractions, or "nice to have" behaviors the user didn't ask for. Tight > ambitious. But validation at boundaries, error-path handling, and edge-case guards for the code you are actually building are never speculative — they are part of the thing being asked for, not scope widening. The focus principle fences against adding unrelated work; it does not authorize skipping the guardrails that make the asked-for change robust.
 
@@ -193,7 +193,7 @@ Use the shape in `templates/exploration.md` (bundled with this skill). It has tw
 
 - **quick scope** — keep both subsections. `exploration.md` is the only artifact, so the file list and out-of-scope note live here.
 - **feature scope** — omit both subsections. They move into `spec.md` (acceptance criteria + subtasks carry the file list; spec owns "Out of scope").
-- **research scope** — rename **Approach** to **Findings & Recommendation**, omit "Files to change", keep "Out of scope" (existing rule preserved).
+- **research scope** — rename **Approach** to **Recommendation**, omit "Files to change", keep "Out of scope" (existing rule preserved).
 
 If any assumption in the approach could change the design depending on the user's answer, add a `## Open questions` section listing one question per list item. Prefer surfacing the assumption as an explicit question over burying it as a hidden default.
 
