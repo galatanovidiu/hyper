@@ -165,10 +165,6 @@ The phase skill ends its dispatch by returning exactly one verdict plus a short 
 3. For `verify → implement` specifically, also set `awaiting: user-input` — the blocked `checks.md` is the remediation brief, and the next user reply resumes implement.
 4. Re-enter **Dispatch phase** with the new phase. No user checkpoint.
 
-### Verdict: `cancelled`
-
-Route through the cancellation flow. Set `phase: cancelled`, record `cancelled_at` and `cancelled_reason`, archive the folder per `reference/archive.md`, and announce.
-
 ### Phase-transition table
 
 Apply the phase-transition table from `reference/gates.md`. Approval-gated phases (`explore`, `plan`) auto-advance because their approval **was** the user's proceed signal. Agent-completion transitions (`implement → verify`, `verify → docs`) stop and ask so the user can inspect the diff or `checks.md` before moving on.

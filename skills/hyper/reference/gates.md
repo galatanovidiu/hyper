@@ -26,7 +26,6 @@ Every phase dispatch ends with the phase skill returning exactly one verdict to 
 | `awaiting-input` | Open question(s) recorded in the artifact (or a surfaced blocked-subtask question). | Set `task.md` `awaiting: user-input`. Stop and relay the first unanswered question verbatim from the phase skill's return summary. |
 | `phase-complete` | Phase produced its artifact and is ready to advance. | Clear `awaiting`. Apply the phase-transition table. Apply the checkpoint rule. |
 | `redirect target: <phase>` | Non-linear transition — `plan → explore` on user rewind, or `verify → implement` on blocked `checks.md`. | Clear any stale `awaiting`. Set `phase: <target>`. For `verify → implement`, also set `awaiting: user-input` (verify's blocked findings become the remediation brief). Re-enter Dispatch. |
-| `cancelled` | Terminal cancellation surfaced by a phase (rare — e.g. user declines to continue a bugfix hard-stop). | Route through the cancellation flow in `hyper-task`. |
 
 Phase skills must return exactly one verdict per dispatch. A verdict with no new artifact change is still valid — e.g. when a user reply only adds a single answer to `## Open questions` but leaves other questions unanswered, the phase skill records that answer and returns `awaiting-input` again.
 

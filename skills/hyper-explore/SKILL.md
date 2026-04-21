@@ -226,7 +226,6 @@ Every dispatch ends with one verdict. Shared contract in `../hyper/reference/gat
 - `awaiting-input` — open questions remain (normal open-questions loop or bugfix hard-stop).
 - `awaiting-approval` — `exploration.md` (or `exploration-bugfix.md`) is ready for user approval.
 - `phase-complete` — the user approved on a re-dispatch. `hyper` reads `scope:` and advances per its transition table: `plan` for feature, `implement` for quick, `done` + archive for research. You do not touch `phase:` or run the archive.
-- `redirect target: explore` — only applicable if a re-dispatch reveals the work is misframed and must start over; otherwise not emitted from this phase.
 
 On a user reply that requests changes, revise `exploration.md` (rewrite-over-patch for reframes; preserve resolved questions + pivot note) and return `awaiting-approval` again. On a direct question, answer it inline and return `awaiting-approval` with the artifact unchanged.
 
