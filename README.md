@@ -177,8 +177,8 @@ After first use, your project has:
 .hyper/
   tasks/              # active tasks
     T1-add-login-page/
-      task.md         # goal + current phase (optional why)
-      exploration.md  # findings + approach (approved)
+      task.md         # goal + current phase (optional why; `bugfix: true/false` flag)
+      exploration.md  # findings + approach (approved) — or `exploration-bugfix.md` for bugfix tasks
       spec.md         # acceptance criteria + subtask index + out-of-scope + edge cases
       T1.1-wire-login-endpoint.md   # subtask (feature scope): status, depends, what/why/done-when, worker's completion record
       T1.2-login-form.md            # subtask
@@ -223,6 +223,10 @@ Each task is classified during `explore`:
 - `research` — explore → done (terminal artifact is `exploration.md` with findings)
 
 Phases are skipped by scope, never by agent judgment. Classification happens once, with your approval, during explore.
+
+### Bugfix detection
+
+Independently of scope, `explore` also checks whether the work is a bugfix or regression. If keywords (*bug, fix, regression, crash, failing …*) or attached artifacts (stack traces, failing-test output, issue links) suggest one, Hyper asks a single confirmation question and, on *yes*, sets `bugfix: true` on `task.md` and routes to a root-cause-first sub-flow. The artifact becomes `exploration-bugfix.md` instead of `exploration.md`, with symptom evidence, a `repro_status` classification (`deterministic | intermittent | no-repro`), a single active hypothesis with a named acceptance proof, and a structured disproven-hypothesis ledger. After 3 *distinct* falsified hypotheses the sub-flow hard-stops with an escalation bundle so you can reframe instead of letting the agent keep guessing.
 
 ## Design philosophy
 
