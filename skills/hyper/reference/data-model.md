@@ -62,6 +62,7 @@ artifacts below say how it gets done.>
 | `phase` | `deferred` · `explore` · `plan` · `implement` · `verify` · `docs` · `done` · `cancelled` | Current phase. The entry skill reads this to route. `done` and `cancelled` are terminal. `deferred` means the task exists but the user hasn't started it yet (created by `hyper-task`). |
 | `scope` | `quick` · `feature` · `research` · `unknown` | Set during explore. Drives which phases run. `unknown` before explore classifies it. |
 | `created` | ISO date | When the task was created. |
+| `bugfix` | `true` · `false` | Set to `true` when the task is a bugfix or regression. Routes `hyper-explore` to the root-cause-first sub-flow. Defaults to `false`; detection lives in `hyper-explore` Step 1. Missing field is treated as `false` for back-compat. |
 | `awaiting` | `null` · `user-approval` · `user-input` · `<custom label>` | When set, the gate is open. `hyper` pauses normal routing, surfaces the gate on blank / generic resume turns, and routes the next substantive reply back to the current phase skill, which clears or updates the field. See `reference/gates.md` for the shared gate protocol. |
 | `cancelled_at` | ISO date | Present only when `phase: cancelled`. Date the task was cancelled. |
 | `cancelled_reason` | short string | Present only when `phase: cancelled`. One-line reason. |
@@ -97,6 +98,28 @@ Written by the `hyper-explore` skill. Two required sections plus one optional:
 3. **Open questions** (optional) — a list of questions for the user whose answers would change the approach. When present, `hyper-explore` asks them serially in chat (one per message) and records each answer under the question in this file, renaming the section to `Resolved questions` once all are answered. While questions are pending, `awaiting: user-input`; once answered, it transitions to `awaiting: user-approval`.
 
 `exploration.md` is the approval artifact for the explore phase. Once the user approves, phase advances.
+
+### `exploration-bugfix.md`
+
+Written by `hyper-explore` when `task.md` has `bugfix: true`. Replaces `exploration.md` for the bugfix sub-flow. Same approval-gate semantics as `exploration.md`.
+
+The `repro_status` enum — one of:
+
+- `deterministic` — exact command, test, or steps reproduce the failure every time.
+- `intermittent` — fails some of the time; requires a run matrix and a suspected flake axis (timing, state, environment, ordering).
+- `no-repro` — no reproduction available yet; requires a rationale and a pointer to the next evidence source.
+
+The disproven-hypothesis ledger is append-only. Each entry has these five fields:
+
+| Field | Meaning |
+|-------|---------|
+| `hypothesis` | The proposed root cause being tested. |
+| `minimal_experiment` | Smallest experiment (test, command, instrumentation) that can falsify it. |
+| `observed_result` | What the experiment actually produced. |
+| `artifact_path` | Path to the raw evidence in the task folder (e.g. `evidence/<slug>.log`). |
+| `conclusion` | One line stating why the hypothesis is falsified and where to look next. |
+
+Only distinct falsified hypotheses count toward the N=3 hard stop. A blind rerun without a new hypothesis, new instrumentation, or new evidence does not count as a falsification and does not consume the budget.
 
 ## `spec.md`
 

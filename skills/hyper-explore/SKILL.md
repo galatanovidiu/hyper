@@ -31,13 +31,22 @@ read task.md
   │
   ├── clarify the goal (if needed)
   │
+  ├── detect bugfix intent (keywords + attached artifacts); set bugfix flag
+  │
   ├── classify scope (quick / feature / research)
   │
   ├── scan the codebase — facts, not opinions
   │
-  ├── (if research) produce findings; (otherwise) draft approach
+  ├── framing check
   │
-  ├── write exploration.md
+  ├── if bugfix ─► bugfix sub-flow (symptom evidence → repro classification →
+  │                 recent changes (regressions) → hypothesis with acceptance
+  │                 proof → disproven ledger → N=3 distinct-falsifications
+  │                 hard stop with escalation bundle)
+  │
+  ├── draft approach (or Findings & Recommendation for research)
+  │
+  ├── write exploration.md or exploration-bugfix.md (by flag)
   │
   ├── serialize any open questions (one per message, record answers in the file)
   │
@@ -64,6 +73,27 @@ Then read the task body. Does it unambiguously describe what to do?
 
 Never ask more than one clarification question per message. Stop and wait for the answer. When you get it, continue.
 
+### Step 1b — Detect bugfix intent
+
+Bugfix intent is *orthogonal to scope*: a one-line bugfix is still `quick`, a structural bugfix is still `feature`. The `bugfix` flag on `task.md` frontmatter (default `false`) selects a root-cause-first sub-flow later in this skill.
+
+Scan the task body for bugfix keywords: *bug, fix, regression, broken, error, crash, failing, repro, stack trace, exception*.
+
+Also check for attached-artifact signals that imply a defect even without the keywords:
+
+- Pasted stack traces.
+- Failing-test output blocks (assertion failures, test-runner summaries).
+- Issue-tracker links (GitHub, Linear, Jira).
+- Phrases like "used to work", "worked before X", "regressed after Y".
+
+**Rule.** If any keyword or artifact signal matches, ask the user exactly one confirmation question:
+
+> *"This reads as a bugfix/regression — should I route through the root-cause-first sub-flow? (yes / no)"*
+
+On **yes**, write `bugfix: true` to `task.md` frontmatter. On **no** or no match, leave `bugfix: false`. Do not ask the question when no signal matches — defaulting to `false` silently is the correct behavior.
+
+**Mid-explore flip.** If the user later reveals bugfix intent (a clarification turn surfaces it, or new context arrives), flip `bugfix` to `true` and restart at the bugfix sub-flow (Step 3.5). Preserve existing `exploration.md` content via rewrite-over-patch when the template switches — carry forward resolved questions and any evidence already collected.
+
 ## Step 2 — Classify scope
 
 Pick one:
@@ -80,7 +110,7 @@ Write the scope into `task.md` frontmatter (`scope: quick | feature | research`)
 
 ## Step 3 — Scan the codebase
 
-Use your search/read tools to find what matters for this task:
+For non-bugfix tasks, use your search/read tools to find what matters:
 
 - Files the change will touch
 - Existing patterns to follow (how similar things are done elsewhere)
@@ -91,9 +121,55 @@ Go as deep as the scope demands. For `quick`, a few targeted searches are enough
 
 **Facts only here.** No design decisions yet. If you find something surprising or undocumented, note it.
 
-If the task is a bugfix or regression, ask the user for error output, logs, or a failing test case *before* diving into the code. They have context you don't.
+For bugfix tasks (`bugfix: true`), the generic scan is replaced by Step 3.5 — the sub-flow internally covers file/pattern discovery as needed for root-cause investigation. Run the framing check below first, then jump to Step 3.5.
 
-**Framing check (after the scan, before drafting).** Once the scan is done, briefly restate the user's framing of the problem and name one plausible alternate framing the evidence suggests — a different root cause, a different surface to change, a different goal the symptom might be pointing at. If the alternate survives the evidence, raise it as a clarification before Step 4 and wait for the user to pick a direction. If the evidence does not support an alternate, record the framing check in a single sentence ("Framing check: no alternate survives the scan") and continue. The user's ask is a hypothesis, not a directive — this check exists so you do not blindly implement the first framing when the code is telling you to solve a different problem.
+**Framing check (after the scan, before drafting or bugfix sub-flow).** Once the scan is done — or, for bugfix tasks, before any bugfix-specific evidence collection — briefly restate the user's framing of the problem and name one plausible alternate framing the evidence suggests: a different root cause, a different surface to change, a different goal the symptom might be pointing at. If the alternate survives the evidence, raise it as a clarification and wait for the user to pick a direction. If the evidence does not support an alternate, record the framing check in a single sentence ("Framing check: no alternate survives the scan") and continue. The user's ask is a hypothesis, not a directive — this check exists so you do not blindly implement the first framing when the code is telling you to solve a different problem. Running it *before* the bugfix sub-flow means a wrong framing does not burn hypothesis budget.
+
+## Step 3.5 — Bugfix sub-flow (only when `bugfix: true`)
+
+**No-edit rule.** *This sub-flow produces evidence, hypotheses, and a proposed fix — never patches. Code edits belong in implement.*
+
+Skip this entire section when `bugfix: false`.
+
+1. **Collect symptom evidence.** Ask the user for logs, stack trace, or failing-test output. Store raw artifacts in the task folder at `evidence/<slug>.<ext>` (e.g. `evidence/stacktrace-login.txt`, `evidence/failing-test.log`) and link them from `exploration-bugfix.md` by relative path. **Do not paste long dumps into the prose** — linked artifacts only. This fences against context poisoning from multi-kilobyte log blocks.
+
+2. **Classify repro status** as one of `deterministic | intermittent | no-repro`:
+
+   - `deterministic` — an exact command, test, or step sequence reproduces the failure every time. Record the command.
+   - `intermittent` — the failure occurs sometimes. Require a **run matrix** (attempts × outcomes) and a suspected **flake axis** from `timing | state | environment | ordering`. This is the primary fence against retry storms.
+   - `no-repro` — the failure cannot yet be reproduced. Require a written **rationale** and the **next evidence source** to collect. Do not block progress; evidence may legitimately be unavailable.
+
+3. **Recent changes / Working reference** (regressions only). Record the last-known-good behavior (commit, release, date, or user report) and the most relevant code/config/env delta since then. Regressions are often diffable in minutes; this is a fast discriminator. Omit the section for fresh defects.
+
+4. **Form a single written root-cause hypothesis.** One active hypothesis at a time. Alongside it, inline the **acceptance proof** artifact: the specific failing test that will turn green, or the repro command whose output must change. The acceptance proof is what "fixed" means, written down before the fix.
+
+5. **Maintain a disproven-hypothesis ledger.** Append-only. Every entry has these five structured fields:
+
+   - `hypothesis` — the statement under test.
+   - `minimal_experiment` — the smallest read-only or runtime check that would falsify it.
+   - `observed_result` — what actually happened.
+   - `artifact_path` — relative path to the evidence that supports the conclusion.
+   - `conclusion` — why the hypothesis is disproven.
+
+   When a hypothesis falsifies, move it to the ledger and write the next one under "Root-cause hypothesis".
+
+6. **Hard stop at N=3 *distinct* falsified hypotheses.** State verbatim in the artifact and honor it here:
+
+   > *A rerun with no new hypothesis, no new instrumentation, and no new evidence does not count as a falsification and does not consume the budget.*
+
+   Only distinct falsifications — each backed by a new experiment, new instrumentation, or new evidence — count toward N.
+
+7. **On hard stop, emit an escalation bundle.** Append a `## Pause — reframe required` section to `exploration-bugfix.md` containing:
+
+   - **Evidence-packet summary** — what artifacts have been collected and what they show.
+   - **`repro_status`** — current classification (`deterministic | intermittent | no-repro`).
+   - **Disproven-hypothesis ledger reference** — point to the existing ledger section; do not duplicate its contents.
+   - **Most-likely-remaining branch** — pick exactly one from `code | environment | data | test-harness | architecture`.
+   - **One concrete ask of the user** — the single specific question or action that would unblock.
+
+   Then set `task.md` frontmatter `awaiting: user-input` and return to `hyper`. The hard stop is a speed bump with full context, not a lockout — the user can inspect the ledger and direct the next move.
+
+After Step 3.5 completes (hypothesis forms, survives, and a proposed fix is ready), continue to Step 4.
 
 ## Step 4 — Draft the approach
 
@@ -111,7 +187,9 @@ For **research** tasks: this section becomes **Findings & Recommendation**. Stru
 
 ## Step 5 — Write `exploration.md`
 
-Use the shape in `templates/exploration.md` (bundled with this skill). It has two sections — **Findings** and **Approach** — with subsections for files to change and out-of-scope, plus an optional **Open questions** section. For research tasks, rename **Approach** to **Findings & Recommendation** and omit the "Files to change" subsection.
+Use the shape in `templates/exploration.md` (bundled with this skill). It has two sections — **Findings** and **Approach** — with subsections for files to change and out-of-scope, plus an optional **Open questions** section.
+
+**Template routing.** When `task.md` has `bugfix: true`, use `templates/exploration-bugfix.md` instead of `templates/exploration.md`. The bugfix template has different sections (see `skills/hyper/reference/data-model.md` § exploration-bugfix.md). For research tasks, rename **Approach** to **Findings & Recommendation** and omit the "Files to change" subsection.
 
 If any assumption in the approach could change the design depending on the user's answer, add a `## Open questions` section listing one question per list item. Prefer surfacing the assumption as an explicit question over burying it as a hidden default — see the Key principles below.
 
@@ -182,4 +260,5 @@ Research tasks terminate at this phase (no plan/implement/verify/docs). By-id lo
 ## Additional resources
 
 - `../hyper/reference/gates.md` — shared gate protocol for open questions and approval replies.
-- `templates/exploration.md` — ready-to-fill template for the artifact this skill produces.
+- `templates/exploration.md` — ready-to-fill template for non-bugfix tasks.
+- `templates/exploration-bugfix.md` — ready-to-fill template when `task.md` has `bugfix: true`.

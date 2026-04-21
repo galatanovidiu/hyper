@@ -4,6 +4,7 @@ title: <title>
 phase: explore
 scope: unknown
 created: <YYYY-MM-DD>
+bugfix: false
 awaiting: null
 ---
 
