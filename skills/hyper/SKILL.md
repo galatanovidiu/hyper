@@ -201,10 +201,5 @@ If `task.md`'s `awaiting` and the blocked subtask's `awaiting` ever diverge, the
 ## Rules
 
 - **You dispatch, you don't implement.** This skill never writes code, runs tests, or reviews diffs.
-- **State lives in `task.md` frontmatter, and you own it.** Every mutation of `phase:` and `awaiting:` goes through this skill. Phase skills return verdicts; they do not write these two fields. `scope:` and `bugfix:` stay with `hyper-explore` — they are classification, not workflow state.
-- **Archive on terminal phases is yours too.** When a phase-driven transition lands on `phase: done`, run the archive snippet. Only `hyper-task`'s user-initiated cancellation archives outside this skill.
-- **Use the smallest workflow that fits.** If the intake heuristic says the request is micro-sized and the user does not want tracking, nudge once toward direct handling outside Hyper.
 - **The user is the approval gate.** Silence is not consent.
-- **Auto-advance only on user approval.** Approval-gated phases (`explore`, `plan`) auto-advance into the next Dispatch when they return `phase-complete`. Agent-completion phases (`implement`, `verify` → `docs`) go through a checkpoint so the user can inspect the result.
 - **Repair malformed state deliberately.** If `.hyper/` files are malformed or contradictory, stop and consult `reference/state-recovery.md` rather than guessing.
-- **Terminal tasks stay terminal.** `done` and `cancelled` don't re-run from here. If the user wants to reopen a cancelled task, they clear the cancel fields manually.

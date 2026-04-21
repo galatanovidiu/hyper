@@ -233,7 +233,5 @@ On a user reply that requests changes, revise `exploration.md` (rewrite-over-pat
 ## Rules
 
 - **Scan before asking.** Many "ambiguous" goals become clear after reading the code for two minutes. Don't fire off questions the codebase would answer.
-- **One question per message.** Use a direct question when there is one real answer to elicit; if there are multiple plausible answers, recommend one and explain why.
 - **Facts and design are separate.** Findings are what *is*. Approach is what we'll *do*. Don't mix them.
-- **Approval is explicit.** Agent judgment is not a substitute for "yes, go".
 - **Length proportional to scope.** A `quick` exploration.md fits on one screen. A `feature` one is a page or two. A `research` one is as long as the evidence demands.

@@ -178,14 +178,10 @@ Never present unverified teammate output to the user.
 
 **Save verified artifact** named `team-{providers}-{task-type}.md`. If running inside a Hyper task dir, save there (e.g., `.hyper/tasks/T22-foo/team-codex-code-review.md`). Otherwise save to `.hyper/team/` alongside the raw output.
 
-## Rules and key principles
+## Rules
 
-- **Verify everything.** Every finding is checked against the codebase before the user sees it. This is the single non-negotiable gate.
-- **STOP rule.** Never auto-apply fixes from reviews. Present findings, let the user decide.
 - **Reviews are adversarial by default.** No "gentle review" mode. The point is to find problems.
-- **Provider is always explicit.** If unclear, ask. Never guess.
 - **Self-delegation requires explicit confirmation.** Always warn when lead = teammate.
-- **Same prompt for all providers.** Output differences should come from the model, not the prompt.
 - **Provenance on every finding.** Multi-provider runs always attribute which provider said what.
 - **Lead breaks ties.** When providers disagree, the lead reasons through it with project context.
 - **Never invent findings.** If verification reveals a hallucination, reject it — don't replace with a made-up alternative.

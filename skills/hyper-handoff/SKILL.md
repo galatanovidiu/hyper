@@ -81,5 +81,4 @@ and continue. Reference the files to read and the first action to take.>
 
 - **Don't duplicate.** If it's in `task.md`, `exploration.md`, `spec.md`, any subtask file, or `checks.md`, don't repeat it here. Reference it.
 - **Be specific.** "The user wanted something more secure" is not useful. "The user said bcrypt is required and argon2id is out of scope" is useful.
-- **Uncommitted work gets listed.** The next session needs to know what's dirty.
 - **One paragraph for the next step.** Don't write a plan; write a starting point.
