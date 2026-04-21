@@ -178,9 +178,9 @@ After first use, your project has:
   tasks/              # active tasks
     T1-add-login-page/
       task.md         # goal + current phase (optional why; `bugfix: true/false` flag)
-      exploration.md  # findings + approach (approved) — or `exploration-bugfix.md` for bugfix tasks
+      exploration.md  # findings + approach (approved); bugfix tasks keep the same filename but use a root-cause-first body shape
       spec.md         # acceptance criteria + subtask index + out-of-scope + edge cases
-      T1.1-wire-login-endpoint.md   # subtask (feature scope): status, depends, what/why/done-when, worker's completion record
+      T1.1-wire-login-endpoint.md   # subtask (feature scope): id, parent, status, depends, awaiting, what/why/done-when, worker's completion record
       T1.2-login-form.md            # subtask
       checks.md       # tests, review, qa, docs results
       handoff.md      # optional session handoff snapshot
@@ -226,7 +226,7 @@ Phases are skipped by scope, never by agent judgment. Classification happens onc
 
 ### Bugfix detection
 
-Independently of scope, `explore` also checks whether the work is a bugfix or regression. If keywords (*bug, fix, regression, crash, failing …*) or attached artifacts (stack traces, failing-test output, issue links) suggest one, Hyper asks a single confirmation question and, on *yes*, sets `bugfix: true` on `task.md` and routes to a root-cause-first sub-flow. The artifact becomes `exploration-bugfix.md` instead of `exploration.md`, with symptom evidence, a `repro_status` classification (`deterministic | intermittent | no-repro`), a single active hypothesis with a named acceptance proof, and a structured disproven-hypothesis ledger. After 3 *distinct* falsified hypotheses the sub-flow hard-stops with an escalation bundle so you can reframe instead of letting the agent keep guessing.
+Independently of scope, `explore` also checks whether the work is a bugfix or regression. If keywords (*bug, fix, regression, crash, failing …*) or attached artifacts (stack traces, failing-test output, issue links) suggest one, Hyper asks a single confirmation question and, on *yes*, sets `bugfix: true` on `task.md` and routes to a root-cause-first sub-flow. The artifact still lives at `exploration.md`, but its body switches to the bugfix structure: symptom evidence, a `repro_status` classification (`deterministic | intermittent | no-repro`), a single active hypothesis with a named acceptance proof, and a structured disproven-hypothesis ledger. After 3 *distinct* falsified hypotheses the sub-flow hard-stops with an escalation bundle so you can reframe instead of letting the agent keep guessing.
 
 ## Design philosophy
 

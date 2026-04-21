@@ -4,6 +4,8 @@ This repo is **Hyper**: a collection of [Agent Skills](https://agentskills.io) t
 
 See `README.md` for the user-facing overview and install instructions.
 
+Unless stated otherwise, the normative rules here are for the Hyper suite (`skills/hyper*`) and Hyper-owned docs/artifacts. Bundled companion skills and repo-local dev helpers can have their own structure when they solve different problems.
+
 ## Documentation
 
 - `README.md` is user-facing. It is the single place for human-readable documentation: overview, install, usage, skill list.
@@ -13,6 +15,8 @@ See `README.md` for the user-facing overview and install instructions.
 
 ## What lives where
 
+Hyper skills generally follow this layout:
+
 ```
 skills/<name>/
   SKILL.md           # required — the skill entry point
@@ -20,7 +24,9 @@ skills/<name>/
   reference/         # optional — reference material loaded on demand
 ```
 
-Hyper installs as a suite — `install-hyper` symlinks every skill together, never one alone. So a Hyper skill may reference files in a sibling Hyper skill (e.g. `skills/hyper-task/SKILL.md` pointing at `skills/hyper/reference/data-model.md`) when that keeps a single source of truth. The constraint is suite-internal: don't reference anything outside `skills/`.
+This layout is normative for the Hyper suite. Bundled companion skills may use a different bundled-file structure when their own workflow needs it.
+
+Hyper installs as a suite. In user projects that means copying or symlinking the full `skills/` folder together, never one Hyper skill alone. The repo-local `install-hyper` helper exists only for the development loop; it is not part of the distributed Hyper package. Because the suite ships together, a Hyper skill may reference files in a sibling Hyper skill (e.g. `skills/hyper-task/SKILL.md` pointing at `skills/hyper/reference/data-model.md`) when that keeps a single source of truth. The constraint is suite-internal: don't reference anything outside `skills/`.
 
 ## User-facing vs internal skills
 
@@ -33,7 +39,7 @@ When adding a new skill, decide which category it belongs to and set the frontma
 
 ## Agent Skills spec constraints
 
-When editing any `SKILL.md`, enforce:
+When editing a Hyper `SKILL.md` (`skills/hyper*`), enforce:
 
 **Frontmatter**
 - `name`: lowercase letters, numbers, hyphens only. ≤64 chars. Must not contain the reserved words `anthropic` or `claude`.
@@ -41,10 +47,12 @@ When editing any `SKILL.md`, enforce:
 - Other fields (`user-invocable`, `allowed-tools`, etc.) only when there's a clear reason.
 
 **Body**
-- Keep under 500 lines. Move detail into bundled `templates/` or `reference/` files that `SKILL.md` points to.
+- Keep under 500 lines. Move detail into bundled `templates/` or `reference/` files that the Hyper `SKILL.md` points to.
 - Reference bundled files one level deep only (`templates/task.md` — never `templates/subdir/task.md`).
 - Write for an agent, not a human reader. Imperative steps, concrete examples, no historical narrative.
 - Don't explain things a capable agent already knows. Every token competes with conversation context.
+
+The bundled `team` companion skill is intentionally not forced into the same package layout; its nested `references/` tree is part of its own design.
 
 ## Cross-references between Hyper skills
 
@@ -72,7 +80,7 @@ Hyper targets **any** agent that supports the Agent Skills spec, not just Claude
 
 ## When touching the data model
 
-`skills/hyper/reference/data-model.md` is authoritative for `.hyper/` layout, `task.md` frontmatter, subtask file shape, and artifact filenames. Any change there needs matching updates in the skills that read/write those artifacts (`hyper`, `hyper-task`, `hyper-explore`, `hyper-plan`, `hyper-implement`, `hyper-worker`, `hyper-verify`, `hyper-docs`, `hyper-backlog`, `hyper-handoff`) and in the relevant templates.
+`skills/hyper/reference/data-model.md` is authoritative for Hyper-owned `.hyper/` layout, `task.md` frontmatter, subtask file shape, and artifact filenames. Companion-skill subtrees such as `.hyper/team/` are documented by their owning skill/docs. Any change there needs matching updates in `README.md`, the Hyper skills that read/write those artifacts (`hyper`, `hyper-task`, `hyper-explore`, `hyper-plan`, `hyper-implement`, `hyper-worker`, `hyper-verify`, `hyper-docs`, `hyper-backlog`, `hyper-handoff`, `hyper-retro`), and the relevant templates.
 
 ## Testing changes locally
 
@@ -82,6 +90,20 @@ There's no test suite — the "tests" are exercising Hyper end-to-end on a real 
 2. Open Claude Code (or another agent) in a throwaway project.
 3. Invoke `/hyper <some task>` and walk through the phases.
 4. If a skill triggers wrong or its instructions go off the rails, read the failed session carefully before editing — often it's the description that's misaligned, not the body.
+
+## Design rules
+
+These are the invariants that keep Hyper small. Apply them to every edit, especially when adding surface area feels easier than restructuring.
+
+- **Single source of truth.** Every contract (table, enum, snippet, mechanic) has exactly one file that owns it. Every other mention is a pointer, not a copy. *Test: if you change the rule in one place, does another file silently disagree? If yes, one of them has to go.*
+- **No dead surface area.** If no skill reads or writes a field, value, artifact, or code path, delete it. Unused options mislead more than they enable. *Test: grep the string across `skills/`. Zero producers or zero consumers → remove it.*
+- **No restatement sections.** `SKILL.md` bodies don't carry "Key principles", "Additional resources", or "Rules" bullets that repeat the flow. `## Rules` lists only novel operational constraints a careful reader would otherwise miss. *Test: could a reader who scanned the body have inferred this bullet? If yes, drop it.*
+- **One artifact name per concept.** Branches live inside the artifact, not in the filename. `exploration.md` carries the bugfix body when needed; there is no `exploration-bugfix.md`. *Test: would a downstream skill need an OR-clause to find this file? If yes, collapse to one name.*
+- **Scope every section to where it applies.** If a subsection is only meaningful in one scope or branch, state the condition and keep it out of the others. *Test: does this section exist on artifacts where nobody reads it? If yes, narrow the scope.*
+- **Pure-producer phase skills.** Phase skills produce an artifact and return a verdict; they don't mutate `task.md` phase/awaiting, decide transitions, or patch state owned by another skill. `hyper` interprets the verdict and owns the transition. *Test: does this skill both produce output and decide where work goes next? If yes, split.*
+- **Shared mechanics live in `reference/`.** Copy-pasted multi-line snippets across skills (archive moves, bootstrap blocks, validation recipes) go into a reference file; call sites become one-liners. *Test: is the same block in two `SKILL.md` files? If yes, extract.*
+
+When an edit grows the skill set — more files, more filename variants, more enum values, more cross-references — check whether it's enforcing one of these rules or violating one.
 
 ## Anti-patterns
 
