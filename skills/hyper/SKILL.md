@@ -119,6 +119,18 @@ Given task id `T<N>`:
 
 `awaiting` is the single source of truth for whether a gate is open. **You own every mutation of `task.md`'s `phase:` and `awaiting:` fields.** Phase skills never write them — they write their artifact and return a verdict. The full contract lives in `reference/gates.md`; this section implements the `hyper` side.
 
+**Precondition — pending verify checkpoint choice.** Before routing `phase: docs`, check whether the task is sitting at the `verify -> docs` checkpoint after a non-clean verify pass:
+
+- `task.md` has `phase: docs`
+- `checks.md` exists with `**Overall:** needs-changes`
+- `checks.md` does **not** yet have a `## docs` section
+
+In that state, treat the next user reply as the unresolved checkpoint choice rather than as a docs request:
+
+- A reply like `continue to docs`, `continue`, or equivalent means keep `phase: docs` and continue into the routing table below.
+- A reply like `send it back to implement`, `remediate first`, `go back to implement`, or equivalent means set `phase: implement` and re-enter **Dispatch phase**.
+- A reply like `stop`, `hold`, or `not yet` means leave the state as-is and stop without dispatching docs.
+
 Read the task's `phase` field and route:
 
 | `phase` | Next step |
@@ -157,7 +169,11 @@ The phase skill ends its dispatch by returning exactly one verdict plus a short 
 3. If the transition is terminal (`done`), run the archive snippet from `reference/archive.md`, announce completion, and stop.
 4. Otherwise, apply the checkpoint rule:
    - **No-checkpoint transitions** (`explore → plan`, `explore → implement` for quick, `plan → implement`): re-enter **Dispatch phase** directly with the new `phase:` value. The user already approved at the previous gate; no extra confirmation.
-   - **Checkpoint transitions** (`implement → verify`, `verify → docs` for feature): ask *"T<N> is ready for <next phase>. Continue?"* and stop. When the user says yes, re-run this skill.
+   - **Checkpoint: `implement → verify`.** Ask *"T<N> implementation complete. Continue to verify?"* and stop. When the user says yes, re-run this skill.
+   - **Checkpoint: `verify → docs` for feature.** Read `checks.md` and inspect `**Overall:**`.
+     - If it is `pass`, ask *"T<N> verify passed. Continue to docs?"* and stop.
+     - If it is `needs-changes`, ask a remediation-aware prompt that names the verify outcome and offers: continue to docs, send it back to implement for remediation, or stop and decide manually. Stop after presenting the options.
+     - If `checks.md` is missing or the overall verdict cannot be read, stop and consult `reference/state-recovery.md` rather than guessing.
 
 ### Verdict: `redirect target: <phase>`
 

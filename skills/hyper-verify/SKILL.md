@@ -216,7 +216,7 @@ The overall verdict is computed, not retyped. It is the worst of the three secti
 Every dispatch ends with one verdict. Shared contract in `../hyper/reference/gates.md`. Verify emits:
 
 - `awaiting-input` — opt-out gate prompt on the first dispatch of a verify run. The summary is the one-message prompt (Tests / Review / QA with the reply examples). `hyper` sets `task.md` `awaiting: user-input` and relays the prompt. On the next user reply, `hyper` clears `awaiting` and re-dispatches `hyper-verify`; the re-dispatch parses the reply and runs the non-skipped sections without re-prompting. This is the only `awaiting-input` verify emits — sections themselves do not gate mid-run.
-- `phase-complete` — overall `pass` or `needs-changes`. `hyper` reads `scope:` and advances per its transition table: `docs` for feature (with user checkpoint), `done` + archive for quick. You do not write `phase:` or run the archive.
+- `phase-complete` — overall `pass` or `needs-changes`. Your summary should report the verify outcome (`verify: pass` for a clean run, or `verify: needs-changes` with the dominant warning context when applicable), not pre-frame the next phase. `hyper` reads `scope:` and advances per its transition table: `docs` for feature (with the checkpoint prompt), `done` + archive for quick. You do not write `phase:` or run the archive.
 - `redirect target: implement` — overall `blocked`. `hyper` sets `phase: implement` and `awaiting: user-input`.
 
 ## Rules
