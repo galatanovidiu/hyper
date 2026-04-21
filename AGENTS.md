@@ -11,7 +11,7 @@ Unless stated otherwise, the normative rules here are for the Hyper suite (`skil
 - `README.md` is user-facing. It is the single place for human-readable documentation: overview, install, usage, skill list.
 - `AGENTS.md` (this file) is agent-facing. Rules, constraints, and conventions for agents editing this repo.
 - Additional human-readable docs go under `docs/`. Create the folder when a topic outgrows the README; link from the README.
-- Skill bodies (`skills/<name>/SKILL.md`) are agent-facing — do not treat them as user documentation.
+- Everything under `skills/` — `SKILL.md` bodies, `templates/`, `reference/` — is skill source, not documentation. Do not edit these files during a docs phase or as a "while I'm here" cleanup. Changes to files under `skills/` happen only when a task explicitly targets them.
 
 ## What lives where
 
