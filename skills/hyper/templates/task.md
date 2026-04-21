@@ -3,7 +3,7 @@ id: T<N>
 title: <title>
 phase: explore
 scope: unknown
-created: <YYYY-MM-DD>
+created: <YYYY-MM-DDTHH:MM:SS>
 bugfix: false
 awaiting: null
 ---

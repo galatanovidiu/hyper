@@ -33,7 +33,7 @@ id: T<N>
 title: <title>
 phase: <current phase or safest earlier phase>
 scope: <quick|feature|research|unknown>
-created: <ISO date>
+created: <local datetime in YYYY-MM-DDTHH:MM:SS form>
 awaiting: null
 ---
 ```
@@ -105,7 +105,7 @@ Recovery:
 
 An interrupted verify pass can leave `checks.md` with some sections missing. `hyper-implement`'s remediation preflight reads the overall verdict at the top and the section verdicts below it; missing sections cause undefined behavior.
 
-Signs: `**Overall:**` header present but one of `## tests`, `## review`, `## qa` is missing; or a section exists with no verdict line. Missing `## docs` is *not* malformed — that section is appended by the docs phase and is expected to be absent during and after verify.
+Signs: `**Overall:**` header present but one of `## tests`, `## review`, `## qa` is missing; or a section exists with no verdict line. Missing `## docs` is *not* malformed — that section is appended by the docs phase and is expected to be absent during and after verify. A review-blocked pass that still writes `## qa` as `**Verdict:** blocked` with a note that QA did not run is normal and should not be treated as half-written.
 
 Recovery:
 

@@ -84,7 +84,8 @@ Steps:
    title: <title>
    phase: deferred
    scope: unknown
-   created: <today's ISO date>
+   created: <current local datetime in YYYY-MM-DDTHH:MM:SS form, e.g. 2026-04-21T14:35:00>
+   bugfix: false
    awaiting: null
    ---
    ```
@@ -108,7 +109,7 @@ Steps:
 3. Ask for a one-line reason. *"Why cancel T4? (one line — saved with the task for history)"* Wait for the answer.
 4. Update the task's frontmatter:
    - `phase: cancelled`
-   - `cancelled_at: <today's ISO date>`
+   - `cancelled_at: <current local datetime in YYYY-MM-DDTHH:MM:SS form, e.g. 2026-04-21T14:35:00>`
    - `cancelled_reason: <user's reason>`
    - Clear `awaiting` if set (`awaiting: null`).
 5. Archive the folder per `../hyper/reference/archive.md`.

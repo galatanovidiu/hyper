@@ -1,20 +1,20 @@
 ---
 name: hyper-code-review
 description: >
-  Reviews a diff through three ordered sub-passes — spec compliance, bug-finding, and standards compliance — followed by a validation step that drops unconfirmed findings. Produces a single `## review` markdown block with a `pass | needs-changes | blocked` verdict. Works in two modes: embedded (invoked by `hyper-verify` against the current task's diff, output inlined into `checks.md`) and standalone (user-invoked, creates a `code-review`-scoped task for an arbitrary diff — any branch, PR, staged change, or set of files — and can be promoted to a bugfix task when findings warrant). Cross-agent: parallelism is opportunistic, not required. Keywords: hyper, code review, review, bugs, security, standards, spec compliance, validation, diff, PR review.
+  Reviews a diff through three ordered sub-passes — spec compliance, bug-finding, and standards compliance — followed by a validation step that drops unconfirmed findings. Produces a single `## review` markdown block with a `pass | needs-changes | blocked` verdict. Works in two modes: embedded (invoked by `hyper-verify` against the current task's diff, output inlined into `checks.md`) and standalone (user-invoked, creates and archives a `code-review`-scoped task as the durable record for an arbitrary diff — any branch, PR, staged change, or set of files — and can later promote critical findings into a bugfix task when warranted). Cross-agent: parallelism is opportunistic, not required. Keywords: hyper, code review, review, bugs, security, standards, spec compliance, validation, diff, PR review.
 user-invocable: true
 ---
 
 # hyper-code-review
 
-You run a structured code review of a diff. Three ordered passes plus a validation step, one markdown block out, one verdict. The review has no opinions on style or speculative concerns — only spec drift, real bugs, and documented-rule violations.
+You run a structured code review of a diff. Three ordered passes plus a validation step, one markdown block out. Embedded mode returns a verdict to its caller; standalone mode archives the review record and reports the outcome. The review has no opinions on style or speculative concerns — only spec drift, real bugs, and documented-rule violations.
 
 ## Two modes
 
 This skill runs in one of two modes. Pick the mode from how you were invoked, not from a flag on disk.
 
 - **Embedded.** Invoked by `hyper-verify` as part of the verify phase of an existing Hyper task. A caller hands you the task folder path and the diff scope; you write the `## review` block directly into that task's `checks.md` (overwriting any prior `## review` section) and return a short summary plus the rolled-up verdict. You never create a task, never talk to the user, never write `task.md`. The verify skill owns the opt-out gate, the rollup across tests/review/QA, and the verdict returned to `hyper`.
-- **Standalone.** A user invoked this skill directly to review some piece of code. You create a new task with `scope: code-review` and `phase: review`, run the review against whatever the user pointed at (current diff, PR, branch comparison, staged files, specific paths), write `checks.md` in the task folder, and return a verdict to `hyper`. The user then decides whether to archive the review, keep it open, or promote it to a bugfix task (see **Promotion to bugfix** below).
+- **Standalone.** A user invoked this skill directly to review some piece of code. You create a new task with `scope: code-review` and `phase: review`, run the review against whatever the user pointed at (current diff, PR, branch comparison, staged files, specific paths), write `checks.md` in the task folder, and archive that task as the durable review record. If the user later wants a follow-up bugfix task, this skill can seed one from the critical findings (see **Promotion to bugfix** below).
 
 Mode selection:
 
@@ -62,8 +62,8 @@ Always read `.hyper/rules.md` (if present), project `AGENTS.md`, `~/AGENTS.md` a
 
 ### Standalone mode
 
-- A task folder at `.hyper/tasks/T<N>-<slug>/` containing `task.md` (with `scope: code-review`, `phase: review`) and `checks.md` with only a `## review` section. No `exploration.md`, no `spec.md`, no subtask files, no `## tests` or `## qa`.
-- A verdict to `hyper` per `../hyper/reference/gates.md`: `phase-complete` (review written, user can read and decide) or `awaiting-input` (findings are blockers and you are asking the user what to do next — see **Post-review prompt** below).
+- An archived task folder at `.hyper/archive/T<N>-<slug>/` containing `task.md` (with `scope: code-review`, `phase: done`, `bugfix: false`) and `checks.md` with only a `## review` section. No `exploration.md`, no `spec.md`, no subtask files, no `## tests` or `## qa`.
+- No verdict is returned to `hyper` in standalone mode. This skill owns the archive step for the review record it created.
 
 ## Before any pass — look at the diff
 
@@ -290,41 +290,24 @@ Fresh dispatch (`/hyper-code-review …` with no existing task in play):
 2. **Derive a title.** Short human-readable description of the review target. Examples: *"Review PR #412"*, *"Review uncommitted diff"*, *"Review feat/payments branch vs main"*, *"Review src/auth/ files"*.
 3. **Allocate a task id.** Scan `.hyper/tasks/` and `.hyper/archive/` for the highest `T<N>` across both and use `T<N+1>`. Never reuse ids.
 4. **Create the task folder.** `.hyper/tasks/T<N>-<slug>/` with a kebab slug derived from the title (lowercase, hyphens, ~40 chars).
-5. **Write `task.md`.** Frontmatter: `id`, `title`, `scope: code-review`, `phase: review`, `created` (today's ISO date), `awaiting: null`. Body: one paragraph naming the review target (the exact diff command or PR number) and, if the user provided explicit acceptance criteria, a short `## Contract` section capturing them verbatim.
+5. **Write `task.md`.** Frontmatter: `id`, `title`, `scope: code-review`, `phase: review`, `created` (current local datetime in `YYYY-MM-DDTHH:MM:SS` form, e.g. `2026-04-21T14:35:00`), `bugfix: false`, `awaiting: null`. Body: one paragraph naming the review target (the exact diff command or PR number) and, if the user provided explicit acceptance criteria, a short `## Contract` section capturing them verbatim.
 6. **Run the review.** Follow passes 2a → 2b → 2c → validation above. 2a is skipped (or uses the `## Contract`) since there is no `spec.md`.
 7. **Write `checks.md`.** Top-level header plus the single `## review` block as shown under **Writing the `## review` block**.
-8. **Return a verdict to `hyper`.** See **Post-review prompt** for the exact verdict logic.
+8. **Archive the review task and report the outcome.** See **Standalone completion** below.
 
-### Post-review prompt
+### Standalone completion
 
-After the review is written, surface the outcome and offer the user a next step. The verdict you return to `hyper` depends on the review outcome:
+After the review is written, archive the standalone review task immediately. It is a durable review record, not an in-progress workflow task.
 
-- **Review verdict `pass`** — return `phase-complete` with summary: *"T<N> review complete. No findings. Ready to archive."* `hyper` transitions the task to `done` and archives it.
-- **Review verdict `needs-changes` or `blocked`** — return `awaiting-input` with this prompt:
-
-  ```
-  T<N> review complete.
-
-    <one-line summary: X critical, Y warning, Z note across <sub-passes>>
-
-  What would you like to do?
-
-    1. Promote to a bugfix task — create a new task seeded from the critical findings
-       (recommended when the critical findings point at a real bug to fix).
-    2. Keep T<N> open for manual follow-up.
-    3. Archive T<N> anyway — the review is the record; you'll handle the fixes separately.
-  ```
-
-  On reply:
-  - Option 1 (**promote**) → run **Promotion to bugfix** below. Return `phase-complete` after promotion so the code-review task archives. The new bugfix task is a separate `T<N+1>`.
-  - Option 2 (**keep open**) → return `phase-complete`. The task archives to `done`; the user can still read `checks.md` any time (archived tasks stay on disk).
-  - Option 3 (**archive anyway**) → same as option 2.
-
-  (Options 2 and 3 collapse on re-read — the task goes to `done` regardless. The distinction is for the user's framing, not a persisted state difference.)
+- Set `task.md` `phase: done`.
+- Run the archive move so the folder lives under `.hyper/archive/`.
+- Then surface the outcome to the user:
+  - **Review verdict `pass`** — *"T<N> review complete. No findings. Review archived."*
+  - **Review verdict `needs-changes` or `blocked`** — *"T<N> review complete. <one-line summary>. Review archived. If you want, I can promote the critical findings into a bugfix task."*
 
 ### Promotion to bugfix
 
-When the user picks option 1 in the post-review prompt, create a new bugfix task seeded from the code-review findings.
+When the user explicitly asks to promote a standalone review's critical findings, create a new bugfix task seeded from the archived code-review record.
 
 1. Allocate the next task id (`T<M>`) by the same scan rule used in step 3 above.
 2. Create `.hyper/tasks/T<M>-<slug>/task.md` with frontmatter:
@@ -333,13 +316,13 @@ When the user picks option 1 in the post-review prompt, create a new bugfix task
    - `scope: unknown` (explore will classify)
    - `phase: explore`
    - `bugfix: true`
-   - `created: <today>`
+   - `created: <current local datetime in YYYY-MM-DDTHH:MM:SS form, e.g. 2026-04-21T14:35:00>`
    - `awaiting: null`
 3. Body: one paragraph naming the source review (`Seeded from code review T<N>. See .hyper/archive/T<N>-<slug>/checks.md for the full review.`) plus a copy of the critical findings (not warnings or notes) as the symptom evidence. If the findings already cite file:line references, preserve them.
-4. Announce: *"Promoted to T<M> — <title>. Starting explore phase."*
-5. Return `phase-complete` for the code-review task (T<N>). `hyper` will archive T<N> and then route T<M> into explore on the next invocation.
+4. Announce: *"Promoted T<N> review findings to T<M> — <title>. Starting explore phase."*
+5. Leave the archived code-review task in place as the source record. Do not reopen it.
 
-The code-review task always archives on promotion — it has served its purpose. The bugfix task is independent work with its own full phase flow (`explore → …`).
+The code-review task stays archived on promotion — it has served its purpose. The bugfix task is independent work with its own full phase flow (`explore → …`).
 
 ## Embedded mode — step by step
 

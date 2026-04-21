@@ -99,7 +99,7 @@ Otherwise:
 ```markdown
 ## tests
 
-**Verdict:** pass | fail
+**Verdict:** pass | blocked
 **Commands run:**
 - `<command>` — <exit code>, <brief summary: N tests, X passed, Y failed>
 
@@ -107,7 +107,7 @@ Otherwise:
 <If no test runner: say so explicitly — "Project has no test suite." — and do not fake a pass.>
 ```
 
-**If tests fail because of the current change:** record the failures in `checks.md` and set the overall verdict to `blocked`. Do not attempt fixes in verify — on `blocked`, you return `redirect target: implement` and the implement phase reads `checks.md` as its brief.
+**If tests fail because of the current change:** record the failures in `checks.md` and mark the `## tests` section `blocked`. Do not attempt fixes in verify — on `blocked`, you return `redirect target: implement` and the implement phase reads `checks.md` as its brief.
 
 **If tests fail for reasons unrelated to the change:** append a new entry to `.hyper/backlog.md`. Format: a `## B<N> — <short title>` heading (e.g. `## B<N> — Pre-existing failure in auth.test.ts`) followed by a body containing the test name, error message, and a note that it's pre-existing. Allocate `B<N>` by scanning `backlog.md` for the highest existing `^## B\d+ — ` heading and adding 1 (bootstrap with a `# Backlog` heading if missing). Don't fix inline. Record the pre-existing failures in `checks.md` but mark the verdict `pass` if current-change tests pass.
 
@@ -141,7 +141,17 @@ On harnesses with reliable parallel subagent dispatch (Claude Code and any agent
 
 - `pass` — continue to Section 3 (QA).
 - `needs-changes` — continue to Section 3 (QA). The overall rollup will surface the warnings to the user without blocking.
-- `blocked` — stop the phase here. Section 3 (QA) does not run on a blocked review because a remediation pass will bring the task back to verify anyway. Return verdict `redirect target: implement` to `hyper`. `hyper` sets `phase: implement` and `awaiting: user-input`. The next implement pass uses `checks.md` as its brief, fixes the blockers, and returns to verify.
+- `blocked` — before returning, still write a `## qa` section so `checks.md` stays structurally complete:
+
+  ```markdown
+  ## qa
+
+  **Verdict:** blocked
+
+  QA not run because review already blocked this verify pass. Re-run verify after remediation.
+  ```
+
+  Then return verdict `redirect target: implement` to `hyper`. `hyper` sets `phase: implement` and `awaiting: user-input`. The next implement pass uses `checks.md` as its brief, fixes the blockers, and returns to verify.
 
 **Verify does not re-review.** You do not second-guess `hyper-code-review`'s findings, add severities, or re-run any sub-pass yourself. If you believe the review missed something, record it as a note under a `### Verify notes` sub-section after `hyper-code-review`'s output — but do not modify the findings list or verdict it produced.
 
@@ -174,7 +184,7 @@ For each acceptance criterion in `spec.md` (or the implicit ones from a quick ta
 ```markdown
 ## qa
 
-**Verdict:** pass | issues-found | not-applicable
+**Verdict:** pass | blocked | not-applicable
 
 | Criterion | Result | Evidence |
 |-----------|--------|----------|
@@ -185,7 +195,7 @@ For each acceptance criterion in `spec.md` (or the implicit ones from a quick ta
 <If failures: describe repro steps and expected vs. actual.>
 ```
 
-**If QA finds failures:** treat them like critical review findings — stop, return verdict `redirect target: implement` to `hyper`, and point to the QA section in `checks.md` in your summary.
+**If QA finds failures:** set the `## qa` section verdict to `blocked`, then treat them like critical review findings — stop, return verdict `redirect target: implement` to `hyper`, and point to the QA section in `checks.md` in your summary.
 
 ## Writing `checks.md`
 

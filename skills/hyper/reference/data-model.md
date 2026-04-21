@@ -39,7 +39,7 @@ id: T1
 title: Add login page
 phase: explore
 scope: feature
-created: 2026-04-17
+created: 2026-04-17T09:14:32
 awaiting: null
 ---
 
@@ -58,12 +58,12 @@ artifacts below say how it gets done.>
 |-------|--------|---------|
 | `id` | `T1`, `T2`, … | Sequential integer. First task is `T1`. |
 | `title` | short string | Human-readable title, used in the folder name and headings. |
-| `phase` | `deferred` · `explore` · `plan` · `implement` · `verify` · `docs` · `review` · `done` · `cancelled` | Current phase. **Owned by `hyper`** (and by `hyper-task` on cancellation). Phase skills return verdicts; they do not write this field. `done` and `cancelled` are terminal. `deferred` means the task exists but the user hasn't started it yet (created by `hyper-task`). `review` is only used by `scope: code-review` tasks and is handled by `hyper-code-review`. |
+| `phase` | `deferred` · `explore` · `plan` · `implement` · `verify` · `docs` · `review` · `done` · `cancelled` | Current phase. **Owned by `hyper`** (and by `hyper-task` on cancellation, plus `hyper-code-review` when it archives a standalone code-review task it created directly). Phase skills return verdicts; they do not write this field. `done` and `cancelled` are terminal. `deferred` means the task exists but the user hasn't started it yet (created by `hyper-task`). `review` is only used by `scope: code-review` tasks and is handled by `hyper-code-review`. |
 | `scope` | `quick` · `feature` · `research` · `code-review` · `unknown` | Set during explore by `hyper-explore`, or set at task creation by `hyper-code-review` for standalone code-review tasks. Drives which phases run. `unknown` before explore classifies it. Phase-owned classification, not workflow state. |
-| `created` | ISO date | When the task was created. |
+| `created` | Local datetime in `YYYY-MM-DDTHH:MM:SS` form (e.g. `2026-04-17T09:14:32`) | When the task was created. |
 | `bugfix` | `true` · `false` | Set by `hyper-explore` when the task is a bugfix or regression. Routes `hyper-explore` to the root-cause-first sub-flow. Defaults to `false`; detection lives in `hyper-explore` Step 1. Missing field is treated as `false` for back-compat. Phase-owned classification, not workflow state. |
 | `awaiting` | `null` · `user-approval` · `user-input` | When set, the gate is open. **Owned by `hyper`.** `hyper` sets and clears this field based on the verdict returned by the phase skill (`awaiting-approval` → `user-approval`, `awaiting-input` → `user-input`, `phase-complete` → clear). `hyper` pauses normal routing while the gate is open, surfaces the gate on blank / generic resume turns, and routes the next substantive reply back to the current phase skill. See `reference/gates.md` for the verdict contract. |
-| `cancelled_at` | ISO date | Present only when `phase: cancelled`. Date the task was cancelled. |
+| `cancelled_at` | Local datetime in `YYYY-MM-DDTHH:MM:SS` form (e.g. `2026-04-17T09:14:32`) | Present only when `phase: cancelled`. When the task was cancelled. |
 | `cancelled_reason` | short string | Present only when `phase: cancelled`. One-line reason. |
 
 ### Phases by scope
@@ -229,20 +229,22 @@ Written during verify and docs phases. Verify writes the first three sections in
 **Date:** <YYYY-MM-DD>
 
 ## tests
-<test runner output summary, pass/fail, command used>
+**Verdict:** pass | blocked | skipped — user opted out
+<test runner output summary, commands run, or opt-out note>
 
 ## review
-Verdict: pass | needs-changes | blocked
+**Verdict:** pass | needs-changes | blocked | skipped — user opted out
 <findings with file:line refs>
 
 ## qa
-<Verdict + evidence table, or not-applicable with rationale>
+**Verdict:** pass | blocked | not-applicable | skipped — user opted out
+<evidence table, not-applicable rationale, opt-out note, or "not run because review already blocked this verify pass">
 
 ## docs
 <which docs were updated or rationale for no update>
 ```
 
-Missing `## docs` means the docs phase hasn't completed yet. Missing one of the earlier sections means verify hasn't completed yet.
+Missing `## docs` means the docs phase hasn't completed yet. Missing one of the earlier sections means verify hasn't completed yet. A review-blocked verify pass is still complete when `## qa` is present with `**Verdict:** blocked` and a one-line note that QA did not run because review already blocked the pass.
 
 The top-level `**Overall:**` verdict is computed, not authored independently: it is the worst of the `tests`, `review`, and `qa` verdicts, ranked `blocked` > `needs-changes` > `pass` (QA `not-applicable` counts as `pass`; a `skipped — user opted out` verdict on any of the three sections also counts as `pass`). See `hyper-verify` for the rule.
 

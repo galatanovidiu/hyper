@@ -5,7 +5,7 @@
 
 ## tests
 
-**Verdict:** pass | fail
+**Verdict:** pass | blocked
 **Commands run:**
 - `<command>` — exit <N>, <brief summary>
 
@@ -65,13 +65,14 @@ User opted out at verify start.
 
 ## qa
 
-**Verdict:** pass | issues-found | not-applicable
+**Verdict:** pass | blocked | not-applicable
 
 | Criterion | Result | Evidence |
 |-----------|--------|----------|
 | <criterion from spec> | pass / fail | <command output, screenshot path, HTTP response> |
 
 <If not-applicable: "No user-facing changes — QA skipped.">
+<If review already blocked the pass: "QA not run because review already blocked this verify pass. Re-run verify after remediation.">
 
 <!-- If user opted out at the verify opt-out gate, replace the block above with:
 

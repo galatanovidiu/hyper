@@ -12,6 +12,7 @@ This file is the **single authority** for how `hyper` and the phase skills coord
 
 - `hyper` owns **every mutation of `task.md`'s `phase:` and `awaiting:` fields**. Phase skills never write these two fields. `hyper` also owns the archive move for phase-driven terminal transitions (`done`).
 - `hyper-task` owns `phase: cancelled` and the archive move for user-initiated cancellation. That path is out-of-band from the phase workflow.
+- `hyper-code-review` owns the terminal `phase: done` transition and archive move for standalone `scope: code-review` tasks it creates directly. That path is user-facing and out-of-band from the normal `hyper` dispatch loop.
 - Phase skills own their **artifact** (`exploration.md`, `spec.md`, `checks.md`, subtask bodies, doc files) and the phase-specific classification fields on `task.md` (`scope`, `bugfix`). They do not touch `phase` or `awaiting`.
 - `hyper-worker` owns subtask files' `status` and `awaiting`. The subtask file is a phase-internal artifact, not top-level workflow state.
 - `hyper` owns **routing later user replies** back to the correct phase skill.
@@ -43,7 +44,7 @@ Phase skills must return exactly one verdict per dispatch. A verdict with no new
 | `verify` | `quick` | `done` | no — `hyper` archives and announces |
 | `verify` | `feature` | `docs` | **yes** — "T<N> verify passed. Continue to docs?" |
 | `docs` | `feature` | `done` | no — `hyper` archives and announces |
-| `review` | `code-review` | `done` | no — `hyper` archives and announces (the post-review prompt is inside `hyper-code-review`, not a phase-transition checkpoint) |
+| `review` | `code-review` | `done` | no — `hyper` archives and announces when it is dispatching an existing review task; standalone `hyper-code-review` archives its own direct review records |
 
 For `redirect`:
 

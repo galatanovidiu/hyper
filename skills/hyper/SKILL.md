@@ -104,7 +104,7 @@ Given task id `T<N>`:
 2. Determine the next task id: scan **both** `.hyper/tasks/` and `.hyper/archive/` for the highest `T<N>` prefix across both, use `T<N+1>`. Archived ids count — they are never reused.
 3. Derive a short title from the user's goal (trim filler, keep it under ~60 chars, imperative phrasing when possible).
 4. Derive a kebab-case slug from the title (lowercase, spaces → hyphens, strip punctuation, ~40 chars).
-5. Draft the frontmatter using the `templates/task.md` shape, with `id`, `title`, `created` (today's ISO date), `phase: explore`, `scope: unknown`, and `awaiting: null`.
+5. Draft the frontmatter using the `templates/task.md` shape, with `id`, `title`, `created` (current local datetime in `YYYY-MM-DDTHH:MM:SS` form, e.g. `2026-04-21T14:35:00` — shell out to `date +"%Y-%m-%dT%H:%M:%S"` if needed), `phase: explore`, `scope: unknown`, `bugfix: false`, and `awaiting: null`.
 6. Draft the body: one short paragraph restating the user's goal in their words.
 7. **Optional `## Why`.** If the current request already includes a clear motivation, constraint, or triggering incident and persisting it would help future readers, append a blank line followed by `## Why`, a blank line, and that reason to the body. Preserve the user's wording as closely as practical. If the reason is embedded inside a longer request, extract only the reason span rather than copying unrelated instruction text. If the request does not already contain a clear enough reason, skip the section. Do **not** ask a dedicated Why prompt just to satisfy structure.
 8. Create `.hyper/tasks/T<N>-<slug>/task.md` using the frontmatter from step 5 and the body from steps 6–7.

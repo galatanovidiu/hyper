@@ -134,7 +134,8 @@ Steps:
    title: <title from backlog entry>
    phase: deferred
    scope: unknown
-   created: <today's ISO date>
+   created: <current local datetime in YYYY-MM-DDTHH:MM:SS form, e.g. 2026-04-21T14:35:00>
+   bugfix: false
    awaiting: null
    ---
 
