@@ -226,9 +226,3 @@ Verify does not emit `awaiting-input` or `awaiting-approval` — it does not hol
 - **Never write `task.md` `phase:` or `awaiting:`.** Return a verdict; `hyper` owns the mutation.
 - **QA tests behavior, not code.** Reading the implementation is review, not QA. Run the feature.
 - **Evidence over assertion.** Every QA row has real output. "I checked, it works" is not evidence.
-
-## Key principles
-
-- Verify exists because implement is optimistic. The implementer wants to be done; the verifier's job is to be honest.
-- A `pass` verdict on `checks.md` is a statement you're staking your name on. Treat it that way.
-- The three lenses are different on purpose. Tests catch regressions. Review catches bad patterns and security holes. QA catches broken behavior. A passing test suite does not mean the feature works.

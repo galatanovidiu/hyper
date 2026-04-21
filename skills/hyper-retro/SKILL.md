@@ -73,8 +73,3 @@ Retention: retros are append-only. Task retros archive with their task; project 
 - **Specific or nothing.** "Implementation went well" is noise. "The explore phase caught the bcrypt-vs-argon2 decision before I wasted an hour on the wrong one" is signal.
 - **Change items are actionable.** If you can't imagine what "doing differently" looks like, the item is too vague to keep.
 - **Separate scopes honestly.** A project-level friction isn't a Hyper problem. A Hyper problem isn't a personal failing.
-
-## Key principles
-
-- Retros only help if they're read again. Keep entries short enough that the user will skim them at the start of a similar task later.
-- The best retros name the smallest change that would have helped. Don't redesign the world; adjust the one move.

@@ -121,9 +121,3 @@ Steps:
 - **Never delete files.** Cancellation is a status change plus an archive move, not a deletion. Terminal tasks live in `.hyper/archive/` as history.
 - **Ask for missing info.** Create without a clear title? Ask. Cancel without a reason? Ask. Don't fabricate.
 - **Task state lives in `task.md` frontmatter.** That's the source of truth. Don't read or write status from anywhere else. See `../hyper/reference/state-recovery.md` for the repair path when files are malformed, partial, or clearly legacy.
-
-## Key principles
-
-- This skill is optimization for the user. Everything it does could be accomplished by manually editing files under `.hyper/` — the skill just makes the common operations fast and consistent.
-- The output is for a human to read. List output, status output, confirmation messages — all designed for at-a-glance parsing, not machine consumption.
-- Deferred tasks are a planning tool, not a to-do list. If the user's "later" list is getting long, that's a sign to prune or move items to `.hyper/backlog.md` instead.

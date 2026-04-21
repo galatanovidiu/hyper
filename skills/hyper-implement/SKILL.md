@@ -214,12 +214,3 @@ Every dispatch ends with one verdict. Shared contract in `../hyper/reference/gat
 
 - `awaiting-input` — a subtask hit a blocker, or a verify remediation pass needs a user decision that exceeds direct remediation limits. Summary carries the question verbatim.
 - `phase-complete` — all subtasks done (feature), change applied and tests pass (quick), or remediation fixes applied (remediation pass). `hyper` advances to `verify` and applies the checkpoint rule.
-
-## Key principles
-
-- **The plan decomposed the work; the orchestrator respects the decomposition.** If you want to merge subtasks mid-flight, stop — re-read why they were split. Only a verify remediation pass bypasses the normal worker-per-subtask flow.
-- **The subtask file is the contract.** What the worker reads at the start and writes at the end is the full record of each slice. Trust that record.
-- **A subtask is not done when `status: done` is in the file.** It's done when `## Done when` can be verified against real behavior. The worker's job is to make that true before flipping status; the orchestrator's job is to trust the worker did its job, then let verify double-check.
-- **Clean, reviewable diff.** Every piece of work should reduce surprise for whoever reads the diff next — including future you.
-- **Robustness before cleverness (quick scope).** Handle error paths, validate at boundaries, fail loudly. Validation is part of the work, not speculative scope.
-- **Stay focused, park the drift.** Pre-existing problems go to `.hyper/backlog.md`, not inline "while I'm here" fixes.

@@ -169,9 +169,3 @@ Dropped ids are not reused. No undo — the user would need to re-add manually.
 - **Ids are immutable.** Never renumber entries after promote/drop. Gaps are fine.
 - **Respect explicit labels.** If the user says "this is just an idea" or "create a task for this", skip the triage prompt.
 - **Single-writer assumption.** Don't try to defend against the user editing `backlog.md` by hand while the skill is running. If the file looks unexpected, read fresh and retry once. See `../hyper/reference/state-recovery.md` for the repair path when state is malformed.
-
-## Key principles
-
-- Backlog is lighter than tasks on purpose. No lifecycle, no phases, no artifacts beyond the entry itself. If an item needs more than a paragraph of investigation to describe, it's probably a task.
-- The file is human-readable first and machine-parseable second. Keep `## B<N> — <title>` headings clean; put the interesting content in the body.
-- Promotion is a one-way door in the easy direction: idea → task. Going back (task → idea) requires the user to cancel the task and re-add manually.

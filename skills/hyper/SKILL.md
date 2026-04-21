@@ -208,9 +208,3 @@ If `task.md`'s `awaiting` and the blocked subtask's `awaiting` ever diverge, the
 - **Auto-advance only on user approval.** Approval-gated phases (`explore`, `plan`) auto-advance into the next Dispatch when they return `phase-complete`. Agent-completion phases (`implement`, `verify` → `docs`) go through a checkpoint so the user can inspect the result.
 - **Repair malformed state deliberately.** If `.hyper/` files are malformed or contradictory, stop and consult `reference/state-recovery.md` rather than guessing.
 - **Terminal tasks stay terminal.** `done` and `cancelled` don't re-run from here. If the user wants to reopen a cancelled task, they clear the cancel fields manually.
-
-## Key principles
-
-- Structure is a servant, not a taskmaster. Skip nothing on purpose, but don't pad either.
-- Markdown on disk is the source of truth. If the file says `phase: plan`, the task is in plan.
-- Announce phase transitions. Every routing decision gets one clear sentence before any action.

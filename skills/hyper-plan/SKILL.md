@@ -180,9 +180,3 @@ On a user reply that requests spec changes, revise `spec.md` and any affected su
 - **At least one subtask.** Zero is a failure. If the task truly has nothing to decompose, it probably was `scope: quick` — revisit the scope classification with the user.
 - **Spec effort proportional to implementation effort.** A 30-line change does not need 8 subtasks.
 - **No creative decisions here.** If exploration didn't answer a question, send the task back to explore rather than inventing an answer now.
-
-## Key principles
-
-- The spec + subtask files are a contract between you (the planner now) and the workers (the implementers later). Write them so a fresh sub-agent reading one subtask file can start without re-deriving the decomposition.
-- A human should be able to read `spec.md` and predict the size and shape of the PR that lands. The subtask files show the sequencing.
-- "Done when" for each subtask is the single most valuable line in the file. If a subtask has no clear "done when", it's not ready to implement.

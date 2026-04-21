@@ -97,9 +97,3 @@ Docs does not emit `awaiting-input` or `awaiting-approval` — it does not hold 
 - **Current state, not changelogs.** Describe what is, not what changed (unless you're actually updating a changelog file).
 - **Record the no-op.** "Nothing to update" with rationale is a real result — it says the phase happened.
 - **Never write `task.md` `phase:` or run the archive.** Return `phase-complete`; `hyper` owns the terminal transition.
-
-## Key principles
-
-- The point of this phase is a true answer to the question "is the project's documentation still honest after this change?" The answer is always recorded — silence is not acceptable.
-- If you need to explain the change in prose (not in a doc), that goes in a commit message, not in the project docs.
-- Docs that describe the code are a maintenance cost. Don't add docs just because a change felt big — add docs where they're the right home for the information.

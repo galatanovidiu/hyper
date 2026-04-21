@@ -83,8 +83,3 @@ and continue. Reference the files to read and the first action to take.>
 - **Be specific.** "The user wanted something more secure" is not useful. "The user said bcrypt is required and argon2id is out of scope" is useful.
 - **Uncommitted work gets listed.** The next session needs to know what's dirty.
 - **One paragraph for the next step.** Don't write a plan; write a starting point.
-
-## Key principles
-
-- A handoff is the context rescue for everything the filesystem doesn't already record. If everything is on disk, the handoff is short — that's a good sign, not a lazy one.
-- Write it for a stranger. Assume the next session has no memory of this one and only the files in front of them.

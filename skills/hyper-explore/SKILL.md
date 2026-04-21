@@ -195,7 +195,7 @@ Use the shape in `templates/exploration.md` (bundled with this skill). It has tw
 - **feature scope** — omit both subsections. They move into `spec.md` (acceptance criteria + subtasks carry the file list; spec owns "Out of scope").
 - **research scope** — rename **Approach** to **Findings & Recommendation**, omit "Files to change", keep "Out of scope" (existing rule preserved).
 
-If any assumption in the approach could change the design depending on the user's answer, add a `## Open questions` section listing one question per list item. Prefer surfacing the assumption as an explicit question over burying it as a hidden default — see the Key principles below.
+If any assumption in the approach could change the design depending on the user's answer, add a `## Open questions` section listing one question per list item. Prefer surfacing the assumption as an explicit question over burying it as a hidden default.
 
 ## Step 6 — Serialize open questions
 
@@ -237,11 +237,3 @@ On a user reply that requests changes, revise `exploration.md` (rewrite-over-pat
 - **Facts and design are separate.** Findings are what *is*. Approach is what we'll *do*. Don't mix them.
 - **Approval is explicit.** Agent judgment is not a substitute for "yes, go".
 - **Length proportional to scope.** A `quick` exploration.md fits on one screen. A `feature` one is a page or two. A `research` one is as long as the evidence demands.
-
-## Key principles
-
-- The user should be able to read `exploration.md` alone and know what's about to happen. That's the clarity Hyper promises.
-- If you catch yourself writing scope you're not sure the user asked for, stop and ask.
-- Unexamined assumptions are where wasted work comes from. Surface them as explicit questions, not as hidden defaults in the approach.
-- **Question the framing.** The user's ask is a hypothesis, not a directive. After scanning the code, state the current framing alongside one plausible alternate framing; raise the alternate as a clarification only if the evidence supports it.
-- **Pivots during explore are normal.** When the direction shifts mid-explore, rewrite `exploration.md` — but carry forward resolved questions and the pivot rationale so the artifact stays the durable record.
