@@ -100,9 +100,18 @@ The exploration template also carries `### Files to change` and `### Out of scop
 
 `exploration.md` is the approval artifact for the explore phase. Once the user approves, phase advances.
 
-### `exploration-bugfix.md`
+### Bugfix body structure
 
-Written by `hyper-explore` when `task.md` has `bugfix: true`. Replaces `exploration.md` for the bugfix sub-flow. Same approval-gate semantics as `exploration.md`.
+When `task.md` has `bugfix: true`, `exploration.md`'s body follows a different shape — the standard Findings/Approach sections are replaced by a root-cause-first structure authored by `hyper-explore`'s bugfix sub-flow (Step 3.5). The artifact filename stays `exploration.md`; downstream skills read it the same way they read any other `exploration.md`. The bugfix-specific sections:
+
+- **Symptom evidence** — links to raw artifacts stored at `evidence/<slug>.<ext>` in the task folder.
+- **Repro status** — one of `deterministic`, `intermittent`, `no-repro` (see enum below).
+- **Recent changes / Working reference** — regressions only; omitted for fresh defects.
+- **Root-cause hypothesis** — one active hypothesis at a time with an inline acceptance proof.
+- **Expected behavior** and **Unchanged behavior** — the regression-prevention surface verify will read.
+- **Disproven hypotheses** — append-only ledger (see schema below).
+- **Proposed fix** — written once the active hypothesis survives.
+- **Pause — reframe required** — populated only when the N=3 hard stop triggers.
 
 The `repro_status` enum — one of:
 

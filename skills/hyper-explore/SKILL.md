@@ -18,7 +18,7 @@ This phase runs first on every task. No code gets written until the user approve
 
 ## Outputs
 
-- `exploration.md` with **Findings** + **Approach** (or `exploration-bugfix.md` when `bugfix: true`)
+- `exploration.md` with **Findings** + **Approach** when `bugfix: false`, or the bugfix structure (repro status, root-cause hypothesis, disproven-hypothesis ledger, acceptance proof, unchanged-behavior list) when `bugfix: true`. One artifact filename in either case.
 - `task.md` frontmatter updated: `scope: quick | feature | research` (and `bugfix: true` when detected). You **do not** write `phase:` or `awaiting:` — `hyper` owns those. You return a verdict instead.
 - A verdict to `hyper` per `../hyper/reference/gates.md`: `awaiting-input` while open questions remain, `awaiting-approval` once the artifact is ready for user approval, `phase-complete` on approval.
 
@@ -46,7 +46,7 @@ read task.md
   │
   ├── draft approach (or Findings & Recommendation for research)
   │
-  ├── write exploration.md or exploration-bugfix.md (by flag)
+  ├── write exploration.md (bugfix structure when flag set, otherwise Findings/Approach)
   │
   ├── serialize any open questions (return `awaiting-input` while pending)
   │
@@ -131,7 +131,7 @@ For bugfix tasks (`bugfix: true`), the generic scan is replaced by Step 3.5 — 
 
 Skip this entire section when `bugfix: false`.
 
-1. **Collect symptom evidence.** Ask the user for logs, stack trace, or failing-test output. Store raw artifacts in the task folder at `evidence/<slug>.<ext>` (e.g. `evidence/stacktrace-login.txt`, `evidence/failing-test.log`) and link them from `exploration-bugfix.md` by relative path. **Do not paste long dumps into the prose** — linked artifacts only. This fences against context poisoning from multi-kilobyte log blocks.
+1. **Collect symptom evidence.** Ask the user for logs, stack trace, or failing-test output. Store raw artifacts in the task folder at `evidence/<slug>.<ext>` (e.g. `evidence/stacktrace-login.txt`, `evidence/failing-test.log`) and link them from `exploration.md` by relative path. **Do not paste long dumps into the prose** — linked artifacts only. This fences against context poisoning from multi-kilobyte log blocks.
 
 2. **Classify repro status** as one of `deterministic | intermittent | no-repro`:
 
@@ -159,7 +159,7 @@ Skip this entire section when `bugfix: false`.
 
    Only distinct falsifications — each backed by a new experiment, new instrumentation, or new evidence — count toward N.
 
-7. **On hard stop, emit an escalation bundle.** Append a `## Pause — reframe required` section to `exploration-bugfix.md` containing:
+7. **On hard stop, emit an escalation bundle.** Append a `## Pause — reframe required` section to `exploration.md` containing:
 
    - **Evidence-packet summary** — what artifacts have been collected and what they show.
    - **`repro_status`** — current classification (`deterministic | intermittent | no-repro`).
@@ -189,7 +189,7 @@ For **research** tasks: this section becomes **Findings & Recommendation**. Stru
 
 Use the shape in `templates/exploration.md` (bundled with this skill). It has two sections — **Findings** and **Approach** — with subsections for files to change and out-of-scope, plus an optional **Open questions** section.
 
-**Template routing.** When `task.md` has `bugfix: true`, use `templates/exploration-bugfix.md` instead of `templates/exploration.md`. The bugfix template has different sections (see `skills/hyper/reference/data-model.md` § exploration-bugfix.md). Scope rules for the "Files to change" and "Out of scope" subsections (same rules apply to the bugfix template's top-level sections of the same name):
+**Template routing.** The artifact written to the task folder is always `exploration.md`. When `task.md` has `bugfix: true`, use the body structure from `templates/exploration-bugfix.md` (repro status, root-cause hypothesis, disproven-hypothesis ledger, acceptance proof, unchanged-behavior list — see `skills/hyper/reference/data-model.md` § exploration.md for the schema); otherwise use `templates/exploration.md` (Findings + Approach). Both templates are source files in this skill, not artifact names; the output filename stays `exploration.md` in either case. Scope rules for the "Files to change" and "Out of scope" subsections (same rules apply to the bugfix template's top-level sections of the same name):
 
 - **quick scope** — keep both subsections. `exploration.md` is the only artifact, so the file list and out-of-scope note live here.
 - **feature scope** — omit both subsections. They move into `spec.md` (acceptance criteria + subtasks carry the file list; spec owns "Out of scope").
@@ -224,7 +224,7 @@ Return verdict `awaiting-approval` to `hyper`. `hyper` sets `task.md` `awaiting:
 Every dispatch ends with one verdict. Shared contract in `../hyper/reference/gates.md`. Explore emits:
 
 - `awaiting-input` — open questions remain (normal open-questions loop or bugfix hard-stop).
-- `awaiting-approval` — `exploration.md` (or `exploration-bugfix.md`) is ready for user approval.
+- `awaiting-approval` — `exploration.md` is ready for user approval.
 - `phase-complete` — the user approved on a re-dispatch. `hyper` reads `scope:` and advances per its transition table: `plan` for feature, `implement` for quick, `done` + archive for research. You do not touch `phase:` or run the archive.
 
 On a user reply that requests changes, revise `exploration.md` (rewrite-over-patch for reframes; preserve resolved questions + pivot note) and return `awaiting-approval` again. On a direct question, answer it inline and return `awaiting-approval` with the artifact unchanged.
