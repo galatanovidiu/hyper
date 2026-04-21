@@ -2,6 +2,30 @@
 
 This guide is for humans editing the Hyper repo itself.
 
+## Validate the suite locally
+
+Run:
+
+```bash
+node scripts/validate-hyper.mjs
+```
+
+The validator checks a small set of high-value repo contracts:
+
+- shipped `skills/*/SKILL.md` files have parseable frontmatter
+- Hyper user-facing vs internal skill expectations still match the current
+  suite
+- internal Hyper skills keep `user-invocable: false`
+- bundled `templates/` and `reference/` paths resolve
+- named `Invoke the ... skill` / `Load the ... skill` handoffs point to real
+  shipped skills
+- README and the Hyper data model still describe the current skill inventory
+
+It is intentionally lightweight. It validates structural repo contracts, not
+natural-language quality or end-to-end behavior. Keep doing real `/hyper` dry
+runs in a throwaway project for workflow changes. If you add, remove, or
+rename a shipped skill, update the validator expectations in the same diff.
+
 ## Most fragile contracts
 
 These areas are the most likely to drift:
@@ -47,7 +71,8 @@ Do all of these together:
 1. add/rename the folder under `skills/`
 2. update README skill tables and prose
 3. update `skills/hyper/reference/data-model.md` if the skill changes the workflow or state model
-4. grep for the old skill name and old path forms
+4. run `node scripts/validate-hyper.mjs`
+5. grep for the old skill name and old path forms
 
 ## When changing the data model
 

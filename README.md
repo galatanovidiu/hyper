@@ -258,3 +258,4 @@ The bullets above describe what Hyper is. These describe how an agent working in
 
 - [`docs/operating-hyper.md`](docs/operating-hyper.md) — how to use Hyper on real projects, including when not to use it.
 - [`docs/maintaining-hyper.md`](docs/maintaining-hyper.md) — how to maintain the Hyper repo itself.
+- For a quick structural check of this repo itself, run `node scripts/validate-hyper.mjs`. It complements, but does not replace, an end-to-end dry run in a throwaway project.
