@@ -17,9 +17,10 @@ You are in the **implement** phase. For `feature` scope, you usually orchestrate
 
 ## Outputs
 
-- For `feature` scope: subtask files flipped to `status: done` with `## Completion` sections written by workers; `task.md` frontmatter updated to `phase: verify` when every subtask is done
-- For `quick` scope: code changes directly; `task.md` frontmatter updated to `phase: verify`
-- For a verify remediation pass (any scope): only the fixes needed to resolve blocked test/review/QA findings in `checks.md`; `task.md` frontmatter cleared of any stale `awaiting` gate and updated to `phase: verify`
+- For `feature` scope: subtask files flipped to `status: done` with `## Completion` sections written by workers.
+- For `quick` scope: code changes directly in the project.
+- For a verify remediation pass (any scope): only the fixes needed to resolve blocked test/review/QA findings in `checks.md`.
+- A verdict to `hyper` per `../hyper/reference/gates.md`. You do **not** write `phase:` or `awaiting:` on `task.md`.
 
 ## Preflight — verify remediation pass
 
@@ -36,9 +37,9 @@ If `checks.md` exists in the task folder and its top-level overall verdict is `b
    - no subtask decomposition or spec rewrite is needed
    - the diff stays small and reviewable
 
-   If any of those are false, stop. Keep `phase: implement`, set `awaiting: user-input`, and ask the user whether to revisit planning or broaden the task. Do not guess.
+   If any of those are false, stop. Return verdict `awaiting-input` to `hyper` with a one-line summary asking the user whether to revisit planning or broaden the task. Do not guess.
 3. Re-run the commands named in `checks.md` plus any targeted follow-up checks needed to confirm the fix.
-4. Clear `task.md` `awaiting`, set `phase: verify`, and return to the `hyper` skill.
+4. Return verdict `phase-complete` to `hyper`. `hyper` clears the stale `awaiting` gate, advances to `verify`, and applies the checkpoint rule.
 
 For `feature` scope, do **not** reopen or renumber completed subtask files just to fix verify findings. The subtask files stay as the historical record of the first implementation pass; `checks.md` is the active brief for the remediation pass.
 
@@ -52,8 +53,7 @@ The approach in `exploration.md` is your whole brief. No spec, no subtasks, no w
 2. Make the change.
 3. Run the project's test suite (or the relevant subset) to check you didn't break anything. If no tests exist, say so — don't fake it.
 4. Run lint / type check if the project has them.
-5. Update `task.md` frontmatter: `phase: verify`.
-6. Return to the `hyper` skill.
+5. Return verdict `phase-complete` to `hyper`. `hyper` advances to `verify` with a user checkpoint.
 
 You do not need to log completion details — the diff is the record. The safety checklists at the bottom of this file apply to quick-scope changes (no worker is dispatched to inherit them).
 
@@ -126,24 +126,19 @@ Wait for the sub-agent to return. Then re-read the subtask file's frontmatter:
 
 The dispatched worker set its subtask's `awaiting: user-input` and added a question under `## Open questions` in the subtask body.
 
-1. Set `task.md` frontmatter `awaiting: user-input` (so the top-level `hyper` gate catches it).
-2. Read the first unanswered question from the blocked subtask's `## Open questions`.
-3. Surface it inline in chat — one question per message, never batch. Present the question verbatim. If it has multiple plausible answers, offer numbered-question + lettered-option shorthand, mark one option as the recommendation, and give a one-line reason grounded in the task, code, or the user's stated goal.
-4. Return to the `hyper` skill.
+1. Read the first unanswered question from the blocked subtask's `## Open questions`.
+2. Return verdict `awaiting-input` to `hyper` with the question as your summary. Present the question verbatim. If it has multiple plausible answers, offer numbered-question + lettered-option shorthand, mark one option as the recommendation, and give a one-line reason grounded in the task, code, or the user's stated goal. `hyper` sets `task.md` `awaiting: user-input` and relays the question. Never batch.
 
-When the user answers on a later turn, `hyper` routes that reply back into this skill because the task is still `phase: implement` with `awaiting` set:
+When the user answers on a later turn, `hyper` clears `task.md` `awaiting` and re-dispatches this skill because the task is still `phase: implement`:
 
 - Record the answer under the question in the blocked subtask's `## Open questions` (indented bullet or short paragraph). The file is the durable record of both question and answer.
-- If more unanswered questions remain in that subtask's section, surface the next one inline and keep `awaiting: user-input`. Never batch.
-- When the section has no unanswered questions left, rename the heading to `## Resolved questions`, clear the subtask's `awaiting: null`, clear `task.md`'s `awaiting: null`, and re-dispatch that subtask (back to Step 3).
-- If the user's response is a change request or a meta question rather than an answer, apply the change, then re-surface the first still-unanswered question.
+- If more unanswered questions remain in that subtask's section, return `awaiting-input` again with the next question. Never batch.
+- When the section has no unanswered questions left, rename the heading to `## Resolved questions`, clear the **subtask's** `awaiting: null`, and re-dispatch that subtask's worker (back to Step 3). Do not write `task.md` `awaiting` — `hyper` owns it.
+- If the user's response is a change request or a meta question rather than an answer, apply the change, then return `awaiting-input` with the first still-unanswered question.
 
 ### Step 5 — Advance the phase
 
-When every subtask has `status: done`:
-
-- Update `task.md` frontmatter: `phase: verify`.
-- Return to the `hyper` skill with a summary: *"T<N> implementation complete. <N> subtasks done. Ready for verify."*
+When every subtask has `status: done`, return verdict `phase-complete` to `hyper` with a summary: *"T<N> implementation complete. <N> subtasks done. Ready for verify."* `hyper` advances to `verify` and applies the checkpoint rule.
 
 ### Subtask file is wrong mid-flight
 
@@ -155,9 +150,9 @@ Workers own the escalation path for out-of-scope findings (they append to `.hype
 
 ## Completion check
 
-Before flipping `phase: verify`:
+Before returning `phase-complete`:
 
-- **Feature scope:** every subtask file in the task folder whose name starts with `T<N>.` has `status: done`. No `awaiting` set. No subtasks missing or unaccounted for.
+- **Feature scope:** every subtask file in the task folder whose name starts with `T<N>.` has `status: done`. No subtask `awaiting` set. No subtasks missing or unaccounted for.
 - **Quick scope:** the change is made, tests ran at least once and passed (or you explicitly told the user no test suite exists), no debug prints or stray TODOs left behind.
 - Scope did not expand beyond what `spec.md` (feature) or `exploration.md` (quick) described.
 
@@ -205,8 +200,16 @@ Only save things that will matter to a *different* task. Details of the current 
 - **Quick scope: stay scoped.** Do not widen scope by touching adjacent code, fixing pre-existing bugs, or adding features the approach did not name. Deepen the code you are writing: validation at boundaries, error-path handling, edge-case guards are part of the change, not scope creep.
 - **Fail loudly on malformed state.** No subtask files found, cycles in `depends`, unparseable frontmatter — abort with a specific error. Silent skips turn small bugs into mysterious ones. Use `../hyper/reference/state-recovery.md` for the repair path.
 - **One question per message.** When propagating a worker's blocker, surface one question. Never batch.
-- **Ask, don't guess.** If `spec.md` contradicts itself or leaves a critical decision unmade, set `task.md` `awaiting: user-input` and stop. Guessing usually costs more than a round-trip.
+- **Ask, don't guess.** If `spec.md` contradicts itself or leaves a critical decision unmade, return verdict `awaiting-input` with the specific question. Guessing usually costs more than a round-trip.
+- **Never write `task.md` `phase:` or `awaiting:`.** Return a verdict; `hyper` owns the mutation. You still own subtask-file edits (answers, `## Resolved questions` rename) because the subtask file is a phase-internal artifact.
 - **Pre-existing bugs go to backlog.** Workers escalate them; as orchestrator you just relay. In quick scope, you're the one escalating — same rule: backlog it, don't fix inline.
+
+## Return contract
+
+Every dispatch ends with one verdict. Shared contract in `../hyper/reference/gates.md`. Implement emits:
+
+- `awaiting-input` — a subtask hit a blocker, or a verify remediation pass needs a user decision that exceeds direct remediation limits. Summary carries the question verbatim.
+- `phase-complete` — all subtasks done (feature), change applied and tests pass (quick), or remediation fixes applied (remediation pass). `hyper` advances to `verify` and applies the checkpoint rule.
 
 ## Key principles
 

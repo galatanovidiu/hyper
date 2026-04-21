@@ -24,10 +24,7 @@ One artifact: `checks.md`. One verdict.
 ## Outputs
 
 - `checks.md` with `## tests`, `## review`, and `## qa` sections. On feature tasks, the docs phase later appends `## docs`.
-- `task.md` frontmatter updated:
-  - `phase: docs` if feature scope
-  - `phase: done` if quick scope
-  - `phase: implement` with `awaiting: user-input` if unresolved critical issues or QA failures block progress
+- A verdict to `hyper` per `../hyper/reference/gates.md`. You do **not** write `phase:` or `awaiting:` on `task.md`.
 
 ## Before you start
 
@@ -40,7 +37,7 @@ git status --short
 
 Include untracked files in your mental model — they're part of the change.
 
-**Verify never patches code.** If a check uncovers a problem, record it in `checks.md` and bounce the task back to implement with `phase: implement` and `awaiting: user-input`. The implement phase owns all remediation; verify only observes and reports. This keeps the responsibility boundary sharp and avoids two skills fighting over the same diff.
+**Verify never patches code.** If a check uncovers a problem, record it in `checks.md` and return verdict `redirect target: implement` to `hyper`. `hyper` then sets `phase: implement` and `awaiting: user-input`, and the next implement pass reads `checks.md` as its remediation brief. The implement phase owns all remediation; verify only observes and reports. This keeps the responsibility boundary sharp and avoids two skills fighting over the same diff.
 
 ## Section 1 — Tests
 
@@ -60,7 +57,7 @@ Include untracked files in your mental model — they're part of the change.
 <If no test runner: say so explicitly — "Project has no test suite." — and do not fake a pass.>
 ```
 
-**If tests fail because of the current change:** record the failures in `checks.md` and set the overall verdict to `blocked`. Do not attempt fixes in verify — the implement phase will read `checks.md` as its brief on the bounce-back.
+**If tests fail because of the current change:** record the failures in `checks.md` and set the overall verdict to `blocked`. Do not attempt fixes in verify — on `blocked`, you return `redirect target: implement` and the implement phase reads `checks.md` as its brief.
 
 **If tests fail for reasons unrelated to the change:** append a new entry to `.hyper/backlog.md`. Format: a `## B<N> — <short title>` heading (e.g. `## B<N> — Pre-existing failure in auth.test.ts`) followed by a body containing the test name, error message, and a note that it's pre-existing. Allocate `B<N>` by scanning `backlog.md` for the highest existing `^## B\d+ — ` heading and adding 1 (bootstrap with a `# Backlog` heading if missing). Don't fix inline. Record the pre-existing failures in `checks.md` but mark the verdict `pass` if current-change tests pass.
 
@@ -99,7 +96,7 @@ Record as:
 <If no findings: "Diff matches spec.md acceptance criteria.">
 ```
 
-**If 2a verdict is `blocked`:** write the spec compliance section, write the code quality section as `**Verdict:** skipped — spec compliance blocked.` with no findings list, set the combined `## review` verdict to `blocked`, then stop the phase. Update `task.md` with `phase: implement` and `awaiting: user-input`, then return to the `hyper` skill. The next implement pass uses `checks.md` as its brief, fixes the spec drift, and returns to verify.
+**If 2a verdict is `blocked`:** write the spec compliance section, write the code quality section as `**Verdict:** skipped — spec compliance blocked.` with no findings list, set the combined `## review` verdict to `blocked`, then stop the phase. Return verdict `redirect target: implement` to `hyper`. `hyper` sets `phase: implement` and `awaiting: user-input`. The next implement pass uses `checks.md` as its brief, fixes the spec drift, and returns to verify.
 
 ### 2b — Code quality (runs only when 2a passes)
 
@@ -159,7 +156,7 @@ Record as:
 - `needs-changes` — warnings the user should see before shipping, but you as the agent are not going to fix them right now.
 - `blocked` — at least one critical finding. You (or the user) must fix before the task can complete.
 
-**If 2b verdict is `blocked`:** stop the phase. Update `task.md` with `phase: implement` and `awaiting: user-input`, then return to the `hyper` skill. The next implement pass uses `checks.md` as its brief, fixes the criticals, and returns to verify.
+**If 2b verdict is `blocked`:** stop the phase. Return verdict `redirect target: implement` to `hyper`. `hyper` sets `phase: implement` and `awaiting: user-input`. The next implement pass uses `checks.md` as its brief, fixes the criticals, and returns to verify.
 
 ### Combined review verdict
 
@@ -195,7 +192,7 @@ For each acceptance criterion in `spec.md` (or the implicit ones from a quick ta
 <If failures: describe repro steps and expected vs. actual.>
 ```
 
-**If QA finds failures:** treat them like critical review findings — stop, set `task.md` to `phase: implement` with `awaiting: user-input`, and point to the QA section in `checks.md`.
+**If QA finds failures:** treat them like critical review findings — stop, return verdict `redirect target: implement` to `hyper`, and point to the QA section in `checks.md` in your summary.
 
 ## Writing `checks.md`
 
@@ -204,29 +201,25 @@ Use the shape in `templates/checks.md` (bundled with this skill). This phase wri
 **Overall verdict:**
 
 - `pass` — tests pass, review has no critical, qa passes (or n/a). Ready to advance.
-- `needs-changes` — warnings exist but no criticals. Agent still advances; user sees the warnings.
-- `blocked` — at least one test failure, critical review finding, or QA failure. Phase moves to `implement` with `awaiting: user-input`; the next implement pass reads `checks.md` as its brief and returns to verify.
+- `needs-changes` — warnings exist but no criticals. Task still advances; user sees the warnings.
+- `blocked` — at least one test failure, critical review finding, or QA failure. `hyper` will bounce the task back to `implement` with `awaiting: user-input` on your `redirect` verdict; the next implement pass reads `checks.md` as its brief and returns to verify.
 
-## Advancing the phase
+## Return contract
 
-Once `checks.md` is written with verdict `pass` or `needs-changes`:
+Every dispatch ends with one verdict. Shared contract in `../hyper/reference/gates.md`. Verify emits:
 
-- **Feature scope with any documentation implications** → `phase: docs`.
-- **Feature scope with clearly no documentation implications** → `phase: docs` anyway. Docs phase can record a no-op. This keeps the workflow honest.
-- **Quick scope** → `phase: done`. No docs phase. Done. Then archive the folder (see below).
+- `phase-complete` — overall `pass` or `needs-changes`. `hyper` reads `scope:` and advances per its transition table: `docs` for feature (with user checkpoint), `done` + archive for quick. You do not write `phase:` or run the archive.
+- `redirect target: implement` — overall `blocked`. `hyper` sets `phase: implement` and `awaiting: user-input`.
 
-### Archive the folder
-
-When you set `phase: done` for a quick-scope task, archive the task folder per `../hyper/reference/archive.md`.
-
-Return to the `hyper` skill.
+Verify does not emit `awaiting-input` or `awaiting-approval` — it does not hold its own gate. It runs to completion and hands back a verdict.
 
 ## Rules
 
 - **Run the tests.** Static analysis is not a test run. If you can't run tests (no runner, env issues), record that explicitly — don't fake a pass.
 - **Review the diff, not the file.** Pre-existing code is out of scope unless the change makes it worse.
 - **Critical means critical.** Don't inflate severity to look thorough, and don't downgrade real findings to ship faster.
-- **Verify never patches code.** Any blocked finding bounces to implement with `checks.md` as the brief. Implement is the single owner of the remediation loop.
+- **Verify never patches code.** Any blocked finding returns `redirect target: implement` with `checks.md` as the brief. Implement is the single owner of the remediation loop.
+- **Never write `task.md` `phase:` or `awaiting:`.** Return a verdict; `hyper` owns the mutation.
 - **QA tests behavior, not code.** Reading the implementation is review, not QA. Run the feature.
 - **Evidence over assertion.** Every QA row has real output. "I checked, it works" is not evidence.
 

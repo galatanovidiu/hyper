@@ -99,6 +99,8 @@ Do not start the workflow. `phase: deferred` signals the task exists but is unsc
 
 Cancel a task the user has decided not to pursue.
 
+Cancellation is **out-of-band** from the phase workflow. Unlike phase skills (which return verdicts and let `hyper` own `task.md` `phase:` / `awaiting:` and the archive move), `hyper-task` Cancel is the single owner of the `phase: cancelled` transition and runs its own archive move. This skill is the user-facing entry point for termination; there is no phase skill to return a verdict to.
+
 Steps:
 
 1. Confirm the target. If the user said "cancel T4" and T4 exists, use that id. If T4 doesn't exist, say so and stop.

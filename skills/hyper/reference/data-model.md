@@ -28,7 +28,7 @@ All Hyper state lives on disk under `.hyper/` in the project root. Plain markdow
 
 - Task folders are named `T<N>-<kebab-slug>`. `N` is a simple incrementing integer. Slug is derived from the title: lowercase, spaces → hyphens, strip punctuation, ~40 chars.
 - Artifact filenames are fixed. A skill that writes `spec.md` always writes to that path.
-- When a task's `phase` flips to `done` or `cancelled`, the folder is moved from `.hyper/tasks/` to `.hyper/archive/`. The skill that flips the phase owns the move. By-id lookups (`hyper T<N>`, `hyper-task status`, `hyper-retro`) fall back to `archive/` when the id isn't in `tasks/`. Normal flows (listing active tasks, default routing) ignore archive.
+- When a task's `phase` flips to `done` or `cancelled`, the folder is moved from `.hyper/tasks/` to `.hyper/archive/`. `hyper` runs the archive move for every phase-driven terminal transition (`done`); `hyper-task` runs it for user-initiated `cancelled`. Phase skills never run the move themselves. By-id lookups (`hyper T<N>`, `hyper-task status`, `hyper-retro`) fall back to `archive/` when the id isn't in `tasks/`. Normal flows (listing active tasks, default routing) ignore archive.
 - Task ids are allocated by scanning `tasks/ ∪ archive/` for the highest `T<N>` and adding 1. Ids are never reused.
 - Work that the intake heuristic classifies as direct-handling sized never enters `.hyper/` at all — no task folder, no backlog entry unless the user asks for one.
 
@@ -59,11 +59,11 @@ artifacts below say how it gets done.>
 |-------|--------|---------|
 | `id` | `T1`, `T2`, … | Sequential integer. First task is `T1`. |
 | `title` | short string | Human-readable title, used in the folder name and headings. |
-| `phase` | `deferred` · `explore` · `plan` · `implement` · `verify` · `docs` · `done` · `cancelled` | Current phase. The entry skill reads this to route. `done` and `cancelled` are terminal. `deferred` means the task exists but the user hasn't started it yet (created by `hyper-task`). |
-| `scope` | `quick` · `feature` · `research` · `unknown` | Set during explore. Drives which phases run. `unknown` before explore classifies it. |
+| `phase` | `deferred` · `explore` · `plan` · `implement` · `verify` · `docs` · `done` · `cancelled` | Current phase. **Owned by `hyper`** (and by `hyper-task` on cancellation). Phase skills return verdicts; they do not write this field. `done` and `cancelled` are terminal. `deferred` means the task exists but the user hasn't started it yet (created by `hyper-task`). |
+| `scope` | `quick` · `feature` · `research` · `unknown` | Set during explore by `hyper-explore`. Drives which phases run. `unknown` before explore classifies it. Phase-owned classification, not workflow state. |
 | `created` | ISO date | When the task was created. |
-| `bugfix` | `true` · `false` | Set to `true` when the task is a bugfix or regression. Routes `hyper-explore` to the root-cause-first sub-flow. Defaults to `false`; detection lives in `hyper-explore` Step 1. Missing field is treated as `false` for back-compat. |
-| `awaiting` | `null` · `user-approval` · `user-input` · `<custom label>` | When set, the gate is open. `hyper` pauses normal routing, surfaces the gate on blank / generic resume turns, and routes the next substantive reply back to the current phase skill, which clears or updates the field. See `reference/gates.md` for the shared gate protocol. |
+| `bugfix` | `true` · `false` | Set by `hyper-explore` when the task is a bugfix or regression. Routes `hyper-explore` to the root-cause-first sub-flow. Defaults to `false`; detection lives in `hyper-explore` Step 1. Missing field is treated as `false` for back-compat. Phase-owned classification, not workflow state. |
+| `awaiting` | `null` · `user-approval` · `user-input` · `<custom label>` | When set, the gate is open. **Owned by `hyper`.** `hyper` sets and clears this field based on the verdict returned by the phase skill (`awaiting-approval` → `user-approval`, `awaiting-input` → `user-input`, `phase-complete` → clear). `hyper` pauses normal routing while the gate is open, surfaces the gate on blank / generic resume turns, and routes the next substantive reply back to the current phase skill. See `reference/gates.md` for the verdict contract. |
 | `cancelled_at` | ISO date | Present only when `phase: cancelled`. Date the task was cancelled. |
 | `cancelled_reason` | short string | Present only when `phase: cancelled`. One-line reason. |
 
@@ -182,11 +182,11 @@ Removed or renamed to "Resolved questions" once answered.>
 | `title` | short string | Human-readable title. Mirrored in the `spec.md` ToC index. |
 | `status` | `todo` · `in-progress` · `done` | Current state. `todo` is the initial state and the only one the orchestrator dispatches from (next `todo` whose `depends` are all `done`). `in-progress` is set by the worker as its first mutation so an interrupted dispatch can be diagnosed. `done` is the terminal state, set by the worker after tests pass and `## Completion` is written. User-intervention blockers use `awaiting: user-input` — not a status value. |
 | `depends` | list of sibling ids | Subtask ids (e.g. `[T1.1, T1.2]`) that must have `status: done` before this one can be dispatched. Empty list means independently dispatchable. |
-| `awaiting` | `null` · `user-input` | Subtask-level gate. When `user-input`, the worker hit a clarification blocker; the orchestrator propagates this to the parent `task.md`'s `awaiting` so the top-level `hyper` gate stops dispatch. Cleared when the user answers. |
+| `awaiting` | `null` · `user-input` | Subtask-level gate, written by the worker. When `user-input`, the worker hit a clarification blocker; the orchestrator surfaces it via an `awaiting-input` verdict and `hyper` propagates the gate to the parent `task.md`'s `awaiting`. Cleared by the orchestrator when the user answers. |
 
 ### Awaiting propagation
 
-Subtask-level `awaiting: user-input` propagates up to `task.md`'s `awaiting: user-input` so the top-level routing gate catches it. On a later user reply, `hyper` routes back into `hyper-implement`; the orchestrator records the user's answer under the question in the blocked subtask file, clears the subtask's `awaiting`, clears the task-level `awaiting`, and re-dispatches the blocked subtask's worker. Subtask-level is the source of truth — if they diverge, the orchestrator re-propagates from the subtask.
+Subtask-level `awaiting: user-input` is surfaced by `hyper-implement` via an `awaiting-input` verdict. `hyper` then sets `task.md`'s `awaiting: user-input` so the top-level routing gate catches it. On a later user reply, `hyper` clears `task.md` `awaiting` and re-dispatches `hyper-implement`; the orchestrator records the user's answer under the question in the blocked subtask file, clears the **subtask's** `awaiting`, and either re-dispatches the worker or returns the next verdict. Subtask-level is the source of truth — if `task.md` and the subtask diverge, `hyper-implement` re-propagates on the next dispatch. `hyper-implement` never writes `task.md` directly.
 
 ### Dispatch rules
 
@@ -194,7 +194,7 @@ The orchestrator in `hyper-implement` selects subtasks by scanning frontmatter:
 
 - Pick the first file (alphabetical by id) where `status: todo` and every id listed in `depends` has `status: done` in its own file.
 - If nothing matches and at least one subtask is still `todo`, either a dependency chain is unsatisfied (expected — other subtasks are still running or awaiting user input) or there's a deadlock (abort with error).
-- If every subtask is `status: done`, advance the parent task to `phase: verify` and return.
+- If every subtask is `status: done`, return verdict `phase-complete` to `hyper`. `hyper` advances the parent task to `phase: verify` (with the `implement → verify` checkpoint).
 
 If verify later sends the task back with `checks.md` overall `blocked`, `hyper-implement` runs a remediation pass directly from `checks.md` instead of reopening or renumbering completed subtask files.
 
@@ -235,7 +235,7 @@ Verdict: pass | needs-changes | blocked
 
 Missing `## docs` means the docs phase hasn't completed yet. Missing one of the earlier sections means verify hasn't completed yet.
 
-Verify never patches code. Any blocked finding returns the task to `implement` with `awaiting: user-input`; the next implement pass reads `checks.md` as its remediation brief and bounces back to verify when done.
+Verify never patches code. A blocked finding causes `hyper-verify` to return a `redirect target: implement` verdict; `hyper` then sets `phase: implement` and `awaiting: user-input`. The next implement pass reads `checks.md` as its remediation brief and returns `phase-complete` to bounce back to verify when done.
 
 ## `handoff.md`
 

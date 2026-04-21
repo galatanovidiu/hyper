@@ -24,10 +24,10 @@ The destination guard exists to catch id collisions or partial previous archives
 
 | Skill | Trigger |
 |-------|---------|
-| `hyper-explore` | `research`-scope task is approved; `phase: done` |
-| `hyper-verify`  | `quick`-scope task passes verify; `phase: done` |
-| `hyper-docs`    | `feature`-scope task finishes docs; `phase: done` |
-| `hyper-task`    | Any task is cancelled; `phase: cancelled` |
+| `hyper` | Any phase-driven terminal transition — research-scope explore approved, quick-scope verify passes, feature-scope docs finishes — any time `hyper` advances a task to `phase: done`. |
+| `hyper-task` | User-initiated cancellation; `phase: cancelled`. Out-of-band from the phase flow. |
+
+Phase skills (`hyper-explore`, `hyper-verify`, `hyper-docs`, etc.) never run the archive move themselves. They return `phase-complete`; `hyper` applies the transition table, sets `phase: done`, and runs the snippet above.
 
 `archive/` is created lazily by `mkdir -p` on first use — no pre-creation needed during bootstrap.
 

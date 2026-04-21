@@ -19,8 +19,7 @@ This phase runs only for `scope: feature` tasks. Quick tasks skip to implement. 
 
 - `spec.md` with acceptance criteria + ToC-style subtask index + out-of-scope + edge cases
 - `T<N>.<M>-<slug>.md` — one file per vertical slice, stored directly in the task folder (alongside `task.md` and `spec.md`), each with frontmatter (`id`, `parent`, `title`, `status: todo`, `depends: [...]`, `awaiting: null`) and body sections (`## What`, `## Why`, `## Done when`)
-- `task.md` frontmatter: `awaiting: user-approval`
-- Phase stays at `plan` until the user approves
+- A verdict to `hyper` per `../hyper/reference/gates.md`. You do **not** write `phase:` or `awaiting:` on `task.md`.
 
 ## Flow
 
@@ -36,9 +35,9 @@ re-read exploration.md
   │
   ├── write spec.md (acceptance criteria + ToC index of subtask files + out-of-scope + edge cases)
   │
-  ├── serialize any open questions (one per message, record answers in the file)
+  ├── serialize any open questions (return `awaiting-input` while pending)
   │
-  └── set awaiting: user-approval and stop
+  └── return `awaiting-approval` to `hyper`
 ```
 
 ## Step 1 — Re-read `exploration.md`
@@ -147,31 +146,32 @@ If you find problems, fix them. Then continue.
 
 If `spec.md` has no `## Open questions` section, or the section is empty, skip to Step 8.
 
-Otherwise, set `task.md` frontmatter `awaiting: user-input` and work through the questions one at a time, following these rules:
+Otherwise, work through the questions one at a time, following these rules:
 
-- **One question per message.** Never batch. Ask Q1, stop, wait for the answer.
-- Present the question verbatim from the file. If it has multiple plausible answers, offer numbered-question + lettered-option shorthand ("1A", "1B", …), mark one option as the recommendation, and give a one-line reason grounded in the task, code, or the user's stated goal.
+- **One question per message.** Never batch. Ask Q1 as your return summary, return verdict `awaiting-input` to `hyper`, and stop. `hyper` sets `task.md` `awaiting: user-input` and relays the question.
+- On the next dispatch (triggered by the user's reply), present the question verbatim from the file. If it has multiple plausible answers, offer numbered-question + lettered-option shorthand ("1A", "1B", …), mark one option as the recommendation, and give a one-line reason grounded in the task, code, or the user's stated goal.
 - When the user answers, record the answer under the question in `spec.md` (indented bullet or a short paragraph beneath the list item — the artifact must stay the durable record of both question and answer).
 - If the user requests changes to the spec or asks a meta question instead of answering, treat it like any other "requests changes / asks a question" response: stop the loop, revise, and restart Step 7 with the updated questions.
-- Move to the next unanswered question. Repeat until none remain.
+- Move to the next unanswered question. If any remain, return `awaiting-input` again.
 
 Once every question has an answer, rename the section heading from `## Open questions` to `## Resolved questions` (or delete the section entirely if the answers are already captured elsewhere in the spec). Then proceed to Step 8.
 
-## Step 8 — Set approval gate and stop
-
-Update `task.md` frontmatter: `awaiting: user-approval` (replacing `user-input` if it was set during Step 7).
+## Step 8 — Request approval
 
 Tell the user: *"Wrote `spec.md` and <N> subtask files (`T<N>.1-<slug>.md` … `T<N>.<M>-<slug>.md`) at the task folder root. Please review the acceptance criteria and subtasks. Approve to start implementation, or tell me what to change."*
 
-**Stop.** `hyper` owns the open gate and will route the later reply back into this skill while `phase: plan` remains in `task.md`.
+Return verdict `awaiting-approval` to `hyper`. `hyper` sets `task.md` `awaiting: user-approval` and stops. Do not write `phase:` or `awaiting:` yourself.
 
-## When the user responds
+## Return contract
 
-On a later turn, `hyper` routes the reply back into this skill because the task is still `phase: plan` with `awaiting` set.
+Every dispatch ends with one verdict. Shared contract in `../hyper/reference/gates.md`. Plan emits:
 
-- **Approves** → clear `awaiting`, update `phase:` to `implement`, return to the `hyper` skill.
-- **Requests changes** → clear `awaiting`, stay in `plan`, revise `spec.md`, re-set `awaiting: user-approval` and stop.
-- **Wants to rethink the approach** → set `phase: explore` and return to the `hyper` skill. Explore will pick it up from there.
+- `awaiting-input` — open questions remain in `spec.md`.
+- `awaiting-approval` — the spec + subtask files are ready for user approval, or a revision has been applied.
+- `phase-complete` — user approved on a re-dispatch. `hyper` advances to `implement` per the transition table.
+- `redirect target: explore` — user wants to rethink the approach rather than approve. `hyper` sets `phase: explore` and re-enters dispatch.
+
+On a user reply that requests spec changes, revise `spec.md` and any affected subtask files, then return `awaiting-approval` again. On a direct question, answer it inline and return `awaiting-approval` with the artifacts unchanged.
 
 ## Rules
 

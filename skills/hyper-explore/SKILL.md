@@ -18,9 +18,9 @@ This phase runs first on every task. No code gets written until the user approve
 
 ## Outputs
 
-- `exploration.md` with **Findings** + **Approach**
-- `task.md` frontmatter updated: `scope: quick | feature | research` and `awaiting: user-approval`
-- Phase stays at `explore` until the user approves — then you advance to the next phase
+- `exploration.md` with **Findings** + **Approach** (or `exploration-bugfix.md` when `bugfix: true`)
+- `task.md` frontmatter updated: `scope: quick | feature | research` (and `bugfix: true` when detected). You **do not** write `phase:` or `awaiting:` — `hyper` owns those. You return a verdict instead.
+- A verdict to `hyper` per `../hyper/reference/gates.md`: `awaiting-input` while open questions remain, `awaiting-approval` once the artifact is ready for user approval, `phase-complete` on approval.
 
 ## Flow
 
@@ -48,9 +48,9 @@ read task.md
   │
   ├── write exploration.md or exploration-bugfix.md (by flag)
   │
-  ├── serialize any open questions (one per message, record answers in the file)
+  ├── serialize any open questions (return `awaiting-input` while pending)
   │
-  └── set awaiting: user-approval and stop
+  └── return `awaiting-approval` to `hyper`
 ```
 
 ## Step 1 — Surface the end goal, then clarify the goal
@@ -167,7 +167,7 @@ Skip this entire section when `bugfix: false`.
    - **Most-likely-remaining branch** — pick exactly one from `code | environment | data | test-harness | architecture`.
    - **One concrete ask of the user** — the single specific question or action that would unblock.
 
-   Then set `task.md` frontmatter `awaiting: user-input` and return to `hyper`. The hard stop is a speed bump with full context, not a lockout — the user can inspect the ledger and direct the next move.
+   Then return verdict `awaiting-input` to `hyper` with the concrete ask as your summary. `hyper` sets `task.md` `awaiting: user-input` and surfaces the ask. The hard stop is a speed bump with full context, not a lockout — the user can inspect the ledger and direct the next move.
 
 After Step 3.5 completes (hypothesis forms, survives, and a proposed fix is ready), continue to Step 4.
 
@@ -201,37 +201,34 @@ If any assumption in the approach could change the design depending on the user'
 
 If `exploration.md` has no `## Open questions` section, or the section is empty, skip to Step 7.
 
-Otherwise, set `task.md` frontmatter `awaiting: user-input` and work through the questions one at a time, following these rules:
+Otherwise, work through the questions one at a time, following these rules:
 
-- **One question per message.** Never batch. Ask Q1, stop, wait for the answer.
-- Present the question verbatim from the file. If it has multiple plausible answers, offer numbered-question + lettered-option shorthand ("1A", "1B", …), mark one option as the recommendation, and give a one-line reason grounded in the task, code, or the user's stated goal.
+- **One question per message.** Never batch. Ask Q1 as your return summary, return verdict `awaiting-input` to `hyper`, and stop. `hyper` sets `task.md` `awaiting: user-input` and relays the question.
+- On the next dispatch (triggered by the user's reply), present the question verbatim from the file. If it has multiple plausible answers, offer numbered-question + lettered-option shorthand ("1A", "1B", …), mark one option as the recommendation, and give a one-line reason grounded in the task, code, or the user's stated goal.
 - When the user answers, record the answer under the question in `exploration.md` (indented bullet or a short paragraph beneath the list item — the artifact must stay the durable record of both question and answer).
 - If the user requests changes to the approach or asks a meta question instead of answering, treat it like any other "requests changes / asks a question" response: stop the loop, revise, and restart Step 6 with the updated questions.
-- Move to the next unanswered question. Repeat until none remain.
+- Move to the next unanswered question. If any remain, return `awaiting-input` again.
 
 **Rewrite over patch — with preservation.** If an answer or a change request reframes the problem rather than filling in a detail, rewrite `exploration.md` cleanly instead of patching it into coherence. Pivots during explore are normal; a rewrite clarifies the new framing in a way that accretive edits cannot. When you rewrite, carry forward: (a) every resolved question with its answer, (b) a short note explaining why the framing shifted. The artifact must stay the durable record of both the prior direction and the pivot.
 
 Once every question has an answer, rename the section heading from `## Open questions` to `## Resolved questions` (or delete the section entirely if the answers are already captured in the approach). Then proceed to Step 7.
 
-## Step 7 — Set approval gate and stop
-
-Update `task.md` frontmatter: `awaiting: user-approval` (replacing `user-input` if it was set during Step 6).
+## Step 7 — Request approval
 
 Tell the user: *"Wrote `exploration.md`. Scope: <quick|feature|research>. Please read it and tell me to proceed, or what to change."*
 
-**Stop.** Do not advance to the next phase. The user must read the file and respond. `hyper` owns the open gate and will route that later reply back into this skill while `phase: explore` remains in `task.md`.
+Return verdict `awaiting-approval` to `hyper`. `hyper` sets `task.md` `awaiting: user-approval` and stops. Do not write `phase:` or `awaiting:` yourself.
 
-## When the user responds
+## Return contract
 
-On a later turn, `hyper` routes the reply back into this skill because the task is still `phase: explore` with `awaiting` set.
+Every dispatch ends with one verdict. Shared contract in `../hyper/reference/gates.md`. Explore emits:
 
-- **Approves** → clear `awaiting`, update `phase:` to the next value (`plan` for feature, `implement` for quick, `done` for research), write the approval decision into the body of `exploration.md` if useful. For research (terminal `done`), archive the task folder (see below) before returning. For non-terminal transitions, return control to the `hyper` skill.
-- **Requests changes** → clear `awaiting`, stay in `explore`, revise `exploration.md`, then re-set `awaiting: user-approval` and stop again. If the change reframes the problem (not just a detail correction), rewrite the artifact cleanly rather than patching it; carry forward every resolved question with its answer and a short note on why the framing shifted, so the artifact stays the durable record of both directions.
-- **Asks a question** → answer, stay in `explore`, don't clear `awaiting`.
+- `awaiting-input` — open questions remain (normal open-questions loop or bugfix hard-stop).
+- `awaiting-approval` — `exploration.md` (or `exploration-bugfix.md`) is ready for user approval.
+- `phase-complete` — the user approved on a re-dispatch. `hyper` reads `scope:` and advances per its transition table: `plan` for feature, `implement` for quick, `done` + archive for research. You do not touch `phase:` or run the archive.
+- `redirect target: explore` — only applicable if a re-dispatch reveals the work is misframed and must start over; otherwise not emitted from this phase.
 
-## Archive on research done
-
-When a `research`-scope exploration is approved and `phase` becomes `done`, archive the task folder per `../hyper/reference/archive.md`. Research tasks terminate at this phase (no plan/implement/verify/docs).
+On a user reply that requests changes, revise `exploration.md` (rewrite-over-patch for reframes; preserve resolved questions + pivot note) and return `awaiting-approval` again. On a direct question, answer it inline and return `awaiting-approval` with the artifact unchanged.
 
 ## Rules
 
