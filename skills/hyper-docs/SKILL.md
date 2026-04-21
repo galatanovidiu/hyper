@@ -24,11 +24,16 @@ This phase runs for `scope: feature` tasks only. Quick tasks skip docs (the diff
 - A `## docs` section appended to `checks.md` describing what was done
 - A verdict to `hyper` per `../hyper/reference/gates.md`. You do **not** write `phase:` on `task.md` or run the archive move.
 
-## Step 1 — Find documentation that might be affected
+## Step 1 — Decide whether the change is user-visible, then find affected docs
 
-Look for docs the change could contradict or leave stale. Typical places:
+Before scanning doc files, decide whether the implemented change is user-visible. Examples: new feature, new flag, new install step, new config the user sets, new file the user creates, or any behavior/workflow the user needs to know about.
 
-- `README.md` (root and any sub-READMEs)
+- **User-visible** → update at least one existing human-facing documentation surface. In this repo that means `README.md` and/or `docs/`, whichever is the right place. Agent-facing files under `skills/` do not satisfy the docs phase on their own.
+- **Internal-only** → a `no-changes-needed` outcome is allowed, but only with a concrete rationale.
+
+Then look for docs the change could contradict or leave stale. Typical places:
+
+- `README.md` (root and any sub-READMEs) when the change is user-visible
 - `CHANGELOG.md`
 - `docs/` directory
 - Inline code docs (JSDoc, PHPDoc, docstrings) on public APIs you changed
@@ -42,6 +47,7 @@ Not every change needs doc updates. Internal refactors with no public API impact
 
 For each candidate doc:
 
+- **User-visible now** → update the right existing human-facing doc surface. `skills/**/SKILL.md` or `skills/**/reference/*.md` can be updated when the task explicitly targets them, but they do not count as satisfying the docs phase by themselves.
 - **Stale now** (the doc says something the code no longer does) → update.
 - **Incomplete now** (the change added something the doc should mention) → update, but only if the doc is the right place for it.
 - **Unrelated** → skip.

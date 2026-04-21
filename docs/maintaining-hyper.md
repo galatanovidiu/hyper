@@ -87,6 +87,7 @@ Typical offenders:
 
 - README and `docs/` are for humans.
 - `skills/**/SKILL.md` and `skills/**/reference/*.md` are for agents.
+- For user-visible changes, the docs phase is only satisfied by updating an existing human-facing doc surface. Agent-facing skill source can accompany that change, but it does not count on its own.
 
 If a topic is primarily about operating or maintaining Hyper as a project, prefer `docs/`.
 If a topic is needed by an agent while running the workflow, put it under `skills/hyper/reference/` and link from the relevant skill.

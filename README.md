@@ -37,7 +37,7 @@ Six Hyper skills are user-facing. Seven internal Hyper skills run under the hood
 | `hyper-implement` | For feature scope: orchestrates — dispatches one `hyper-worker` sub-agent per subtask file. For quick scope: implements directly. If verify sends work back blocked, handles the remediation pass from `checks.md`. |
 | `hyper-worker` | Dispatched by `hyper-implement` to finish one subtask end-to-end in a fresh sub-agent — research, implement, test, write a `## Completion` record, flip `status: done`. |
 | `hyper-verify` | Runs tests, reviews the diff, verifies behavior. Writes `checks.md`. |
-| `hyper-docs` | Updates any affected documentation. |
+| `hyper-docs` | Updates affected existing human-facing docs (`README.md`, `docs/`, etc.) and records when no doc changes are needed. |
 
 **Companion skill shipped in this repo:**
 
