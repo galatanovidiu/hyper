@@ -6,7 +6,7 @@ description: >
 
 # install-hyper
 
-Dev-loop helper for working on Hyper itself. Install the twelve skills under `skills/` into every supported agent skills directory on this machine as symlinks, so agents pick up edits live without reinstalling.
+Dev-loop helper for working on Hyper itself. Install the skill folders under `skills/` into every supported agent skills directory on this machine as symlinks, so agents pick up edits live without reinstalling.
 
 This skill is not part of the distributed Hyper package — it lives in `.claude/skills/install-hyper/` inside this repo and only surfaces when Claude Code is running in the hyper7 directory.
 
@@ -69,14 +69,3 @@ For Claude Code specifically: newly installed skills show up without a restart (
 - **Uninstall is safe.** Only removes symlinks that point back into this repo. Non-symlinks at the target are left alone.
 - **One source of truth.** All targets symlink to the same folders under `skills/` in this repo. Edit once, every agent picks it up.
 - **This script is not the production install method.** It's for developing Hyper itself. End users follow the README's copy-based flow or an agent-specific install mechanism.
-
-## Key principles
-
-- Dev loop wins. Install once, edit freely. Symlinks mean refresh is a no-op.
-- Idempotent. Running `install` twice is safe and reports "already linked" rather than erroring.
-- Multi-agent by default. The same Hyper skills work across Claude Code, Codex, PI — install lands in all of them.
-- Transparent. The script output is plain and auditable; the agent just interprets and summarizes.
-
-## Additional resources
-
-- `scripts/install.sh` — the actual install/uninstall/status logic. Read it if you need to understand what the skill will do.

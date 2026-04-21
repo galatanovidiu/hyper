@@ -1,6 +1,6 @@
 # Hyper
 
-A lightweight, structured development workflow for AI coding agents. Implemented as eleven Hyper [Agent Skills](https://agentskills.io) — plus the companion `team` skill bundled in this repo — plain markdown files that any compatible agent can load. No CLI, no plugin, no server.
+A lightweight, structured development workflow for AI coding agents. Implemented as thirteen Hyper [Agent Skills](https://agentskills.io) — plus the companion `team` skill bundled in this repo — plain markdown files that any compatible agent can load. No CLI, no plugin, no server.
 
 ## What it does
 
@@ -14,7 +14,7 @@ Each phase writes one markdown artifact on disk. Two phases pause for your appro
 
 ## The skills
 
-Five Hyper skills are user-facing. Six internal Hyper skills run under the hood — dispatched by `hyper` and `hyper-implement` — and won't appear in your slash-command menu. This repo also ships the standalone `team` companion skill.
+Six Hyper skills are user-facing. Seven internal Hyper skills run under the hood — dispatched by `hyper`, `hyper-plan`, and `hyper-implement` — and won't appear in your slash-command menu. This repo also ships the standalone `team` companion skill.
 
 **User-facing Hyper skills:**
 
@@ -25,13 +25,15 @@ Five Hyper skills are user-facing. Six internal Hyper skills run under the hood 
 | `hyper-backlog` | Manages the idea-triage inbox at `.hyper/backlog.md`: add, list, promote to task, drop. |
 | `hyper-handoff` | Writes a session handoff for resuming later. |
 | `hyper-retro` | Reflects on what worked and didn't. |
+| `hyper-code-review` | Reviews an arbitrary diff or PR and writes the durable review record to `checks.md`. |
 
-**Internal Hyper skills (invoked by `hyper`):**
+**Internal Hyper skills (invoked under the hood):**
 
 | Skill | Purpose |
 |-------|---------|
 | `hyper-explore` | Clarifies goal, scans code, proposes approach. Writes `exploration.md`. |
 | `hyper-plan` | Turns approach into acceptance criteria + one `T<N>.<M>-<slug>.md` file per vertical slice at the task folder root. Writes `spec.md`. |
+| `hyper-plan-review` | Reviews `exploration.md`, `spec.md`, and subtask files before approval. Writes `plan-review.md`. |
 | `hyper-implement` | For feature scope: orchestrates — dispatches one `hyper-worker` sub-agent per subtask file. For quick scope: implements directly. If verify sends work back blocked, handles the remediation pass from `checks.md`. |
 | `hyper-worker` | Dispatched by `hyper-implement` to finish one subtask end-to-end in a fresh sub-agent — research, implement, test, write a `## Completion` record, flip `status: done`. |
 | `hyper-verify` | Runs tests, reviews the diff, verifies behavior. Writes `checks.md`. |
@@ -67,7 +69,7 @@ mkdir -p .claude/skills
 cp -r /path/to/hyper7/skills/* .claude/skills/
 ```
 
-**Verify**: open Claude Code in a project and type `/hyper` — you should see autocomplete for `hyper`, `hyper-task`, `hyper-backlog`, `hyper-handoff`, `hyper-retro`, and `team`. (The six internal skills are dispatched by `hyper` and `hyper-implement` and don't appear in the menu.)
+**Verify**: open Claude Code in a project and type `/hyper` — you should see autocomplete for `hyper`, `hyper-task`, `hyper-backlog`, `hyper-handoff`, `hyper-retro`, `hyper-code-review`, and `team`. (The seven internal skills are dispatched under the hood and don't appear in the menu.)
 
 ### Codex, Cursor, Gemini CLI, generic agents
 
@@ -96,7 +98,7 @@ Agent: [dispatches one worker per subtask, then verifies and updates docs]
        T1 is complete.
 ```
 
-Or invoke a skill directly with its slash command: `/hyper` (work), `/hyper-task` (list, create-deferred, cancel, status), `/hyper-backlog` (add, list, promote, drop ideas), `/hyper-handoff`, `/hyper-retro`. Resume a specific task with `/hyper T3`.
+Or invoke a skill directly with its slash command: `/hyper` (work), `/hyper-task` (list, create-deferred, cancel, status), `/hyper-backlog` (add, list, promote, drop ideas), `/hyper-handoff`, `/hyper-retro`, `/hyper-code-review`. Resume a specific task with `/hyper T3`.
 
 When Hyper asks a clarifying question with multiple plausible answers, it recommends one option and gives a short reason. You can still override it with a short reply.
 
@@ -235,7 +237,7 @@ Hyper is the seventh iteration of an idea. Earlier versions had a CLI, a state d
 This version follows the [Agent Skills](https://agentskills.io) open standard:
 
 - **Markdown on disk, no CLI.** Agents edit markdown directly.
-- **Eleven focused Hyper skills, each under ~300 lines — plus the bundled `team` companion skill.** Five are user-facing, six are internal (five phase skills + `hyper-worker` for per-subtask dispatch). Progressive disclosure through bundled `templates/` and `reference/` files.
+- **Focused skills with bundled `templates/` and `reference/` files.** User-facing entry points stay small, while heavier workflow detail lives in the bundled contract files instead of getting duplicated across skill bodies.
 - **Scope triage up front.** Quick tasks stay quick. Features get the full workflow.
 - **Principles over gates.** A "should" with a reason is stronger than a "must" without one.
 

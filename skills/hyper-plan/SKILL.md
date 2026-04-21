@@ -142,21 +142,85 @@ Re-read `spec.md` and every `T<N>.<M>-<slug>.md` subtask file from disk. Check:
 
 If you find problems, fix them. Then continue.
 
-## Step 7 — Serialize open questions
+## Step 7 — Plan review
 
-If `spec.md` has no `## Open questions` section, or the section is empty, skip to Step 8.
+Self-review catches planner-visible problems; it does not catch the problems you can't see from inside the draft. After Step 6 passes, invoke `hyper-plan-review` for an independent pass. This step always runs on feature scope — there is no skip condition.
+
+Invoke `hyper-plan-review` with the absolute task folder path (for example `/abs/path/to/project/.hyper/tasks/T<N>-<slug>/`). On harnesses with reliable subagent dispatch, dispatch it as a sub-agent for context isolation; on inline-only harnesses, the skill runs inline. Either way, the skill writes `plan-review.md` at the task folder root and returns a structured one-liner with a verdict (`pass | needs-changes | blocked`), a recommendation (`continue | fix-in-place | rethink`), per-severity finding counts, and a one-line summary. The artifact itself opens with `**Verdict:**` and `**Recommendation:**` lines, followed by `## Findings` and `## Summary` sections.
+
+Read the returned `plan-review.md` and branch on the verdict × recommendation combination.
+
+### `pass` + `continue`
+
+Advance directly to Step 8 (open-question serialization) without prompting. Do not surface the review to the user as its own turn. Any advisory `[note]` or `[warning]` findings present in `plan-review.md` are inlined into the Step 9 approval message so the user sees them at the approval gate — they do not block, and the user does not have to act on them.
+
+(The approval gate sits at Step 9; Step 8 only serializes open questions when the spec has any. When there are no open questions, Step 8 is a no-op and the flow moves straight to Step 9.)
+
+### `needs-changes` + `fix-in-place`
+
+Surface the findings list to the user with three options. Wording shape:
+
+> Plan review returned `needs-changes` with <N> findings (see `plan-review.md`):
+>
+> <findings list>
+>
+> How would you like to proceed?
+> - **(a) Apply the reviewer's suggested edits.** I'll use each finding's `**Fix:**` hint to edit `spec.md` and subtask files directly, then re-run the reviewer.
+> - **(b) Revise manually.** You edit `spec.md` or subtask files yourself and tell me when you're ready for another review.
+> - **(c) Proceed as-is.** Warnings stay in `plan-review.md` as the audit trail; we continue to the approval gate.
+
+On `(a)`, walk the `[warning]` findings in order, apply each `**Fix:**` hint to the named file and section, then re-invoke `hyper-plan-review` and re-enter this step with the fresh result. `hyper-plan-review` is required to include a `**Fix:**` hint on every `[warning]` when it returns `needs-changes + fix-in-place`, so this branch is actionable without guessing. On `(b)`, wait for the user's signal that the manual revision is ready, then re-invoke `hyper-plan-review`. On `(c)`, proceed to Step 8 without further prompting — `plan-review.md` already records why we continued.
+
+No implicit round cap: the loop iterates once per user turn. The user ends it by picking `(c)` or by the next review returning `pass`.
+
+### `blocked` + `fix-in-place`
+
+Same three options as `needs-changes`, with one difference: option `(c)` requires an explicit confirmation turn before the flow advances. Wording shape:
+
+> Plan review returned `blocked` with <N> blocker findings (see `plan-review.md`):
+>
+> <findings list>
+>
+> How would you like to proceed?
+> - **(a) Apply the reviewer's suggested edits.** I'll use each finding's `**Fix:**` hint to edit `spec.md` and subtask files directly, then re-run the reviewer.
+> - **(b) Revise manually.** You edit `spec.md` or subtask files yourself and tell me when you're ready for another review.
+> - **(c) Proceed anyway.** The findings are blockers — proceeding overrides the reviewer. Reply `yes, proceed anyway` to confirm.
+
+`(a)` applies the `**Fix:**` hint on each `[blocker]` finding and re-invokes `hyper-plan-review`. `(b)` waits for the user's manual revision and then re-invokes `hyper-plan-review`. `(c)` only advances to Step 8 when the user replies with the literal phrase `yes, proceed anyway` (or a clear equivalent — "yes proceed anyway", "proceed anyway, confirmed"). Any other reply — including plain "yes" — is not a confirmation; treat it as the user asking a question or requesting changes, restate option `(c)`, and keep waiting. The override must be deliberate.
+
+### `blocked` + `rethink`
+
+Exactly one path reaches `rethink`: the reviewer cited an exploration-level finding (scope drift, an approach subtasks cannot make work, a fundamental decomposition error). Show the cited finding to the user with explicit confirmation wording:
+
+> Plan review returned `blocked` with a `rethink` recommendation. The reviewer cites an exploration-level issue:
+>
+> <exploration-level finding>
+>
+> This looks like the approach itself, not something we can patch in spec or subtasks. Rewind to explore and revise the approach? Reply `yes, rewind to explore` to confirm, or say no / request changes to handle it in-place.
+
+On confirmation, return `redirect target: explore` to `hyper`. `hyper` sets `phase: explore` and re-enters dispatch. This is the only automatic path that returns `redirect target: explore`.
+
+On a non-confirming reply (plain "no", a question, a request to handle it in-place, anything that isn't the literal confirmation phrase or a clear equivalent), fall back to the `blocked + fix-in-place` flow — present options `(a) / (b) / (c)` using the cited `rethink` finding as a blocker, and add a one-line note that `rethink` was downgraded on the user's choice. From there the regular `blocked + fix-in-place` rules apply, including the `yes, proceed anyway` confirmation on `(c)`.
+
+### Invariant
+
+`redirect target: explore` is returned to `hyper` **only** on a confirmed `blocked + rethink` outcome. The user-initiated rewind path that already exists in the Return contract (a user asking to rethink the approach during the approval gate) is unchanged and orthogonal to this step. A `rethink` recommendation with no user confirmation never redirects.
+
+## Step 8 — Serialize open questions
+
+If `spec.md` has no `## Open questions` section, or the section is empty, skip to Step 9.
 
 Otherwise, work through the questions one at a time, following these rules:
 
 - **One question per message.** Never batch. Ask Q1 as your return summary, return verdict `awaiting-input` to `hyper`, and stop. `hyper` sets `task.md` `awaiting: user-input` and relays the question.
 - On the next dispatch (triggered by the user's reply), present the question verbatim from the file. If it has multiple plausible answers, offer numbered-question + lettered-option shorthand ("1A", "1B", …), mark one option as the recommendation, and give a one-line reason grounded in the task, code, or the user's stated goal.
 - When the user answers, record the answer under the question in `spec.md` (indented bullet or a short paragraph beneath the list item — the artifact must stay the durable record of both question and answer).
-- If the user requests changes to the spec or asks a meta question instead of answering, treat it like any other "requests changes / asks a question" response: stop the loop, revise, and restart Step 7 with the updated questions.
+- If the user requests changes to the spec or asks a meta question instead of answering, treat it like any other "requests changes / asks a question" response: stop the loop, revise, and restart Step 8 with the updated questions.
 - Move to the next unanswered question. If any remain, return `awaiting-input` again.
 
-Once every question has an answer, rename the section heading from `## Open questions` to `## Resolved questions` (or delete the section entirely if the answers are already captured elsewhere in the spec). Then proceed to Step 8.
+Once every question has an answer, rename the section heading from `## Open questions` to `## Resolved questions` (or delete the section entirely if the answers are already captured elsewhere in the spec). Then proceed to Step 9.
 
-## Step 8 — Request approval
+## Step 9 — Request approval
 
 Tell the user: *"Wrote `spec.md` and <N> subtask files (`T<N>.1-<slug>.md` … `T<N>.<M>-<slug>.md`) at the task folder root. Please review the acceptance criteria and subtasks. Approve to start implementation, or tell me what to change."*
 
@@ -169,7 +233,7 @@ Every dispatch ends with one verdict. Shared contract in `../hyper/reference/gat
 - `awaiting-input` — open questions remain in `spec.md`.
 - `awaiting-approval` — the spec + subtask files are ready for user approval, or a revision has been applied.
 - `phase-complete` — user approved on a re-dispatch. `hyper` advances to `implement` per the transition table.
-- `redirect target: explore` — user wants to rethink the approach rather than approve. `hyper` sets `phase: explore` and re-enters dispatch.
+- `redirect target: explore` — emitted on either of two paths, both requiring explicit user confirmation. Path one: the user asks to rethink the approach rather than approve at the Step 9 gate. Path two: Step 7 received a confirmed `blocked + rethink` plan-review outcome (the user agreed with the reviewer's exploration-level finding). A `rethink` recommendation never redirects without asking; a user's reply that isn't an explicit confirmation drops back into the `blocked + fix-in-place` flow. `hyper` sets `phase: explore` and re-enters dispatch.
 
 On a user reply that requests spec changes, revise `spec.md` and any affected subtask files, then return `awaiting-approval` again. On a direct question, answer it inline and return `awaiting-approval` with the artifacts unchanged.
 

@@ -33,6 +33,12 @@ These areas are the most likely to drift:
    - `skills/hyper-implement/SKILL.md`
    - `skills/hyper/reference/data-model.md`
 
+6. **`plan-review.md` contract**
+   - `skills/hyper-plan-review/SKILL.md`
+   - `skills/hyper-plan-review/templates/plan-review.md`
+   - `skills/hyper-plan/SKILL.md` (Step 7 invocation + post-review flow)
+   - `skills/hyper/reference/data-model.md`
+
 ## When adding or renaming a skill
 
 Do all of these together:
@@ -58,6 +64,7 @@ At minimum, check:
 - `hyper-worker`
 - `hyper-verify`
 - `hyper-docs`
+- `hyper-plan-review`
 - `hyper-handoff`
 - `hyper-retro`
 

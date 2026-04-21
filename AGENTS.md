@@ -33,7 +33,7 @@ Hyper installs as a suite. In user projects that means copying or symlinking the
 Hyper has two kinds of skills:
 
 - **User-facing** — `hyper`, `hyper-task`, `hyper-backlog`, `hyper-handoff`, `hyper-retro`, `hyper-code-review`. No `user-invocable` field (defaults to `true`). Show up in the slash-command menu. Triggered either by `/<name>` or by description auto-activation. `hyper-code-review` is dual-mode: user-invocable for standalone reviews on arbitrary diffs (creating a `scope: code-review` task), and also invoked internally by `hyper-verify` as its review pass on in-flight Hyper tasks.
-- **Internal** — `hyper-explore`, `hyper-plan`, `hyper-implement`, `hyper-verify`, `hyper-docs`, `hyper-worker`. Set `user-invocable: false`. The five phase skills (`explore`, `plan`, `implement`, `verify`, `docs`) are invoked only by `hyper`. The worker skill (`hyper-worker`) is invoked only by `hyper-implement` during feature-scope orchestration. None appear in the `/` menu, which keeps the user's surface clean.
+- **Internal** — `hyper-explore`, `hyper-plan`, `hyper-plan-review`, `hyper-implement`, `hyper-verify`, `hyper-docs`, `hyper-worker`. Set `user-invocable: false`. The five phase skills (`explore`, `plan`, `implement`, `verify`, `docs`) are invoked only by `hyper`. The plan-review skill (`hyper-plan-review`) is invoked only by `hyper-plan`. The worker skill (`hyper-worker`) is invoked only by `hyper-implement` during feature-scope orchestration. None appear in the `/` menu, which keeps the user's surface clean.
 
 When adding a new skill, decide which category it belongs to and set the frontmatter accordingly. Phase-style skills and dispatched-worker skills that only make sense as part of a larger flow go `user-invocable: false`.
 
@@ -80,7 +80,7 @@ Hyper targets **any** agent that supports the Agent Skills spec, not just Claude
 
 ## When touching the data model
 
-`skills/hyper/reference/data-model.md` is authoritative for Hyper-owned `.hyper/` layout, `task.md` frontmatter, subtask file shape, and artifact filenames. Companion-skill subtrees such as `.hyper/team/` are documented by their owning skill/docs. Any change there needs matching updates in `README.md`, the Hyper skills that read/write those artifacts (`hyper`, `hyper-task`, `hyper-explore`, `hyper-plan`, `hyper-implement`, `hyper-worker`, `hyper-verify`, `hyper-docs`, `hyper-backlog`, `hyper-handoff`, `hyper-retro`), and the relevant templates.
+`skills/hyper/reference/data-model.md` is authoritative for Hyper-owned `.hyper/` layout, `task.md` frontmatter, subtask file shape, and artifact filenames. Companion-skill subtrees such as `.hyper/team/` are documented by their owning skill/docs. Any change there needs matching updates in `README.md`, the Hyper skills that read/write those artifacts (`hyper`, `hyper-task`, `hyper-explore`, `hyper-plan`, `hyper-plan-review`, `hyper-implement`, `hyper-worker`, `hyper-verify`, `hyper-docs`, `hyper-backlog`, `hyper-handoff`, `hyper-retro`), and the relevant templates.
 
 ## Testing changes locally
 

@@ -13,6 +13,7 @@ All Hyper state lives on disk under `.hyper/` in the project root. Plain markdow
       spec.md           # acceptance criteria + subtask index + out-of-scope + edge cases
       T20.1-first-slice.md   # subtask file (feature scope): id, parent, status, depends, awaiting + what/why/done-when/completion
       T20.2-second-slice.md  # subtask file
+      plan-review.md    # review of spec + subtasks before approval; written by hyper-plan-review
       checks.md         # test results, review findings, qa notes; docs phase appends docs outcome
       handoff.md        # (optional) latest session handoff snapshot
       retro.md          # (optional) task-scoped retrospective entries
@@ -83,7 +84,7 @@ Requests that the shared intake heuristic classifies as direct-handling work nev
 
 ### Internal vs user-facing skills
 
-Users invoke six Hyper skills directly: `hyper`, `hyper-task`, `hyper-backlog`, `hyper-handoff`, `hyper-retro`, and `hyper-code-review` (for standalone code reviews on arbitrary diffs). The phase skills (`hyper-explore`, `hyper-plan`, `hyper-implement`, `hyper-verify`, `hyper-docs`) plus `hyper-worker` are internal — invoked by `hyper` or `hyper-implement`, not by the user. They are marked `user-invocable: false` so they don't clutter the slash-command menu. `hyper-code-review` is dual-mode: user-invocable for standalone reviews, and also invoked internally by `hyper-verify` as its review pass on in-flight tasks.
+Users invoke six Hyper skills directly: `hyper`, `hyper-task`, `hyper-backlog`, `hyper-handoff`, `hyper-retro`, and `hyper-code-review` (for standalone code reviews on arbitrary diffs). The phase skills (`hyper-explore`, `hyper-plan`, `hyper-implement`, `hyper-verify`, `hyper-docs`), the plan reviewer (`hyper-plan-review`), and `hyper-worker` are internal — invoked by `hyper`, `hyper-plan`, or `hyper-implement`, not by the user. They are marked `user-invocable: false` so they don't clutter the slash-command menu. `hyper-code-review` is dual-mode: user-invocable for standalone reviews, and also invoked internally by `hyper-verify` as its review pass on in-flight tasks.
 
 This repo also ships the companion `team` skill, but it sits outside the Hyper task-state model described in this file.
 
@@ -219,6 +220,62 @@ Before each dispatch iteration, the orchestrator scans the task folder for subta
 - A subtask has `awaiting: user-input` but no `## Open questions` section in its body.
 
 Fail loudly beats silent skip. Malformed state is a bug that needs human attention, not a condition to route around.
+
+## `plan-review.md`
+
+Written by the `hyper-plan-review` skill during the plan phase of `feature`-scope tasks, after `hyper-plan`'s Step 6 self-review and before the open-question serialization step. Not written for `quick` or `research` scope — those scopes skip plan entirely, so the reviewer is never invoked.
+
+### Structure
+
+Required header block at the top of the file:
+
+```markdown
+## Plan Review — T<N>
+
+**Verdict:** pass | needs-changes | blocked
+**Recommendation:** continue | fix-in-place | rethink
+**Date:** <YYYY-MM-DD>
+```
+
+Followed by two required sections:
+
+1. **`## Findings`** — bullet list of findings, possibly empty. When empty, the section contains the single line `No findings.` rather than being omitted. Each finding is prefixed with `**[blocker]**`, `**[warning]**`, or `**[note]**` and cites a specific `<file>:<section>`. Every `[blocker]` carries a `**Fix:**` hint, and every `[warning]` on a `needs-changes + fix-in-place` review also carries a `**Fix:**` hint — these are the actionable counterparts to the findings and the raw material for `hyper-plan`'s auto-apply flow. `[note]` findings may include a `**Fix:**` hint but are not required to.
+2. **`## Summary`** — 1–2 sentences on overall plan health, always present.
+
+### Verdict vocabulary
+
+`pass | needs-changes | blocked`, matching `checks.md` and `hyper-code-review` exactly. The verdict is computed from the finding severities, not authored independently:
+
+- Any `[blocker]` finding → `blocked`.
+- No blocker, at least one `[warning]` → `needs-changes`.
+- Only `[note]` findings or no findings → `pass`.
+
+### Recommendation vocabulary and legality
+
+`continue | fix-in-place | rethink`. The recommendation tells `hyper-plan` what action to drive next and is subject to three legality invariants:
+
+- **`continue`** is legal only with `**Verdict:** pass`. The plan is ready for approval.
+- **`fix-in-place`** is legal with either `**Verdict:** needs-changes` or `**Verdict:** blocked`. It is the only legal recommendation for `needs-changes` and is the default for every non-`pass` case. Findings can be resolved by editing `spec.md` or subtask files without rewinding to explore, so any `[warning]` on a `needs-changes + fix-in-place` artifact must include a concrete `**Fix:**` hint.
+- **`rethink`** is legal only with `**Verdict:** blocked` **and** only when at least one finding in `## Findings` cites an exploration-level issue (scope drift from `exploration.md`, an approach the subtasks cannot make work, or a fundamental decomposition error). A `rethink` recommendation without such a citation is malformed.
+
+An artifact that violates the legality rule is malformed; the writing skill is required to self-correct to the closest legal pairing (using a finding already in `## Findings` — never inventing a new one) before writing the file. The invariants are enforced inside `hyper-plan-review` so downstream readers can trust the pairing.
+
+### Overwrite rule
+
+Overwritten cleanly on each invocation, matching `checks.md`. `plan-review.md` represents the current review state, not a round-by-round log — re-reviews after applied edits replace the prior file wholesale. Findings do not accumulate across rounds.
+
+### Archive rule
+
+Archives with the task folder when `phase` becomes `done` or `cancelled`. No special handling.
+
+### Relationship to `checks.md`
+
+Both are review artifacts but with different surfaces and different phases:
+
+- `plan-review.md` reviews the plan (`exploration.md` + `spec.md` + subtask files) before implementation starts, during the plan phase.
+- `checks.md` reviews the diff (plus test runs and QA) after implementation, during the verify phase.
+
+They never share rounds. A blocked `plan-review.md` drives `hyper-plan` back into the spec-edit loop; a blocked `checks.md` drives `hyper-verify` back into remediation. The two artifacts coexist in the task folder for feature-scope tasks that reach verify.
 
 ## `checks.md`
 
