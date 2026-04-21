@@ -243,7 +243,7 @@ Verdict: pass | needs-changes | blocked
 
 Missing `## docs` means the docs phase hasn't completed yet. Missing one of the earlier sections means verify hasn't completed yet.
 
-The top-level `**Overall:**` verdict is computed, not authored independently: it is the worst of the `tests`, `review`, and `qa` verdicts, ranked `blocked` > `needs-changes` > `pass` (QA `not-applicable` counts as `pass`). See `hyper-verify` for the rule.
+The top-level `**Overall:**` verdict is computed, not authored independently: it is the worst of the `tests`, `review`, and `qa` verdicts, ranked `blocked` > `needs-changes` > `pass` (QA `not-applicable` counts as `pass`; a `skipped — user opted out` verdict on any of the three sections also counts as `pass`). See `hyper-verify` for the rule.
 
 Verify never patches code. A blocked finding causes `hyper-verify` to return a `redirect target: implement` verdict; `hyper` then sets `phase: implement` and `awaiting: user-input`. The next implement pass reads `checks.md` as its remediation brief and returns `phase-complete` to bounce back to verify when done.
 

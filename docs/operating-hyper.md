@@ -130,6 +130,8 @@ A good verify pass should answer:
 - does the feature actually behave as promised?
 - did docs need updating?
 
+Verify opens with a one-message opt-out prompt asking which of tests, review, and QA to run on this pass. `run all` is the default; skip a section when you've already checked it yourself or when the task doesn't need it. Skipped sections record `**Verdict:** skipped — user opted out` in `checks.md` and count as `pass` for the overall rollup. The prompt fires once per verify dispatch-chain; a remediation loop re-prompts so you can choose differently.
+
 If verify sends the work back blocked, that is normal workflow, not failure of the system.
 
 ## Handoffs and retros

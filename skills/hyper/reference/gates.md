@@ -23,7 +23,7 @@ Every phase dispatch ends with the phase skill returning exactly one verdict to 
 | Verdict | Meaning | `hyper` does |
 |---------|---------|--------------|
 | `awaiting-approval` | Artifact written; user approval gate required. | Set `task.md` `awaiting: user-approval`. Stop and surface the gate label. |
-| `awaiting-input` | Open question(s) recorded in the artifact (or a surfaced blocked-subtask question). | Set `task.md` `awaiting: user-input`. Stop and relay the first unanswered question verbatim from the phase skill's return summary. |
+| `awaiting-input` | Open question(s) recorded in the artifact, a surfaced blocked-subtask question, or a fresh-dispatch user-choice prompt (e.g. verify's opt-out gate). | Set `task.md` `awaiting: user-input`. Stop and relay the first unanswered question verbatim from the phase skill's return summary. |
 | `phase-complete` | Phase produced its artifact and is ready to advance. | Clear `awaiting`. Apply the phase-transition table. Apply the checkpoint rule. |
 | `redirect target: <phase>` | Non-linear transition — `plan → explore` on user rewind, or `verify → implement` on blocked `checks.md`. | Clear any stale `awaiting`. Set `phase: <target>`. For `verify → implement`, also set `awaiting: user-input` (verify's blocked findings become the remediation brief). Re-enter Dispatch. |
 
