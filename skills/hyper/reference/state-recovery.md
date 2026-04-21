@@ -60,18 +60,15 @@ Recovery:
 
 ### 3. Subtask graph is malformed
 
-Examples:
+These are the abort conditions enumerated in `data-model.md` § Validation. `hyper-implement` refuses to dispatch until the graph validates cleanly. Recover file-by-file, then re-run implement.
 
-- duplicate ids
-- dangling `depends`
-- cycles
-- missing required fields
+- **Duplicate ids.** Two files share the same `T<N>.<M>`. Decide which slice keeps the id (usually the one with real content or a `## Completion` record) and renumber the other to the next unused `M`. Update `spec.md` ToC to match.
+- **Dangling `depends`.** A `depends` entry points to an id that has no file. Either create the missing subtask file, correct the id to an existing sibling, or remove the entry if the dependency is stale.
+- **Cycles in `depends`.** Two or more subtasks form a loop (e.g. `T3.1 → T3.2 → T3.1`). Decide which slice should run first on its own — usually the one with the narrowest scope or no code dependencies — and remove the offending id from its `depends` list. Update the other slices' `depends` so the order is linear. If the slices are genuinely co-dependent, they are one slice; merge them into a single subtask file and renumber the rest.
+- **Unparseable or missing required fields.** Open the file and repair the frontmatter directly. Required fields: `id`, `parent`, `status`, plus `title`, `depends`, `awaiting`. `parent` must match the task folder's id; a mismatch usually means the file was copied from another task — correct the `parent` field or move the file to the right folder.
+- **`awaiting: user-input` without a `## Open questions` section.** The orchestrator set the subtask-level gate but the body has no question. Two repair paths: (a) if there is a real blocker, add the `## Open questions` section with the pending question and re-propagate the gate to `task.md`; (b) if the blocker is already resolved on disk, clear the subtask's `awaiting: null` and let the orchestrator re-dispatch the worker.
 
-Recovery:
-
-- repair the frontmatter directly in the affected subtask files
-- update `spec.md` ToC if titles, ids, or filenames changed
-- do not dispatch workers until the graph validates cleanly
+After any of these, update `spec.md` ToC if titles, ids, or filenames changed. Do not dispatch workers until the graph validates.
 
 ### 4. `awaiting` divergence
 
@@ -104,7 +101,18 @@ Recovery:
 - use `checks.md` as the remediation brief
 - return through `implement`, then back to `verify`
 
-### 7. Archived task needs inspection
+### 7. `checks.md` is half-written
+
+An interrupted verify pass can leave `checks.md` with some sections missing. `hyper-implement`'s remediation preflight reads the overall verdict at the top and the section verdicts below it; missing sections cause undefined behavior.
+
+Signs: `**Overall:**` header present but one of `## tests`, `## review`, `## qa` is missing; or a section exists with no verdict line. Missing `## docs` is *not* malformed — that section is appended by the docs phase and is expected to be absent during and after verify.
+
+Recovery:
+
+- delete `checks.md` and re-run the verify phase. Verify always overwrites cleanly on entry (see `hyper-verify/SKILL.md` Rules), so there is nothing to salvage from a partial run.
+- do not hand-edit a partial `checks.md` into shape — the section verdicts must be derived from an actual test run, review, and QA pass, not invented.
+
+### 8. Archived task needs inspection
 
 Do not move a terminal task back to active just to read it.
 
