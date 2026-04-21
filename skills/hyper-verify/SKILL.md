@@ -204,6 +204,8 @@ Use the shape in `templates/checks.md` (bundled with this skill). This phase wri
 - `needs-changes` — warnings exist but no criticals. Task still advances; user sees the warnings.
 - `blocked` — at least one test failure, critical review finding, or QA failure. `hyper` will bounce the task back to `implement` with `awaiting: user-input` on your `redirect` verdict; the next implement pass reads `checks.md` as its brief and returns to verify.
 
+The overall verdict is computed, not retyped. It is the worst of the three section verdicts, ranked `blocked` > `needs-changes` > `pass`. Treat QA `not-applicable` as `pass` for the rollup. Do not assign the overall verdict independently — it must follow from `## tests`, `## review`, and `## qa`.
+
 ## Return contract
 
 Every dispatch ends with one verdict. Shared contract in `../hyper/reference/gates.md`. Verify emits:
@@ -219,6 +221,8 @@ Verify does not emit `awaiting-input` or `awaiting-approval` — it does not hol
 - **Review the diff, not the file.** Pre-existing code is out of scope unless the change makes it worse.
 - **Critical means critical.** Don't inflate severity to look thorough, and don't downgrade real findings to ship faster.
 - **Verify never patches code.** Any blocked finding returns `redirect target: implement` with `checks.md` as the brief. Implement is the single owner of the remediation loop.
+- **Overwrite `checks.md` cleanly on entry.** `checks.md` represents current state, not history. Never append to a prior attempt — a stale `blocked` verdict on disk would false-trigger the implement remediation preflight on the next dispatch.
+- **Roll up, don't retype.** The top-level overall verdict is computed from the three section verdicts (worst of `tests`, `review`, `qa`; `not-applicable` counts as `pass`). Assigning it independently is how drift starts.
 - **Never write `task.md` `phase:` or `awaiting:`.** Return a verdict; `hyper` owns the mutation.
 - **QA tests behavior, not code.** Reading the implementation is review, not QA. Run the feature.
 - **Evidence over assertion.** Every QA row has real output. "I checked, it works" is not evidence.

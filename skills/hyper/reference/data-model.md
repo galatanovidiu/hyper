@@ -192,7 +192,7 @@ Subtask-level `awaiting: user-input` is surfaced by `hyper-implement` via an `aw
 
 The orchestrator in `hyper-implement` selects subtasks by scanning frontmatter:
 
-- Pick the first file (alphabetical by id) where `status: todo` and every id listed in `depends` has `status: done` in its own file.
+- Pick the lowest-`M` file (numeric order over the `M` component of the id — `T<N>.1, T<N>.2, …, T<N>.10`, not lexical) where `status: todo` and every id listed in `depends` has `status: done` in its own file.
 - If nothing matches and at least one subtask is still `todo`, either a dependency chain is unsatisfied (expected — other subtasks are still running or awaiting user input) or there's a deadlock (abort with error).
 - If every subtask is `status: done`, return verdict `phase-complete` to `hyper`. `hyper` advances the parent task to `phase: verify` (with the `implement → verify` checkpoint).
 
@@ -234,6 +234,8 @@ Verdict: pass | needs-changes | blocked
 ```
 
 Missing `## docs` means the docs phase hasn't completed yet. Missing one of the earlier sections means verify hasn't completed yet.
+
+The top-level `**Overall:**` verdict is computed, not authored independently: it is the worst of the `tests`, `review`, and `qa` verdicts, ranked `blocked` > `needs-changes` > `pass` (QA `not-applicable` counts as `pass`). See `hyper-verify` for the rule.
 
 Verify never patches code. A blocked finding causes `hyper-verify` to return a `redirect target: implement` verdict; `hyper` then sets `phase: implement` and `awaiting: user-input`. The next implement pass reads `checks.md` as its remediation brief and returns `phase-complete` to bounce back to verify when done.
 

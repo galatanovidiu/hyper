@@ -77,11 +77,11 @@ Before picking anything to dispatch, validate. If any check fails, abort with an
 
 ### Step 2 — Pick the next subtask
 
-Scan subtask files (alphabetical by id):
+Scan subtask files ordered by the numeric `M` component of the id — `T<N>.1, T<N>.2, …, T<N>.10` — not lexical order:
 
 - If **all** have `status: done` → go to Step 5 (advance phase).
 - If any has `awaiting: user-input` → go to Step 4 (propagate blocker).
-- Otherwise pick the **first** file where `status: todo` and every id in `depends` has `status: done` in its own file.
+- Otherwise pick the **lowest-`M`** file where `status: todo` and every id in `depends` has `status: done` in its own file.
 
 If no file matches and no blocker is set, you have a deadlock — abort with an error naming the stuck subtasks and their unsatisfied deps.
 
@@ -120,7 +120,7 @@ Wait for the sub-agent to return. Then re-read the subtask file's frontmatter:
 - `status: todo` unchanged and `awaiting` still null → worker did not claim the subtask. Abort with: *"T<N>.<M> returned from dispatch with no state change. Investigate before re-dispatching."*
 - `status: done` but no `## Completion` section → surface a warning to the user, proceed to Step 1. The diff is still the record; the missing summary is best-effort.
 
-**Parallel dispatch is future work.** v1 dispatches one worker at a time. Once sequential dispatch is proven, independent unblocked subtasks may be dispatched in parallel by sending multiple Task calls in one message.
+If the worker's return one-liner named any `B<N>` ids (format: `… (backlog: B7, B8)`), add them to a running list of backlog ids created during this implement run. Step 5 surfaces the full list to the user.
 
 ### Step 4 — Propagate blocker to user
 
@@ -138,7 +138,11 @@ When the user answers on a later turn, `hyper` clears `task.md` `awaiting` and r
 
 ### Step 5 — Advance the phase
 
-When every subtask has `status: done`, return verdict `phase-complete` to `hyper` with a summary: *"T<N> implementation complete. <N> subtasks done. Ready for verify."* `hyper` advances to `verify` and applies the checkpoint rule.
+When every subtask has `status: done`, return verdict `phase-complete` to `hyper` with a summary: *"T<N> implementation complete. <N> subtasks done. Ready for verify."*
+
+If the running list of backlog ids collected in Step 3 is non-empty, append a second sentence: *"Backlog added during run: B7, B8."* Omit the sentence when the list is empty.
+
+`hyper` advances to `verify` and applies the checkpoint rule.
 
 ### Subtask file is wrong mid-flight
 

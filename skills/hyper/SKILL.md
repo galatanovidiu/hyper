@@ -38,7 +38,7 @@ When I say "active tasks" below, I mean tasks in one of the active phases only.
 
 ## Routing
 
-Walk the checks below in order. First match wins.
+Walk the checks below in order. First match wins. Gate replies and active-task matching always take priority over intake triage — the micro-nudge only fires when there is no active work to attach the request to.
 
 ### 1. Request is a task id (e.g. `T3`, `t3`, "resume T3")
 Jump to **Resume by id**.
@@ -52,34 +52,31 @@ Apply the gate protocol in `reference/gates.md`:
 - If multiple active tasks have open gates and the user didn't name an id, ask which task the reply is for. Stop.
 - If the user clearly supplied a new unrelated goal, keep going through this routing table.
 
-### 3. Clearly micro-sized ask, no active task, no explicit request for tracking
+### 3. Goal provided, active task, goals clearly match
+Resume the active task. Jump to **Dispatch phase**.
+
+### 4. Goal provided, active task, goals clearly differ
+Ask: *"T{id} is in progress on '<title>'. I recommend treating this as new work because <reason>. If you want it folded into T{id} instead, say so."* Stop and wait.
+
+### 5. Goal provided, active task, relationship is ambiguous
+Ask: *"T{id} is in progress on '<title>'. My read is this is <new work | part of T{id}> because <reason>. If you want the other path, say so."* Stop and wait.
+
+### 6. No goal, exactly one active task
+Resume that task. Jump to **Dispatch phase**.
+
+### 7. No goal, multiple active tasks
+List them with `id`, `phase`, `awaiting` (if set), and `title`, then ask which to continue. Stop.
+
+### 8. No goal, no active task
+If any deferred tasks exist, tell the user ("You have deferred tasks: T5, T7. Start one with `/hyper T5`, or give me a new goal."). Otherwise ask what they want to work on. Stop.
+
+### 9. Goal provided, no active task
 Apply the shared intake heuristic in `reference/intake-triage.md`.
 
 If the request is direct-handling shaped — tiny, low-risk, and not in a sensitive area — ask once: *"This looks micro-sized and probably faster outside Hyper. I recommend handling it directly without task tracking because <reason>. If you want it tracked in Hyper anyway, say so."*
 
 - If the user chooses direct handling, stop. Do not create Hyper state.
-- If the user says to track it anyway, continue through this routing table.
-
-### 4. No goal, no active task
-If any deferred tasks exist, tell the user ("You have deferred tasks: T5, T7. Start one with `/hyper T5`, or give me a new goal."). Otherwise ask what they want to work on. Stop.
-
-### 5. Goal provided, no active task
-Create a new task. Jump to **Create task**, then route to explore.
-
-### 6. Goal provided, active task, goals clearly match
-Resume the active task. Jump to **Dispatch phase**.
-
-### 7. Goal provided, active task, goals clearly differ
-Ask: *"T{id} is in progress on '<title>'. I recommend treating this as new work because <reason>. If you want it folded into T{id} instead, say so."* Stop and wait.
-
-### 8. Goal provided, active task, relationship is ambiguous
-Ask: *"T{id} is in progress on '<title>'. My read is this is <new work | part of T{id}> because <reason>. If you want the other path, say so."* Stop and wait.
-
-### 9. No goal, exactly one active task
-Resume that task. Jump to **Dispatch phase**.
-
-### 10. No goal, multiple active tasks
-List them with `id`, `phase`, `awaiting` (if set), and `title`, then ask which to continue. Stop.
+- If the user says to track it anyway, or the request is not direct-handling shaped, jump to **Create task**, then route to explore.
 
 Routing decides *which* task to work on, including replies to open gates. **Dispatch phase** below decides which phase skill to invoke for that task.
 

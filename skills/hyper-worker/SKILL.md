@@ -54,7 +54,7 @@ Do **not** touch `task.md`, `spec.md`, or sibling subtask files. The orchestrato
 
    Use project-relative paths, not absolute. Keep each bullet tight — the commit/diff is the detailed record; this is the human-readable summary.
 
-10. **Flip status.** Set the subtask's frontmatter `status: done`. Return to the orchestrator with a one-line summary: *"T<N>.<M> done: <one-liner>"*.
+10. **Flip status.** Set the subtask's frontmatter `status: done`. Return to the orchestrator with a one-line summary: *"T<N>.<M> done: <one-liner>"*. If during this subtask you appended any entries to `.hyper/backlog.md`, include the ids in the summary: *"T<N>.<M> done: <one-liner> (backlog: B7, B8)"*.
 
 ## Mid-work blockers
 
@@ -72,6 +72,7 @@ You will notice things that are broken or stale but not in your subtask's scope.
 
 - Append an entry to `.hyper/backlog.md` under a `## B<N> — <short title>` heading. Body is one paragraph with file:line reference and why it matters.
 - Allocate `B<N>` by scanning `backlog.md` for the highest existing `^## B\d+ — ` heading and adding 1. Bootstrap the file with a `# Backlog` heading if it's missing.
+- Record the allocated id so you can surface it in the final return one-liner (see step 10 of the Flow).
 - Then return to step 6 (Implement) on your actual subtask.
 
 ## Safety checklists
