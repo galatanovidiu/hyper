@@ -1,6 +1,6 @@
 ---
 name: hyper-worker
-description: Implements one Hyper subtask end-to-end inside a dispatched sub-agent. Reads the named subtask file at `.hyper/tasks/T<N>-*/T<N>.<M>-<slug>.md` (legacy bare `T<N>.<M>.md` also valid), researches, implements only that slice, runs tests, writes a Completion record, and flips status to done. Invoked by the hyper-implement orchestrator via the Task tool with subagent_type=general-purpose; not user-invocable. Keywords hyper, worker, subtask, sub-agent, implement one slice, completion record.
+description: Implements one Hyper subtask end-to-end inside a dispatched sub-agent. Reads the named subtask file at `.hyper/tasks/T<N>-*/T<N>.<M>-<slug>.md`, researches, implements only that slice, runs tests, writes a Completion record, and flips status to done. Invoked by the hyper-implement orchestrator via the Task tool with subagent_type=general-purpose; not user-invocable. Keywords hyper, worker, subtask, sub-agent, implement one slice, completion record.
 user-invocable: false
 ---
 
@@ -12,7 +12,7 @@ You run in a fresh context with no memory of prior subtasks. Everything you need
 
 ## Input
 
-The orchestrator gives you one path in the dispatch prompt: the absolute path to the subtask file (e.g. `/abs/path/.hyper/tasks/T27-.../T27.3-wire-login-endpoint.md`; legacy bare filenames like `/abs/path/.hyper/tasks/T27-.../T27.3.md` are also valid). Everything else is derived from the parent folder.
+The orchestrator gives you one path in the dispatch prompt: the absolute path to the subtask file (e.g. `/abs/path/.hyper/tasks/T27-.../T27.3-wire-login-endpoint.md`). Everything else is derived from the parent folder.
 
 If the path is missing or malformed, stop and report. Don't guess.
 

@@ -63,9 +63,9 @@ Given a task id `T<N>`, look first in `.hyper/tasks/T<N>-*/`, then fall back to 
 - Id and title
 - `phase`, `scope`, `created`, `awaiting`
 - Location (`active` or `archived`) so the user knows where the folder is
-- Artifacts present in the folder (`exploration.md`, `spec.md`, subtask files like `T<N>.1-<slug>.md` or legacy `T<N>.1.md`, `checks.md`, etc.)
+- Artifacts present in the folder (`exploration.md`, `spec.md`, subtask files like `T<N>.1-<slug>.md`, `checks.md`, etc.)
 - Subtask progress: list files in the task folder whose names start with `T<N>.` and end with `.md`, then count how many have `status: done` in frontmatter vs total (e.g., *"3 of 6 subtasks done"*).
-- For legacy tasks with no subtask files but a `spec.md` containing checkboxes: fall back to counting `- [x]` vs `- [ ]` lines. Note in the report that this is a legacy-model task.
+- For legacy checklist-in-spec tasks with no subtask files but a `spec.md` containing checkboxes: fall back to counting `- [x]` vs `- [ ]` lines. Note in the report that this is a legacy-model task.
 - For `phase: cancelled`: include `cancelled_at` and `cancelled_reason`
 
 Keep it tight — this is a status line, not a transcript. One screen.

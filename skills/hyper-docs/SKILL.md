@@ -16,7 +16,7 @@ This phase runs for `scope: feature` tasks only. Quick tasks skip docs (the diff
 - `task.md` (phase=docs)
 - The diff from implement
 - `spec.md`, `exploration.md`, `checks.md`
-- Subtask files (`T<N>.<M>-<slug>.md` for new tasks, legacy `T<N>.<M>.md` for older ones) in the task folder — each has a `## Completion` section naming the specific files changed per slice. Useful for scoping the docs-impact search without re-deriving from the raw diff.
+- Subtask files (`T<N>.<M>-<slug>.md`) in the task folder — each has a `## Completion` section naming the specific files changed per slice. Useful for scoping the docs-impact search without re-deriving from the raw diff.
 
 ## Outputs
 

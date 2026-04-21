@@ -135,7 +135,7 @@ Written by the `hyper-plan` skill for `feature`-scope tasks. Contains:
 
 ## Subtask files
 
-Feature-scope tasks decompose into subtask files whose preferred filename is `T<N>.<M>-<slug>.md`, one file per vertical slice, stored directly in the task folder alongside `task.md` and `spec.md`. Derive `<slug>` from the subtask title using the same lowercase, spaces-to-hyphens, punctuation-stripping, roughly-40-character rule used for task-folder slugs. Legacy bare filenames like `T<N>.<M>.md` remain valid for older tasks; readers and orchestrators accept both shapes. The dotted-id prefix keeps subtask files visually distinct from task-level artifacts (`task.md`, `spec.md`, etc.) while the slug makes a directory listing readable without opening every file. The filename is a convenience label, not the source of truth — the in-file `id` and `title` fields remain authoritative if a title later changes.
+Feature-scope tasks decompose into subtask files named `T<N>.<M>-<slug>.md`, one file per vertical slice, stored directly in the task folder alongside `task.md` and `spec.md`. Derive `<slug>` from the subtask title using the same lowercase, spaces-to-hyphens, punctuation-stripping, roughly-40-character rule used for task-folder slugs. The dotted-id prefix keeps subtask files visually distinct from task-level artifacts (`task.md`, `spec.md`, etc.) while the slug makes a directory listing readable without opening every file. The filename is a convenience label, not the source of truth — the in-file `id` and `title` fields remain authoritative if a title later changes.
 
 ```markdown
 ---
@@ -200,7 +200,7 @@ If verify later sends the task back with `checks.md` overall `blocked`, `hyper-i
 
 ### Validation
 
-Before each dispatch iteration, the orchestrator scans the task folder for subtask files whose names start with `T<parent>.` and end with `.md` (for example `T27.1-wire-login-endpoint.md` or legacy `T27.1.md`) and aborts with a specific error if any of the following are true:
+Before each dispatch iteration, the orchestrator scans the task folder for subtask files whose names start with `T<parent>.` and end with `.md` (for example `T27.1-wire-login-endpoint.md`) and aborts with a specific error if any of the following are true:
 
 - No subtask files exist on a feature-scope task.
 - Any subtask file's YAML frontmatter is unparseable or missing required fields (`id`, `parent`, `status`).

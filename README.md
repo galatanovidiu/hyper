@@ -193,7 +193,7 @@ After first use, your project has:
     providers/        # project-local teammate definitions (optional)
 ```
 
-The numeric `T<N>.<M>` prefix remains the stable subtask id. The slugged suffix is there so a folder listing is readable at a glance; older tasks may still have legacy bare filenames like `T1.1.md`.
+The numeric `T<N>.<M>` prefix is the stable subtask id; the slugged suffix keeps a folder listing readable at a glance.
 
 Add `.hyper/` to `.gitignore` unless you want to share task history with your team.
 
