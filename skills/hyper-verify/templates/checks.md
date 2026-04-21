@@ -67,11 +67,16 @@ User opted out at verify start.
 
 **Verdict:** pass | blocked | not-applicable
 
+<Use one of the forms below.>
+
+<For user-facing changes, use the evidence table:>
 | Criterion | Result | Evidence |
 |-----------|--------|----------|
 | <criterion from spec> | pass / fail | <command output, screenshot path, HTTP response> |
 
-<If not-applicable: "No user-facing changes — QA skipped.">
+<For internal-only changes, replace the table with:>
+No user-facing changes — QA skipped.
+
 <If review already blocked the pass: "QA not run because review already blocked this verify pass. Re-run verify after remediation.">
 
 <!-- If user opted out at the verify opt-out gate, replace the block above with:
