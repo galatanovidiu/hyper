@@ -109,6 +109,25 @@ Use these rules:
 
 Do not keep accreting contradictory task artifacts.
 
+## Resuming older tasks
+
+If an active task looks like a cold resume — for example it was created on a
+prior day or it has a `handoff.md` from an earlier pause — Hyper may
+sanity-check it before dispatching the next phase.
+
+That pause is intentionally lightweight:
+
+- it uses saved disk state, not hidden session memory
+- it does not open a new `awaiting` gate or write new task metadata
+- if the task still looks live, Hyper continues normally
+- if it looks stale, Hyper points you to explicit next actions: resume anyway,
+  defer it with `hyper-task defer T<N>`, or cancel it with `hyper-task cancel
+  T<N>`
+
+Use `hyper-task defer T<N>` when the work is still valid but not worth
+continuing right now. Deferral is non-terminal: the task stays in `.hyper/tasks/`
+with its artifacts intact and resumes later through `hyper T<N>`.
+
 ## Unrelated problems you notice
 
 Do not fix them inline by default.

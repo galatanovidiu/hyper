@@ -68,6 +68,14 @@ When a gate is open (`awaiting != null`), treat the following as substantive rep
 
 A blank resume or generic `continue` with no open gate context is not a reply on its own — `hyper` surfaces the gate label and stops.
 
+## Cold-resume sanity checks
+
+`hyper` may pause before dispatching an active task on a cold resume when no gate is open. This is a read-side sanity check, not a gate:
+
+- It uses durable signals only (for example an older `created` date or a present `handoff.md`), never hidden conversation memory.
+- It does **not** write `task.md` `awaiting` or any new frontmatter field.
+- If the task looks stale, the pause points the user to an explicit next action such as `resume T<N> anyway`, `hyper-task defer T<N>`, or `hyper-task cancel T<N>`.
+
 ## Behavior when a gate is open
 
 ### `hyper`

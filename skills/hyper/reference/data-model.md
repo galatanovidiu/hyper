@@ -59,7 +59,7 @@ artifacts below say how it gets done.>
 |-------|--------|---------|
 | `id` | `T1`, `T2`, … | Sequential integer. First task is `T1`. |
 | `title` | short string | Human-readable title, used in the folder name and headings. |
-| `phase` | `deferred` · `explore` · `plan` · `implement` · `verify` · `docs` · `review` · `done` · `cancelled` | Current phase. **Owned by `hyper`** (and by `hyper-task` on cancellation, plus `hyper-code-review` when it archives a standalone code-review task it created directly). Phase skills return verdicts; they do not write this field. `done` and `cancelled` are terminal. `deferred` means the task exists but the user hasn't started it yet (created by `hyper-task`). `review` is only used by `scope: code-review` tasks and is handled by `hyper-code-review`. |
+| `phase` | `deferred` · `explore` · `plan` · `implement` · `verify` · `docs` · `review` · `done` · `cancelled` | Current phase. **Owned by `hyper`** (and by `hyper-task` on user-initiated deferral or cancellation, plus `hyper-code-review` when it archives a standalone code-review task it created directly). Phase skills return verdicts; they do not write this field. `done` and `cancelled` are terminal. `deferred` means the task is parked and not currently running — either newly created for later, or moved back there by `hyper-task` Defer. `review` is only used by `scope: code-review` tasks and is handled by `hyper-code-review`. |
 | `scope` | `quick` · `feature` · `research` · `code-review` · `unknown` | Set during explore by `hyper-explore`, or set at task creation by `hyper-code-review` for standalone code-review tasks. Drives which phases run. `unknown` before explore classifies it. Phase-owned classification, not workflow state. |
 | `created` | Local datetime in `YYYY-MM-DDTHH:MM:SS` form (e.g. `2026-04-17T09:14:32`) | When the task was created. |
 | `bugfix` | `true` · `false` | Set by `hyper-explore` when the task is a bugfix or regression. Routes `hyper-explore` to the root-cause-first sub-flow. Defaults to `false`; detection lives in `hyper-explore` Step 1. Missing field is treated as `false` for back-compat. Phase-owned classification, not workflow state. |
@@ -310,6 +310,11 @@ Verify never patches code. A blocked finding causes `hyper-verify` to return a `
 ## `handoff.md`
 
 Optional. Written by `hyper-handoff` for an active task as the latest current-state rescue. Lives in the task folder, is overwritten on each new handoff, and captures only session context that is not already recorded elsewhere in the task artifacts. It is retained until replaced; if the task archives, the latest handoff archives with it.
+
+On a later active-task resume with no open gate, `hyper` may treat `handoff.md`
+as a cold-resume signal and sanity-check whether the task still deserves
+continuation before dispatching a phase skill. That pause is read-side only:
+it does not write `awaiting` or add a separate resume-state field.
 
 ## `retro.md`
 

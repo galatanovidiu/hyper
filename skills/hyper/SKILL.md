@@ -1,14 +1,14 @@
 ---
 name: hyper
 description: >
-  Starts or resumes structured development work through the Hyper workflow. Reads the current task state on disk under .hyper/, picks the right phase (explore, plan, implement, verify, docs), and dispatches to the matching hyper-* skill. Use when the user asks to build a feature, fix a non-trivial bug, refactor, investigate something in the codebase, resume a specific task by id (e.g. "resume T3"), or continue in-progress Hyper work. Keywords: hyper, structured work, workflow, task, phase, explore, plan, implement, resume.
+  Starts or resumes structured development work through the Hyper workflow. Reads the current task state on disk under .hyper/, picks the right phase (explore, plan, implement, verify, docs), and dispatches to the matching hyper-* skill. On cold resumes of active tasks, it sanity-checks whether the saved work still deserves continuation before dispatching. Use when the user asks to build a feature, fix a non-trivial bug, refactor, investigate something in the codebase, resume a specific task by id (e.g. "resume T3"), or continue in-progress Hyper work. Keywords: hyper, structured work, workflow, task, phase, explore, plan, implement, resume.
 ---
 
 # hyper
 
 Your job: **take the user's request, combine it with `.hyper/` state, decide whether to create, resume, or ask — then dispatch to the right phase skill.** Never implement, test, or review yourself; phase skills do that.
 
-For task *management* operations (list, create-deferred, cancel, status) the user goes to `hyper-task`, not this skill.
+For task *management* operations (list, create-deferred, defer, cancel, status) the user goes to `hyper-task`, not this skill.
 
 ## Before anything else
 
@@ -36,11 +36,13 @@ When I say "active tasks" below, I mean tasks in one of the active phases only.
   - A natural-language goal (new or ambiguous)
 - The contents of `.hyper/tasks/` — list the folder and parse each `task.md` frontmatter.
 
+An explicit override like `resume T3 anyway` or `continue T3 anyway` means: resume that active task even if the cold-resume sanity check would normally stop to question it.
+
 ## Routing
 
 Walk the checks below in order. First match wins. Gate replies and active-task matching always take priority over intake triage — the micro-nudge only fires when there is no active work to attach the request to.
 
-### 1. Request is a task id (e.g. `T3`, `t3`, "resume T3")
+### 1. Request is a task id (e.g. `T3`, `t3`, "resume T3", "resume T3 anyway")
 Jump to **Resume by id**.
 
 ### 2. Reply to an open gate
@@ -62,7 +64,7 @@ Ask: *"T{id} is in progress on '<title>'. I recommend treating this as new work 
 Ask: *"T{id} is in progress on '<title>'. My read is this is <new work | part of T{id}> because <reason>. If you want the other path, say so."* Stop and wait.
 
 ### 6. No goal, exactly one active task
-Resume that task. Jump to **Dispatch phase**.
+Resume that task. Jump to **Cold-resume check**.
 
 ### 7. No goal, multiple active tasks
 List them with `id`, `phase`, `awaiting` (if set), and `title`, then ask which to continue. Stop.
@@ -89,7 +91,31 @@ Given task id `T<N>`:
 3. If `phase: done` — report *"T<N> is already complete."* Stop. (Archived folder — don't reopen.)
 4. If `phase: cancelled` — report *"T<N> was cancelled (<reason>)."* Stop. (Archived folder — don't reopen.)
 5. If `phase: deferred` — set `phase: explore`, save, then continue to **Dispatch phase**. Announce: *"Starting T<N> — <title>."*
-6. Otherwise — continue to **Dispatch phase**.
+6. If the request explicitly says `resume T<N> anyway` / `continue T<N> anyway` (or a clear equivalent), skip **Cold-resume check** once and continue to **Dispatch phase**.
+7. Otherwise — continue to **Cold-resume check**.
+
+## Cold-resume check
+
+Given an already-selected task in an active phase:
+
+1. If `awaiting != null`, skip this check. The existing gate owns the next user turn.
+2. If `phase: deferred`, skip this check. First-time starts go straight to explore.
+3. Decide whether this looks like a cold resume using **durable signals only**:
+   - `task.md` `created` is earlier than the current local date, and/or
+   - `handoff.md` exists in the task folder.
+
+   Do **not** rely on hidden conversation memory or harness-specific "same session" state.
+4. If no cold-resume signal is present, continue to **Dispatch phase**.
+5. If a cold-resume signal is present, read `task.md`, the current phase artifact (`exploration.md`, `spec.md`, or `checks.md` as applicable), and `handoff.md` if present.
+6. Sanity-check whether the task still deserves continuation. Use evidence from the saved artifacts and current codebase, not just age. Signals that justify pausing include:
+   - the requested capability already exists now
+   - the task's motivation no longer looks valid
+   - the saved plan conflicts with the current codebase in a way that changes the task's value
+   - a handoff blocker or rationale is clearly obsolete
+7. If the task still looks live, continue to **Dispatch phase** with no extra user round-trip.
+8. If the task may be stale, obsolete, or misaligned, stop and tell the user: *"T<N> may be stale because <reason>. If you want to resume it anyway, say `resume T<N> anyway`. To park it, use `hyper-task defer T<N>`. To cancel it, use `hyper-task cancel T<N>`."*
+
+This is a read-side pause, not a workflow gate: do not write `task.md` `awaiting`, do not invent a new frontmatter field, and do not dispatch a phase skill until the user chooses an explicit next action.
 
 ## Create task
 
@@ -204,4 +230,5 @@ If `task.md`'s `awaiting` and the blocked subtask's `awaiting` ever diverge, the
 
 - **You dispatch, you don't implement.** This skill never writes code, runs tests, or reviews diffs.
 - **The user is the approval gate.** Silence is not consent.
+- **Cold-resume checks are advisory pauses, not gates.** They never write `awaiting` or hidden state; the user must opt back in explicitly with `resume T<N> anyway` (or park/cancel via `hyper-task`).
 - **Repair malformed state deliberately.** If `.hyper/` files are malformed or contradictory, stop and consult `reference/state-recovery.md` rather than guessing.

@@ -21,7 +21,7 @@ Six Hyper skills are user-facing. Seven internal Hyper skills run under the hood
 | Skill | Purpose |
 |-------|---------|
 | `hyper` | Starts or resumes work. Reads `.hyper/` state and dispatches the right phase. **Main entry point.** |
-| `hyper-task` | Manages tasks outside the workflow: list, create (deferred), cancel, show status. |
+| `hyper-task` | Manages tasks outside the workflow: list, create, defer, cancel, show status. |
 | `hyper-backlog` | Manages the idea-triage inbox at `.hyper/backlog.md`: add, list, promote to task, drop. |
 | `hyper-handoff` | Writes a session handoff for resuming later. |
 | `hyper-retro` | Reflects on what worked and didn't. |
@@ -100,7 +100,9 @@ Agent: [dispatches one worker per subtask, then verifies and updates docs]
        T1 is complete.
 ```
 
-Or invoke a skill directly with its slash command: `/hyper` (work), `/hyper-task` (list, create-deferred, cancel, status), `/hyper-backlog` (add, list, promote, drop ideas), `/hyper-handoff`, `/hyper-retro`, `/hyper-code-review`. Resume a specific task with `/hyper T3`.
+Or invoke a skill directly with its slash command: `/hyper` (work), `/hyper-task` (list, create-deferred, defer, cancel, status), `/hyper-backlog` (add, list, promote, drop ideas), `/hyper-handoff`, `/hyper-retro`, `/hyper-code-review`. Resume a specific task with `/hyper T3`.
+
+When Hyper pauses before resuming an older active task because the saved work may be stale, it points you to explicit next actions: `resume T<N> anyway`, `hyper-task defer T<N>`, or `hyper-task cancel T<N>`.
 
 When Hyper asks a clarifying question with multiple plausible answers, it recommends one option and gives a short reason. You can still override it with a short reply.
 
@@ -148,6 +150,15 @@ Agent: [explore → plan → implement]
        T4.2 is blocked. Recommendation: include locale, because `pages.get` crosses locales and a post-id-only key risks collisions. If you want post id only instead, say so.
 You: include locale
 Agent: [records answer in T4.2-add-locale-to-cache-key.md, re-dispatches the worker]
+```
+
+### Cold resume
+
+```text
+You: /hyper T8
+Agent: T8 may be stale because the saved plan no longer matches the current codebase. If you want to resume it anyway, say `resume T8 anyway`. To park it, use `hyper-task defer T8`. To cancel it, use `hyper-task cancel T8`.
+You: hyper-task defer T8
+Agent: Deferred T8 — <title>. Resume it later with `hyper T8`.
 ```
 
 ### Verify remediation pass

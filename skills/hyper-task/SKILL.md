@@ -1,12 +1,12 @@
 ---
 name: hyper-task
 description: >
-  Manages Hyper tasks outside the execution workflow. Lists active tasks, creates a deferred task (exists but not started), cancels an in-progress task with a reason, or shows the status of a specific task. Use when the user asks "what tasks do I have", "list my tasks", "show my tasks", "what am I working on", "create a task for later", "cancel T<N>", "drop T<N>", "status of T<N>", or similar. Do not use for starting or continuing work — that's the `hyper` skill. Keywords: hyper, task, list, status, cancel, create, manage, deferred.
+  Manages Hyper tasks outside the execution workflow. Lists active tasks, creates a deferred task, parks an active task back into `phase: deferred`, cancels an in-progress task with a reason, or shows the status of a specific task. Use when the user asks "what tasks do I have", "list my tasks", "show status of T<N>", "defer T<N>", "cancel T<N>", or "create a task for later". Do not use for starting or continuing work — that's the `hyper` skill. Keywords: hyper, task, list, status, defer, cancel, create, manage, deferred.
 ---
 
 # hyper-task
 
-Manage tasks without running the workflow. This skill handles listing, status checks, deferred creation, and cancellation. It never writes code or advances a task through phases — that's what `hyper` is for.
+Manage tasks without running the workflow. This skill handles listing, status checks, deferred creation, deferral, and cancellation. It never writes code or advances a task through phases — that's what `hyper` is for.
 
 Active tasks live at `.hyper/tasks/T<N>-<slug>/task.md`. Terminal (`done` / `cancelled`) task folders are moved to `.hyper/archive/T<N>-<slug>/` — same shape, different location. The frontmatter is documented in `skills/hyper/reference/data-model.md` (bundled with the `hyper` skill). Read it if you need to verify any field.
 
@@ -25,6 +25,7 @@ Read the user's request and pick exactly one operation. When the intent is uncle
 | See what's active / "what am I working on" / "list tasks" | **List** | list, show, what tasks |
 | "Show status of T3" / "what's T3" | **Status** | status, info, show T |
 | "Create a task for later" / "remind me to X later" | **Create (deferred)** | create, remind, later, deferred |
+| "Defer T3" / "park T5 for later" / "pause T4" | **Defer** | defer, park, pause, later |
 | "Cancel T3" / "drop T5" / "I'm not doing T4" | **Cancel** | cancel, drop, abort, scrap |
 
 For intents outside this list (start work, continue, rerun a phase), tell the user and point them to `hyper`.
@@ -96,6 +97,23 @@ Steps:
 
 Do not start the workflow. `phase: deferred` signals the task exists but is unscheduled. When the user later invokes `hyper T<N>`, `hyper` sees the deferred phase, transitions it to `explore`, and begins the normal flow.
 
+## Operation: Defer
+
+Park an active task back into `phase: deferred` so the user can resume it later without archiving it.
+
+Steps:
+
+1. Confirm the target. Look first in `.hyper/tasks/T<N>-*/`. If the id exists only in `.hyper/archive/`, report that it is already terminal and stop.
+2. Read `task.md`.
+3. If the task is already `phase: deferred`, say so and stop.
+4. If the task is `phase: done` or `phase: cancelled`, say so and stop — terminal tasks cannot be deferred.
+5. Update the task's frontmatter:
+   - `phase: deferred`
+   - `awaiting: null`
+6. Report: *"Deferred T<N> — <title>. Resume it later with `hyper T<N>`."*
+
+Deferral is **non-terminal**. Do not archive the folder. The existing artifacts stay in place as the saved context for the later resume.
+
 ## Operation: Cancel
 
 Cancel a task the user has decided not to pursue.
@@ -117,8 +135,8 @@ Steps:
 
 ## Rules
 
-- **One operation per invocation.** Don't chain list + cancel in one run. Each natural-language request maps to one thing.
+- **One operation per invocation.** Don't chain list + defer + cancel in one run. Each natural-language request maps to one thing.
 - **Never start or run phases.** If the user's request is really about doing work ("start T5", "continue T3", "add X"), tell them and recommend `hyper` or `/hyper T<N>`.
-- **Never delete files.** Cancellation is a status change plus an archive move, not a deletion. Terminal tasks live in `.hyper/archive/` as history.
+- **Never delete files.** Deferral is an in-place phase change; cancellation is a status change plus an archive move. Terminal tasks live in `.hyper/archive/` as history.
 - **Ask for missing info.** Create without a clear title? Ask. Cancel without a reason? Ask. Don't fabricate.
 - **Task state lives in `task.md` frontmatter.** That's the source of truth. Don't read or write status from anywhere else. See `../hyper/reference/state-recovery.md` for the repair path when files are malformed, partial, or clearly legacy.
