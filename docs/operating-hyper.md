@@ -62,7 +62,7 @@ Use when the main output is a recommendation, audit, or feasibility finding.
 
 ## Bug fixes and regressions
 
-Independently of quick / feature / research scope, `explore` detects bugfix intent from keywords or attached artifacts (stack traces, failing-test output, issue links) and asks a single confirmation question. On *yes*, the task gets `bugfix: true` and `explore` writes `exploration-bugfix.md` instead of `exploration.md`.
+Independently of quick / feature / research scope, `explore` detects bugfix intent from keywords or attached artifacts (stack traces, failing-test output, issue links) and asks a single confirmation question. On *yes*, the task gets `bugfix: true` and `explore` still writes `exploration.md`, but with the bugfix-specific body structure instead of the standard findings/approach shape.
 
 The bugfix sub-flow is stricter than the generic explore:
 
@@ -72,7 +72,7 @@ The bugfix sub-flow is stricter than the generic explore:
 - Falsified hypotheses move to a structured ledger (hypothesis, experiment, observed result, evidence path, conclusion). Blind reruns without new evidence do not count toward the budget.
 - After 3 *distinct* falsified hypotheses the sub-flow hard-stops with an escalation bundle (evidence summary, repro status, ledger, most-likely-remaining branch, one concrete ask). Pause and reframe — do not keep guessing.
 
-Raw evidence (logs, traces, screenshots) lives in the task folder under `evidence/` and is linked from `exploration-bugfix.md` by path, never pasted inline.
+Raw evidence (logs, traces, screenshots) lives in the task folder under `evidence/` and is linked from `exploration.md` by path, never pasted inline.
 
 ## Backlog vs task
 

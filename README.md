@@ -10,7 +10,7 @@ Hyper gives you and your agent a shared understanding of *what phase the work is
 explore → plan → implement → verify → docs → done
 ```
 
-Each phase writes one markdown artifact on disk. Two phases pause for your approval (`exploration.md` and `spec.md`). You can read any artifact at any time — nothing is hidden.
+Each phase writes one markdown artifact on disk. Two phases pause for your approval (`exploration.md` and `spec.md`). Hyper summarizes those artifacts in chat before asking, and you can still read any artifact at any time — nothing is hidden.
 
 ## The skills
 
@@ -89,10 +89,10 @@ Once installed, work with Hyper in plain language:
 ```
 You: Add a login page with email + password, persist the session across reloads.
 Agent: [loads hyper, creates task T1, runs explore phase]
-       Wrote exploration.md. Scope: feature. Please read it and tell me to proceed.
+       Wrote exploration.md. Scope: feature. Summary: add an auth endpoint, a login form, and session persistence. Approve to continue, or tell me what to change.
 You: looks good
 Agent: [runs plan phase]
-       Wrote spec.md and 4 subtask files (T1.1-wire-login-endpoint.md … T1.4-session-persistence.md) in the task folder. Approve to start implementation?
+       Wrote spec.md and 4 subtask files (T1.1-wire-login-endpoint.md … T1.4-session-persistence.md) in the task folder. Summary: 4 acceptance criteria, 4 vertical slices. Approve to start implementation, or tell me what to change.
 You: approve
 Agent: [dispatches one worker per subtask, then verifies and updates docs]
        T1 is complete.
@@ -121,7 +121,7 @@ If the area is sensitive — auth, payments, migrations, deletes, security bound
 ```text
 You: Rename this local helper and update its two call sites.
 Agent: [loads hyper, classifies scope: quick]
-       Wrote exploration.md. Scope: quick. Please read it and tell me to proceed.
+       Wrote exploration.md. Scope: quick. Summary: rename one helper and update two call sites. Approve to continue, or tell me what to change.
 You: proceed
 Agent: [implements directly, verifies, archives task]
        T2 is complete.
@@ -132,7 +132,7 @@ Agent: [implements directly, verifies, archives task]
 ```text
 You: Investigate whether our current auth flow can support SSO without a rewrite.
 Agent: [loads hyper, classifies scope: research]
-       Wrote exploration.md. Scope: research. Please read it and tell me to proceed.
+       Wrote exploration.md. Scope: research. Summary: current auth flow can support SSO with targeted changes, not a full rewrite. Approve to continue, or tell me what to change.
 You: looks good
 Agent: [archives the task at done]
        T3 is complete.

@@ -15,6 +15,7 @@ These areas are the most likely to drift:
    - `skills/hyper/SKILL.md`
    - phase skills that set `awaiting`
    - `skills/hyper/reference/gates.md`
+   - README example flows that show approval-gate wording
 
 3. **Task-vs-idea intake triage**
    - `skills/hyper/SKILL.md`
@@ -78,6 +79,7 @@ Typical offenders:
 - skill counts
 - sample backlog entries
 - sample `checks.md` sections
+- approval-gate prompt examples in README / docs
 - promotion behavior
 - optional artifact lists
 
