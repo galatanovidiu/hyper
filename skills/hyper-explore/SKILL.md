@@ -215,7 +215,13 @@ Once every question has an answer, rename the section heading from `## Open ques
 
 ## Step 7 — Request approval
 
-Tell the user: *"Wrote `exploration.md`. Scope: <quick|feature|research>. Please read it and tell me to proceed, or what to change."*
+Tell the user, in one tight approval message:
+
+- `Wrote exploration.md. Scope: <quick|feature|research>.`
+- A concise chat-readable synopsis of the artifact: the highest-signal findings plus the proposed approach (or the recommendation for research scope), including any notable trade-offs the user should weigh before approving.
+- `Approve to continue, or tell me what to change.`
+
+The summary should be enough for the user to approve or push back without opening `exploration.md`. Keep it tight — `exploration.md` remains the durable record.
 
 Return verdict `awaiting-approval` to `hyper`. `hyper` sets `task.md` `awaiting: user-approval` and stops. Do not write `phase:` or `awaiting:` yourself.
 

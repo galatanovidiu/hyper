@@ -23,7 +23,7 @@ Every phase dispatch ends with the phase skill returning exactly one verdict to 
 
 | Verdict | Meaning | `hyper` does |
 |---------|---------|--------------|
-| `awaiting-approval` | Artifact written; user approval gate required. | Set `task.md` `awaiting: user-approval`. Stop and surface the gate label. |
+| `awaiting-approval` | Artifact written; user approval gate required. | Set `task.md` `awaiting: user-approval`. Stop and surface the phase skill's approval summary, which should include a concise chat-readable synopsis of the artifact plus the approve/change prompt. |
 | `awaiting-input` | Open question(s) recorded in the artifact, a surfaced blocked-subtask question, or a fresh-dispatch user-choice prompt (e.g. verify's opt-out gate). | Set `task.md` `awaiting: user-input`. Stop and relay the first unanswered question verbatim from the phase skill's return summary. |
 | `phase-complete` | Phase produced its artifact and is ready to advance. | Clear `awaiting`. Apply the phase-transition table. Apply the checkpoint rule. |
 | `redirect target: <phase>` | Non-linear transition — `plan → explore` on user rewind, or `verify → implement` on blocked `checks.md`. | Clear any stale `awaiting`. Set `phase: <target>`. For `verify → implement`, also set `awaiting: user-input` (verify's blocked findings become the remediation brief). Re-enter Dispatch. |
@@ -96,7 +96,7 @@ When the open gate is `user-input`:
 For `explore` and `plan`:
 
 - Write the approval artifact.
-- Return `awaiting-approval`. `hyper` sets `awaiting: user-approval` and stops.
+- Return `awaiting-approval` with a concise chat-readable synopsis of the artifact plus the approve/change prompt. `hyper` sets `awaiting: user-approval` and stops.
 - On approval, the phase skill is re-dispatched, applies any final touches, and returns `phase-complete`. `hyper` clears `awaiting` and advances per the transition table (no user checkpoint — the approval was the gate).
 
 ## Remediation gates

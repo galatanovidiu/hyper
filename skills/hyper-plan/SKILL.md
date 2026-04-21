@@ -222,7 +222,13 @@ Once every question has an answer, rename the section heading from `## Open ques
 
 ## Step 9 — Request approval
 
-Tell the user: *"Wrote `spec.md` and <N> subtask files (`T<N>.1-<slug>.md` … `T<N>.<M>-<slug>.md`) at the task folder root. Please review the acceptance criteria and subtasks. Approve to start implementation, or tell me what to change."*
+Tell the user, in one tight approval message:
+
+- `Wrote spec.md and <N> subtask files (`T<N>.1-<slug>.md` … `T<N>.<M>-<slug>.md`) at the task folder root.`
+- A concise chat-readable synopsis of the artifact: the acceptance-criteria shape, the subtask decomposition, and any advisory `[note]` / `[warning]` findings from `plan-review.md` that Step 7 said to inline into this gate message.
+- `Approve to start implementation, or tell me what to change.`
+
+The summary should be enough for the user to approve or push back without opening `spec.md`. Keep it tight — `spec.md` and `plan-review.md` remain the durable records.
 
 Return verdict `awaiting-approval` to `hyper`. `hyper` sets `task.md` `awaiting: user-approval` and stops. Do not write `phase:` or `awaiting:` yourself.
 
