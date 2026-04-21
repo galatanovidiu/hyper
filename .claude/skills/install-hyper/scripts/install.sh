@@ -61,20 +61,18 @@ if [ "${#targets[@]}" -eq 0 ]; then
   exit 1
 fi
 
-skills=(
-  hyper
-  hyper-task
-  hyper-backlog
-  hyper-handoff
-  hyper-retro
-  hyper-explore
-  hyper-plan
-  hyper-implement
-  hyper-worker
-  hyper-verify
-  hyper-docs
-  team
+skills=()
+while IFS= read -r skill_dir; do
+  skills+=("$(basename "$skill_dir")")
+done < <(
+  find "$source_dir" -mindepth 1 -maxdepth 1 -type d \
+    -exec test -f '{}/SKILL.md' ';' -print | LC_ALL=C sort
 )
+
+if [ "${#skills[@]}" -eq 0 ]; then
+  echo "error: no skills found under $source_dir" >&2
+  exit 1
+fi
 
 install_one() {
   local target="$1"
