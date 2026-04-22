@@ -131,7 +131,8 @@ Otherwise, invoke the `hyper-code-review` skill in **embedded mode**. That skill
 
 - the absolute task folder path (`.hyper/tasks/T<N>-*/`),
 - the diff command scoped to the change under review (`git diff HEAD` for single-branch work, or a ref-range like `git diff <base>...<head>` if the task is on a feature branch against a base),
-- the task's `scope` (`quick` or `feature`) so it knows whether to read `spec.md`.
+- the task's `scope` (`quick` or `feature`) so it knows whether to read `spec.md`,
+- a pointer to `skills/hyper/reference/worker-guardrails.md` so the sub-agent has the shared G1–G4 rules visible in the dispatch record before it loads its own skill file.
 
 On harnesses with reliable parallel subagent dispatch (Claude Code and any agent SDK exposing a comparable primitive), the skill may internally run 2b and 2c concurrently and validate per-finding in parallel. On Codex CLI, Gemini CLI, PI, Aider, Continue, and any inline-only mode, the same skill runs sequentially in the current session. Either way, verify calls it the same way — the skill decides how to run its sub-passes based on the host harness.
 

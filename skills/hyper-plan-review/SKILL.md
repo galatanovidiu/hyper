@@ -9,9 +9,11 @@ user-invocable: false
 
 You review a Hyper feature-scope plan before implementation starts. One pass across the plan's text, one codebase-verification sub-step over the references the plan makes, one `plan-review.md` artifact out. The review has no opinions on style, speculative concerns, or implementation-level choices workers will make during implement — only real problems in the plan itself.
 
-You are invoked by `hyper-plan` after its Step 6 self-review and before its open-question serialization step. You are not user-invocable. You return control (and plain data — verdict + recommendation + finding counts) to `hyper-plan`; you do not write `task.md`, you do not return lifecycle verdicts like `awaiting-approval` or `redirect target: explore`. That is the caller's job.
+You are invoked by `hyper-plan` after its Step 6 self-review and before its open-question serialization step. You are not user-invocable. You return control (and plain data — verdict + recommendation + finding counts) to `hyper-plan`. You do not return lifecycle verdicts like `awaiting-approval` or `redirect target: explore` — that is the caller's job. See `../hyper/reference/worker-guardrails.md` (G1) for the `task.md` orchestration boundary.
 
 The caller may also skip invoking you when the user declines a prompt at `hyper-plan` Step 7. In that case `hyper-plan` writes a stub `plan-review.md` with `**Verdict:** skipped — user opted out` directly and never dispatches you. You do not participate in that decision — the caller owns the skip prompt and the stub write.
+
+Read `../hyper/reference/worker-guardrails.md` before the review runs. Its four rules (G1–G4) are normative for this dispatch — treat them as rules of the session, not background reading.
 
 ## Inputs
 
@@ -30,7 +32,7 @@ If the path is missing or malformed, stop and report — do not guess. If `spec.
 - A single `plan-review.md` at the task folder root, overwritten cleanly on each invocation (findings do not accumulate across re-reviews — the file always represents the current review state, matching `checks.md`'s overwrite rule).
 - A return summary to the caller with one line of prose, per-severity finding counts (e.g. `1 blocker, 2 warnings, 3 notes`), and the rollup verdict (`pass | needs-changes | blocked`) plus the recommendation (`continue | fix-in-place | rethink`).
 
-You do **not** write `task.md` `phase:` or `awaiting:`. You do **not** return `awaiting-approval`, `redirect target: explore`, or any other workflow verdict. The caller (`hyper-plan`) owns the post-review flow.
+See `../hyper/reference/worker-guardrails.md` (G1) for the `task.md` orchestration boundary. You do **not** return `awaiting-approval`, `redirect target: explore`, or any other workflow verdict. The caller (`hyper-plan`) owns the post-review flow.
 
 ## Portability
 
@@ -94,7 +96,7 @@ Only EXISTING references are verified. PROPOSED references describe code the pla
 
 ### Verify the EXISTING list
 
-On harnesses with reliable subagent dispatch (Claude Code and any agent SDK exposing a comparable primitive), dispatch **one** Explore subagent with the batched EXISTING list. The subagent prompt batches all references into a single dispatch — do not fan out one subagent per reference.
+On harnesses with reliable subagent dispatch (Claude Code and any agent SDK exposing a comparable primitive), dispatch **one** Explore subagent with the batched EXISTING list. The subagent prompt batches all references into a single dispatch — do not fan out one subagent per reference. Include a pointer to `skills/hyper/reference/worker-guardrails.md` in that dispatch prompt so the Explore sub-agent inherits the same G1–G4 rules before it loads its own skill file.
 
 The Explore subagent returns per-reference statuses in the vocabulary:
 

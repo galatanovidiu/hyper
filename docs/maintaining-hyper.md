@@ -64,6 +64,11 @@ These areas are the most likely to drift:
    - `skills/hyper-plan/SKILL.md` (Step 7 invocation + post-review flow)
    - `skills/hyper/reference/data-model.md`
 
+7. **Worker-guardrails contract**
+   - `skills/hyper/reference/worker-guardrails.md` (G1–G4 — the shared dispatch-time rules)
+   - consumer skills that read the reference at session start: `skills/hyper-worker/SKILL.md`, `skills/hyper-code-review/SKILL.md`, `skills/hyper-plan-review/SKILL.md`
+   - dispatcher skills that mention the reference in their dispatch prompt: `skills/hyper-implement/SKILL.md`, `skills/hyper-verify/SKILL.md`, `skills/hyper-plan/SKILL.md` (plus the nested dispatcher sections in `hyper-code-review` and `hyper-plan-review` themselves)
+
 ## When adding or renaming a skill
 
 Do all of these together:

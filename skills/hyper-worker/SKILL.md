@@ -26,6 +26,7 @@ Do **not** touch `task.md`, `spec.md`, or sibling subtask files. The orchestrato
 
 ## Flow
 
+0. **Read the shared guardrails.** Before anything else, read `../hyper/reference/worker-guardrails.md`. Its four rules (G1–G4) are normative for this dispatch — treat them as rules of the session, not background reading.
 1. **Load the subtask file.** Read frontmatter (`id`, `parent`, `title`, `status`, `depends`, `writes`, `awaiting`) and body (`## What`, `## Why`, `## Done when`, optional `## Open questions` or `## Resolved questions` — the orchestrator renames the section after the last answer is recorded, so on re-dispatch you'll see `## Resolved questions`).
 2. **Verify state.** `status` must be `todo` or `in-progress`. `awaiting` must be `null` (if it's `user-input`, the orchestrator should have cleared it before re-dispatching — if not, stop and report). Every id in `depends` must be `status: done` in its own file. `writes` must be a non-empty list of project-relative files or narrow globs.
 3. **Load surrounding context.** Re-read the parent `task.md` (for scope and original goal) and `spec.md` (for acceptance criteria). Don't re-read exploration unless `## What` or `## Why` references it.
@@ -111,4 +112,4 @@ Any code that touches external input (HTTP, CLI args, file contents, environment
 - **Ask, don't guess.** If `## Done when` is ambiguous or contradicts the spec, raise it as a mid-work blocker. A round-trip is cheaper than rework.
 - **Research before changing.** Read the files, understand the patterns, then write. Code that doesn't match existing conventions slows every future change in that area.
 - **Never touch task-level files.** `task.md`, `spec.md`, and sibling subtasks belong to the orchestrator. You only write project code and your own subtask file.
-- **Never complete the parent task.** You can only flip your own subtask's `status`. The orchestrator owns `task.md`'s `phase`.
+- **Never complete the parent task.** You can only flip your own subtask's `status`. See `../hyper/reference/worker-guardrails.md` (G1).

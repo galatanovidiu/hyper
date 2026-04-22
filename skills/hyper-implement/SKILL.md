@@ -106,6 +106,9 @@ Parent task folder:
 
   <absolute path to .hyper/tasks/T<N>-*/>
 
+Read `skills/hyper/reference/worker-guardrails.md` first — its G1–G4 rules
+apply to this dispatch.
+
 Read the subtask file, the parent task.md, and spec.md. Follow the hyper-worker
 skill end-to-end: research, implement only this slice, run tests, self-review,
 write the ## Completion section, flip status: done in the frontmatter, and return.

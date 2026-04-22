@@ -9,6 +9,10 @@ user-invocable: true
 
 You run a structured code review of a diff. Three ordered passes plus a validation step, one markdown block out. Embedded mode returns a verdict to its caller; standalone mode archives the review record and reports the outcome. The review has no opinions on style or speculative concerns — only spec drift, real bugs, and documented-rule violations.
 
+## Before you start
+
+Read `../hyper/reference/worker-guardrails.md` before any pass runs. Its four rules (G1–G4) are normative for this dispatch in both embedded and standalone mode — treat them as rules of the session, not background reading.
+
 ## Two modes
 
 This skill runs in one of two modes. Pick the mode from how you were invoked, not from a flag on disk.
@@ -58,7 +62,7 @@ Always read `.hyper/rules.md` (if present), project `AGENTS.md`, `~/AGENTS.md` a
 
 - A single `## review` block in the caller's `checks.md`, written per the shape in `../hyper-verify/templates/checks.md`. Overwrite any prior `## review` section on the same `checks.md` — the file represents current state, not history.
 - A return summary to the caller including the combined review verdict (`pass | needs-changes | blocked`), the count of findings per severity, and the one-line rationale for blocked criticals if present.
-- You do **not** write `phase:` or `awaiting:` on `task.md`. You do **not** return a `redirect target:` verdict. That is the caller's job.
+- See `../hyper/reference/worker-guardrails.md` (G1) for the `task.md` orchestration boundary. You do **not** return a `redirect target:` verdict. That is the caller's job.
 
 ### Standalone mode
 
@@ -95,6 +99,8 @@ The blocklist targets noise, not genuine context. A reviewer may still mention a
 2a always runs first. 2b and 2c are independent: they read the same diff but write to different sub-sections of the `## review` block, so they may be dispatched concurrently on harnesses that reliably support parallel subagent dispatch (Claude Code, and any agent SDK exposing a comparable primitive). Harnesses without reliable parallel dispatch — Codex CLI, Gemini CLI, PI, Aider, Continue, and any inline-only mode — run 2b and 2c sequentially in the same session.
 
 Mirrors the Claude `code-review` plugin's four-agents-in-parallel pattern (agents 1+2 for standards, agents 3+4 for bugs), but without a hard dependency on model tiers (Haiku/Sonnet/Opus) that do not exist off Claude. Use whichever model or subagent primitive the host harness offers; if none, run inline.
+
+Whenever a 2b or 2c sub-agent is dispatched, include a pointer to `skills/hyper/reference/worker-guardrails.md` in the dispatch prompt so the sub-agent inherits the same G1–G4 rules. Inline runs do not need a separate pointer — this session already read the reference at start.
 
 The validation step (below) always runs after 2b and 2c finish, regardless of how they were dispatched.
 
@@ -245,7 +251,7 @@ Before the combined review verdict is computed, validate every finding collected
 
 **Drop, don't demote.** Findings that do not hold up under the second read are dropped entirely. Do not demote a non-confirmed `critical` to `warning` or `note` — if the claim is not true with high confidence, it is out.
 
-**On parallel-capable harnesses**, validation runs as a single pass over the combined 2b + 2c findings list after both sub-passes finish. Do not attempt to run validation concurrently with 2b or 2c — validation reads the findings they produce. If the harness supports it, validation of independent findings may be dispatched as parallel subagents (one per finding), matching the Claude plugin's "parallel subagents to validate" pattern in its step 5.
+**On parallel-capable harnesses**, validation runs as a single pass over the combined 2b + 2c findings list after both sub-passes finish. Do not attempt to run validation concurrently with 2b or 2c — validation reads the findings they produce. If the harness supports it, validation of independent findings may be dispatched as parallel subagents (one per finding), matching the Claude plugin's "parallel subagents to validate" pattern in its step 5. Whenever a per-finding validation sub-agent is dispatched, include a pointer to `skills/hyper/reference/worker-guardrails.md` in the dispatch prompt so it inherits the same G1–G4 rules.
 
 **Effect on sub-pass verdicts.** The combined review verdict is computed on the post-validation findings set: whatever survives validation is what counts toward each sub-pass verdict. If validation drops every `critical` from 2b, 2b's verdict becomes `pass`. Likewise for 2c.
 
@@ -347,6 +353,6 @@ You do not prompt the user in embedded mode. You do not create tasks. You do not
 - **Critical means critical.** Don't inflate severity to look thorough, and don't downgrade real findings to ship faster. The high-signal bar for `critical` in 2b is strict; standards `critical` in 2c needs a hard rule cite.
 - **Cite rules in 2c.** Every standards finding must name the source rule and quote it. No cite, no finding.
 - **Drop, don't demote, on validation.** A `critical` that fails validation is dropped. It does not become a `warning`.
-- **Embedded mode never writes `task.md` or returns lifecycle verdicts.** Write the `## review` block and return. The caller owns the rollup.
+- **Embedded mode never returns lifecycle verdicts.** Write the `## review` block and return. The caller owns the rollup. (See `../hyper/reference/worker-guardrails.md` (G1) for the `task.md` orchestration boundary.)
 - **Standalone mode creates a task.** Always. The user asked for it. The task is the record.
 - **Overwrite `## review` cleanly.** In embedded mode, replace any prior `## review` section in `checks.md` rather than appending. `checks.md` is current state, not history.
