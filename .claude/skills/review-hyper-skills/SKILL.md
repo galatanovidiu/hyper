@@ -1,118 +1,155 @@
 ---
 name: review-hyper-skills
 description: >
-  Reviews Hyper skill source for repo-maintainer problems that make the suite harder to execute or maintain: non-operational provenance/history text, stale skill inventories and counts, contract drift across SKILL.md/templates/reference files, non-portable path references, and dead or duplicated instruction surface. Use when the user asks to audit Hyper skills, review the skill suite for maintainer drift, or check whether README.md / AGENTS.md / bundled references still match the shipped skills. Works on current state or a local diff. Keywords: hyper, skill review, maintainer, drift, provenance, inventory, contract, README, AGENTS.
+  Reviews Hyper skill source for drift and maintenance problems across three
+  explicit modes. Use `contract-drift` mode to audit agreement between a
+  shipped skill's `SKILL.md`, its `reference/` files, and its `templates/`.
+  Use `maintainer-drift` mode to audit repo-maintainer surfaces: stale
+  inventories and skill counts, non-operational provenance prose, portability
+  violations in `skills/**` and `.claude/skills/**`, plus `README.md` and
+  `AGENTS.md`. Use `suite-evaluation` mode for a broad pass across multiple
+  skills in one session, with an explicit axis lock. This skill owns
+  drift in markdown-defined Hyper skills; behavior of running agents is out
+  of scope, and so are individual diff, commit, or PR reviews at the skill
+  level. Keywords: hyper, skills, audit, drift, contract,
+  maintainer, review, evaluate, gates, data-model, suite.
 ---
 
 # review-hyper-skills
 
-Use this skill to review Hyper as a maintained skill suite, not as an end-user workflow. This skill includes shipped skills under `skills/`, project-local maintainer skills under `.claude/skills/`, and the repo-maintainer docs that are supposed to stay in sync with them (`README.md`, `AGENTS.md`).
+Reviews the Hyper skill suite for drift that hurts execution or maintenance. This skill covers contract drift — disagreement between the markdown files that define a skill — and explicitly excludes behavioral drift in a running agent, which is not observable from skill source.
 
-## What to look for
+## Pick a mode first
 
-Focus on problems that hurt execution, portability, or maintainability:
+Name the mode out loud before touching any file. Each mode owns a distinct scope and authority set; mixing them is the main way this review goes wrong.
 
-- **Non-operational provenance text** — history, authorship, or origin stories inside shipped instructions: "taken from", "borrowed from", "already proven", task ids, prior repo names, or "this mirrors X" when the sentence does not change what the agent should do.
-- **Stale inventories** — wrong skill counts, missing skills in user-facing vs internal lists, stale slash-command examples, stale "who reads/writes this artifact" lists.
-- **Contract drift** — a skill promises an input, output, artifact shape, or auto-fix path that its paired template, reference file, or caller does not actually support.
-- **Non-portable references** — absolute machine-local paths, references to files outside shipped `skills/`, or repo-specific provenance that would be meaningless after install.
-- **Dead or duplicated instruction surface** — repeated rules, restatement tails, "key principles" sections that add no new behavior, or copied contract text that silently diverges.
-- **Host-specific sprawl** — tool or harness assumptions outside the documented exceptions.
+### Mode 1 — contract-drift
 
-Do not spend the review budget on style preferences or harmless wording churn.
+**Scope.** Shipped skills under `skills/` only. Judge agreement between a skill's `SKILL.md`, its `reference/*.md`, and its `templates/*`.
 
-## Modes
+**Authorities.**
 
-Pick one mode and say it out loud before reviewing:
+- `skills/hyper/reference/gates.md` — phase transitions, verdicts, awaiting values.
+- `skills/hyper/reference/data-model.md` — `task.md` fields, artifact filenames, subtask shape.
+- `skills/hyper/SKILL.md` — orchestrator behavior.
+- Each phase skill's own `SKILL.md` for its own phase.
 
-- **Current-state audit** — review the files as they exist on disk now.
-- **Change review** — review only the local diff, but still judge it against the current contract surface.
+`README.md` and `AGENTS.md` are not authorities in this mode.
 
-If the user says "review all the skills", default to **current-state audit**.
+**Tiebreak rule.** When `templates/` and `SKILL.md` disagree, `templates/` is authoritative for section and layout shape; `reference/` owns filenames, enums, and shared mechanics. `SKILL.md` prose must yield to both.
 
-## Scope
+**State-not-change rule.** Current state on disk, not diffs, commits, or PRs. If the user hands you a branch, PR, or commit range, redirect them to a diff-review skill rather than silently pivoting.
 
-Read only the surfaces needed for the chosen mode:
+### Mode 2 — maintainer-drift
 
-- shipped skills: `skills/**/*.md`
-- project-local skills: `.claude/skills/**/*.md`
-- maintainer docs: `README.md`, `AGENTS.md`
+**Scope.** Repo-maintainer surfaces: `skills/**`, `.claude/skills/**`, `README.md`, `AGENTS.md`.
 
-Bundle files matter:
+**Focus.**
 
-- `templates/` is artifact shape
-- `reference/` is contract or shared mechanics
-- local helper scripts only matter when the skill body claims behavior implemented by the script
+- Non-operational provenance prose — history, authorship, "borrowed from", "already proven", prior repo names, or "this mirrors X" sentences that do not change agent behavior.
+- Stale inventories — wrong skill counts, missing skills in user-facing or internal lists, stale slash-command examples, stale "who reads/writes this artifact" lists.
+- Portability violations — absolute machine-local paths, host-specific sprawl outside documented exceptions, references that would break after install.
+- Dead or duplicated instruction surface — repeated rules, "key principles" tails that add no new behavior, copied contract text that silently diverges.
+
+**Sub-modes.**
+
+- *Current-state audit* — read files as they exist on disk now. This is the default.
+- *Local-diff audit* — review only the local working-tree diff, but still judge each change against the current contract surface, not against the diff alone.
+
+If the user says "review all the skills" with no further signal, default to the current-state audit sub-mode.
+
+### Mode 3 — suite-evaluation
+
+**Scope.** Broad pass across multiple skills in one session. Inherits authorities and surfaces from Mode 1 and Mode 2, but requires an **explicit axis lock** at Step 1 of the workflow — this mode cannot silently re-open either sibling's turf.
+
+**Output difference.** In addition to the standard rubric output, this mode requires a **top 3 fixes** distillation at the end: the three changes that would make the biggest difference to the suite as a whole. If the pass cannot name three, say so.
+
+**Parallelism (opportunistic).** On harnesses with reliable parallel subagent dispatch, Mode 3 may dispatch one sub-agent per skill under review — each sub-agent runs the mode-agnostic workflow against its assigned skill and returns findings for this skill to aggregate and dedupe. Inline sequential execution is the portability baseline; sub-agent dispatch is a speed and context-isolation gain on capable harnesses, not a requirement. Mode 1 and Mode 2 stay inline — their invariants share too much context across the single target skill to benefit from splitting.
 
 ## Workflow
 
-### 1. Lock the axis
+### 1. Lock the scope
 
-State the mode and the review axis. Good axes:
+State:
 
-- non-operational provenance/history text
-- inventory drift
-- contract drift between caller and callee
-- portability violations
-- duplicated or dead instruction surface
+- the mode (one of the three above)
+- the target files
+- the evaluation axis
 
-### 2. Sweep for likely hotspots
+Good axes:
 
-Start with grep, then read the matched files in full before judging.
+- "agreement between documented and live `task.md` fields"
+- "duplicated contract surface between `gates.md` and `hyper/SKILL.md`"
+- "dead surface in a phase skill's templates vs what the skill actually writes"
+- "non-operational provenance prose across shipped skills"
+- "inventory drift between `README.md` and `skills/`"
 
-Good hotspot patterns:
+If the user drifts mid-pass, restate the locked axis out loud. Do not silently widen. If the new angle is worth pursuing, finish this pass first and queue the next.
 
-- prior-project or provenance terms
-- fixed counts (`five`, `six`, `twelve`, etc.)
-- "mirrors", "borrowed", "taken from", "already proven"
-- absolute paths
-- references to README/AGENTS/data-model skill lists
+### 2. Gather evidence
+
+Read files on disk. Start with grep, then read the matched files in full before judging — sampling causes false drift findings.
+
+For contract-drift or axis-locked suite work:
+
+- read the authoritative file first
+- grep every producer and consumer across the scoped surface
+- classify each surface as `live`, `dead`, or `ambiguous`
+
+For maintainer-drift work, hotspot patterns include:
+
+- provenance terms ("borrowed", "taken from", "already proven", "mirrors")
+- fixed counts (numbers as words, numeric list sizes)
+- absolute paths or host-specific prefixes
+- references to README / AGENTS / data-model skill lists
 - artifact names, verdict vocabularies, and auto-fix wording
 
-### 3. Check the contract surfaces
+### 3. Evaluate against invariants
 
-When a finding touches behavior, read the full contract chain:
+- single source of truth
+- no dead surface area
+- no restatement sections ("Rules", "Key principles", "Additional resources" tails)
+- no overengineered workflow — every step, section, guard, and abstraction must pay for itself; collapse defensive machinery whose risk is not named, and merge numbered steps that could be one
+- name-drop over re-explain — when a concept has a standard name (SOLID, YAGNI, DRY, idempotency, Chesterton's fence, LRU, exponential backoff, etc.), cite the name rather than re-teaching it; agents already know these, and re-explanation is restatement wearing a different hat
+- one artifact name per concept
+- scope sections only where they apply
+- pure-producer phase skills; orchestrator owns phase and awaiting
+- shared mechanics extracted to `reference/`
+- portability: no accidental host-specific sprawl outside documented exceptions
+- every maintained inventory matches reality on disk
+- cross-file contract surfaces agree on names, vocabularies, and required fields
 
-- caller skill
-- callee skill
-- relevant `templates/` file
-- relevant `reference/` file
-- maintainer docs if they enumerate the same surface
+A finding needs a smallest safe fix, not just a complaint.
 
-Look for promises that the downstream file cannot satisfy.
+### 4. Produce the output
 
-### 4. Judge against these rules
+Findings first. Every finding must carry:
 
-- Shipped skill text should be operational. If removing a sentence changes nothing about execution, it is a likely cut.
-- Every maintained inventory should match reality on disk.
-- Cross-file contract surfaces must agree on names, vocabularies, and required fields.
-- Project-local maintainer skills may mention repo-specific context; shipped skills should not depend on it.
-- A review finding needs a smallest safe fix, not just a complaint.
+- **severity** — `load-bearing`, `drift`, or `nit`
+- **line-anchored citation** — `path/to/file.md:80`
+- **smallest-safe-fix** — the narrowest edit that resolves the drift
+- **route** — direct edit, new Hyper task, or backlog item
 
-### 5. Output
+Cap at **3–8 findings**. Beyond that, signal dilutes — fold nits into one aggregate line or drop them. If no findings survive, say so explicitly and note any coverage limits.
 
-Findings first. For each finding include:
+Phrase findings as descriptions of the current file, not as descriptions of a change. In `suite-evaluation` mode, end with the required **top 3 fixes** distillation.
 
-- severity: `load-bearing`, `drift`, or `nit`
-- line-anchored citation
-- why it hurts the workflow
-- smallest safe fix
+### 5. Apply
 
-Cap at 8 findings. Fold low-signal repeats into one aggregate finding if needed.
+By default, evaluate and stop. If the user says apply:
 
-If no findings survive, say so explicitly and mention any coverage limits.
-
-## Apply mode
-
-If the user asks to fix the findings:
-
+- fix one finding at a time
 - patch the smallest safe fix
-- re-grep the affected surface
-- do not widen into unrelated cleanup
+- re-grep the affected surface after each edit to confirm the drift or dead surface is actually gone
+- never widen into unrelated cleanup — "while I'm here" edits are a known failure mode
+- never edit `reference/*.md` from a non-review context masquerading as this skill
 
-## Rules
+### 6. Handle pushback
 
-- Review the file that ships, not the intent behind it.
-- Provenance is not a justification. If it does not guide execution, cut it.
-- Repo-maintainer docs are in scope here; they are out of scope for end-user workflow evaluation skills.
-- Prefer one strong finding over three speculative ones.
+When the user challenges a finding:
+
+- if the defence fits in ~3 lines with concrete evidence, state it once
+- otherwise drop the finding cleanly and move on
+- if a false-duplication claim is being rejected, an orthogonal-axis table (skill × behavior) is the standard move
+
+Do not mount long defences of weak findings.
