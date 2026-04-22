@@ -40,7 +40,7 @@ If the harness claims subagent support but the dispatch fails (quota, network, m
 
 ## Criteria
 
-Apply fifteen checks across six areas. The output contract uses the `pass | needs-changes | blocked` + `continue | fix-in-place | rethink` shape defined below.
+Apply sixteen checks across seven areas. The output contract uses the `pass | needs-changes | blocked` + `continue | fix-in-place | rethink` shape defined below.
 
 ### Completeness
 
@@ -74,6 +74,10 @@ Apply fifteen checks across six areas. The output contract uses the `pass | need
 
 14. A worker agent following only the subtask file could implement it without re-interpreting the plan.
 15. Placement instructions are concrete enough that two different workers would produce compatible edits.
+
+### Provenance hygiene
+
+16. The plan does not instruct a worker to write provenance into any changed file. Provenance means absolute local paths (`/Users/...`, `/home/...`, `~/Projects/...`), external or predecessor repo names, or concrete historical task ids from an internal workflow. Applies anywhere a worker would write content — source files, comments, docs, config — not just documentation. Placeholder ids and paths taught as format (`T<N>`, `T1`, `T1.3`, `/path/to/thing`) are not findings; only ids and paths the worker would paste verbatim as historical references are. Severity `[warning]` by default; `[blocker]` when the plan explicitly targets user-facing distribution content or an absolute filesystem path that would only resolve on the author's machine.
 
 ## Codebase verification sub-step
 
@@ -229,7 +233,7 @@ Return plain data only: the verdict, the recommendation, the per-severity counts
 
 1. **Load task folder path.** Validate it exists and points at `/.hyper/tasks/T<N>-<slug>/`. Stop and report if malformed.
 2. **Read plan artifacts.** `exploration.md`, `spec.md`, and every subtask file at the folder root. If any expected artifact is missing or unparseable, switch to **Malformed-plan handling** above — write the artifact, return, done.
-3. **Run the plan-text pass.** Apply the fourteen criteria across the loaded artifacts. Collect findings with severity and file:section citations. Apply the calibration filter as you go — do not collect findings only to drop them later.
+3. **Run the plan-text pass.** Apply the sixteen criteria across the loaded artifacts. Collect findings with severity and file:section citations. Apply the calibration filter as you go — do not collect findings only to drop them later.
 4. **Classify references.** Walk `spec.md` and subtask files. Produce the EXISTING and PROPOSED lists.
 5. **Verify the EXISTING list.** Dispatch one Explore subagent on supporting harnesses; inline reads elsewhere. Map returned statuses to finding severities per the table above. Append those findings to the collected list.
 6. **Roll up the verdict.** Apply the severity rule to the final findings set.

@@ -206,6 +206,7 @@ Look for:
 
 **Hygiene**
 - Debug code, commented-out blocks, `console.log`, `var_dump`, dead branches, stray `TODO`s left behind?
+- Provenance leaks in new or changed lines? Any file in the diff — code, comments, docs, config, generated content — must not carry absolute local paths (`/Users/...`, `/home/...`, `~/Projects/...`), external or predecessor repo names, or concrete historical task ids from an internal workflow (e.g. `T39`, `T40.2` as real references, not as format examples). Placeholder ids and paths taught as format (`T<N>`, `T1`, `T1.3`, `/path/to/thing`) are not findings. Severity `warning` by default; `critical` when the change is explicitly user-facing distribution content (public README, published doc) or an absolute filesystem path that would fail on any other machine.
 
 **Project rules**
 - Conventions from the rule sources that the diff breaks — naming, structure, forbidden patterns, workflow rules, etc.
