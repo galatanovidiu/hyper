@@ -1,6 +1,6 @@
 ---
 name: hyper-plan
-description: Runs the plan phase of a feature-scope Hyper task. Turns the approved exploration.md into a spec.md (acceptance criteria + ToC-style subtask index + out-of-scope + edge cases) and one file per vertical slice named `T<N>.<M>-<slug>.md` at the task folder root (each with status, depends, and what/why/done-when). Sets an approval gate for the user before implementation starts. Runs only for feature-scope tasks (quick and research skip planning). Keywords hyper, plan, spec, acceptance criteria, subtasks, subtask files, spec.md.
+description: Runs the plan phase of a feature-scope Hyper task. Turns the approved exploration.md into a spec.md (acceptance criteria + ToC-style subtask index + out-of-scope + edge cases) and one file per vertical slice named `T<N>.<M>-<slug>.md` at the task folder root (each with status, depends, writes, and what/why/done-when). Sets an approval gate for the user before implementation starts. Runs only for feature-scope tasks (quick and research skip planning). Keywords hyper, plan, spec, acceptance criteria, subtasks, subtask files, spec.md.
 user-invocable: false
 ---
 
@@ -18,7 +18,7 @@ This phase runs only for `scope: feature` tasks. Quick tasks skip to implement. 
 ## Outputs
 
 - `spec.md` with acceptance criteria + ToC-style subtask index + out-of-scope + edge cases
-- `T<N>.<M>-<slug>.md` — one file per vertical slice, stored directly in the task folder (alongside `task.md` and `spec.md`), each with frontmatter (`id`, `parent`, `title`, `status: todo`, `depends: [...]`, `awaiting: null`) and body sections (`## What`, `## Why`, `## Done when`)
+- `T<N>.<M>-<slug>.md` — one file per vertical slice, stored directly in the task folder (alongside `task.md` and `spec.md`), each with frontmatter (`id`, `parent`, `title`, `status: todo`, `depends: [...]`, `writes: [...]`, `awaiting: null`) and body sections (`## What`, `## Why`, `## Done when`)
 - A verdict to `hyper` per `../hyper/reference/gates.md`. You do **not** write `phase:` or `awaiting:` on `task.md`.
 
 ## Flow
@@ -86,6 +86,7 @@ Number subtasks as `T<N>.1`, `T<N>.2`, … where `T<N>` is the parent task id. F
   - `title: <short title>`
   - `status: todo`
   - `depends: []` — or `[T<N>.1, T<N>.2]` when this slice can only run after others are `done`. Empty list means independently dispatchable.
+  - `writes: [path/to/file, another/path]` — concrete project-relative files (or the narrowest justified glob) this slice is allowed to edit.
   - `awaiting: null`
 - **Body sections.**
   - `## What` — specific change: files, functions, behavior. Concrete enough that a worker sub-agent can start without re-deriving the decomposition. Include file:line refs from `exploration.md` when helpful.
@@ -94,9 +95,15 @@ Number subtasks as `T<N>.1`, `T<N>.2`, … where `T<N>` is the parent task id. F
 
 Do **not** pre-write `## Completion` or `## Open questions` — those sections are added by the worker during/after execution.
 
+`writes` is the orchestrator's concurrency contract. Use concrete project-relative files when you can; use a glob only when the slice genuinely owns a bounded family of files. Keep the list as small as the slice allows. If two slices would need the same file, either add a dependency so they cannot be dispatched together or merge them into one slice. Do not leave `writes` empty.
+
+Parallelism is opportunistic, not a planning goal. Good vertical slicing sometimes produces subtasks with disjoint `writes` and the orchestrator happens to run those together; that is a side effect, not something to engineer. **Never split a coherent slice into two just to enable parallel dispatch. Never contort `writes` — artificially narrow or artificially broad — to influence scheduling.** Declare what the slice honestly needs to edit. Sequential execution is a fine outcome.
+
 ### Dependencies
 
 Express dependencies only in the `depends` frontmatter field — the orchestrator reads them there. Prose dependency notes in `## What` are fine as human context but not load-bearing.
+
+Express file ownership only in the `writes` frontmatter field — the orchestrator uses it to decide which eligible slices can be dispatched together safely. Prose mentions in `## What` are supporting context, not the load-bearing concurrency rule.
 
 ### Counts
 
@@ -133,6 +140,7 @@ Re-read `spec.md` and every `T<N>.<M>-<slug>.md` subtask file from disk. Check:
 - Every acceptance criterion is independently testable.
 - Every subtask file has a non-empty `## Done when` with at least one testable criterion. An empty or hand-wavy "done when" is not ready to implement.
 - Every `depends` list references ids that exist as subtask files in the task folder. No dangling refs.
+- Every subtask file has a non-empty `writes` list, and any subtasks intended to be independently dispatchable have disjoint `writes`.
 - No cycles in the `depends` graph.
 - `parent` on every subtask matches the task id (`T<N>`), and `id` follows `T<N>.<M>`.
 - Each subtask is a vertical slice with a verifiable outcome, not a horizontal layer.
@@ -226,6 +234,7 @@ Tell the user, in one tight approval message:
 
 - `Wrote spec.md and <N> subtask files (`T<N>.1-<slug>.md` … `T<N>.<M>-<slug>.md`) at the task folder root.`
 - A concise chat-readable synopsis of the artifact: the acceptance-criteria shape, the subtask decomposition, and any advisory `[note]` / `[warning]` findings from `plan-review.md` that Step 7 said to inline into this gate message.
+- A **derived schedule preview** computed from the subtask files' `depends` and `writes`. Render it as a short list in dispatch order, grouping subtasks whose `depends` are satisfied by the same prior step *and* whose `writes` are pairwise disjoint: those "may run together" on a parallel-capable harness and run sequentially otherwise. Example shape: `T1.1 → T1.2 → [T1.3, T1.4 — disjoint writes, may run together] → T1.5`. This preview is a rendering of the authoritative fields, not a separate declaration; never store it in `spec.md`.
 - `Approve to start implementation, or tell me what to change.`
 
 The summary should be enough for the user to approve or push back without opening `spec.md`. Keep it tight — `spec.md` and `plan-review.md` remain the durable records.
@@ -247,6 +256,7 @@ On a user reply that requests spec changes, revise `spec.md` and any affected su
 
 - **Every criterion independently testable.** "User can log in" is not a criterion; it's a wish.
 - **Vertical slices only.** Each subtask ships a thin working piece of the feature.
+- **Declare ownership honestly.** Every subtask needs a non-empty `writes` list that matches the files it actually edits. Do not narrow `writes` to enable parallel dispatch; do not split a coherent slice to decouple ownership. Parallelism is opportunistic.
 - **At least one subtask.** Zero is a failure. If the task truly has nothing to decompose, it probably was `scope: quick` — revisit the scope classification with the user.
 - **Spec effort proportional to implementation effort.** A 30-line change does not need 8 subtasks.
 - **No creative decisions here.** If exploration didn't answer a question, send the task back to explore rather than inventing an answer now.

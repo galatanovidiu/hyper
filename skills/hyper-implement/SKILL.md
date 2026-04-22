@@ -1,6 +1,6 @@
 ---
 name: hyper-implement
-description: Runs the implement phase of a Hyper task. For feature-scope tasks, orchestrates per-subtask workers — scans the task folder for subtask files named `T<N>.<M>-<slug>.md`, picks the next unblocked one, dispatches a sub-agent via the Task tool to run the hyper-worker skill on that file, then advances. For quick-scope tasks, implements directly from the approach in exploration.md. If verify sends a task back blocked, runs a remediation pass from checks.md and returns to verify. Use when a Hyper task is in the 'implement' phase. Keywords hyper, implement, orchestrator, dispatch, worker, subtasks, sub-agent.
+description: Runs the implement phase of a Hyper task. For feature-scope tasks, orchestrates per-subtask workers — scans the task folder for subtask files named `T<N>.<M>-<slug>.md`, picks the next unblocked batch, dispatches parallel-safe subtasks together on harnesses that support it (otherwise sequentially), then advances. For quick-scope tasks, implements directly from the approach in exploration.md. If verify sends a task back blocked, runs a remediation pass from checks.md and returns to verify. Use when a Hyper task is in the 'implement' phase. Keywords hyper, implement, orchestrator, dispatch, worker, subtasks, sub-agent.
 user-invocable: false
 ---
 
@@ -13,7 +13,7 @@ You are in the **implement** phase. For `feature` scope, you usually orchestrate
 - `task.md` (phase=implement)
 - `exploration.md` (approved approach)
 - `spec.md` (for `feature` scope — acceptance criteria + ToC index of subtask files + out-of-scope + edge cases)
-- `T<N>.<M>-<slug>.md` subtask files for `feature`-scope tasks — one per vertical slice in the task folder, with frontmatter `status`, `depends`, `awaiting`
+- `T<N>.<M>-<slug>.md` subtask files for `feature`-scope tasks — one per vertical slice in the task folder, with frontmatter `status`, `depends`, `writes`, `awaiting`
 
 ## Outputs
 
@@ -59,7 +59,7 @@ You do not need to log completion details — the diff is the record. The safety
 
 ## Flow for `feature` scope
 
-You are an **orchestrator**. You read subtask files, dispatch one worker per subtask via the Task tool, and advance the phase when every subtask is done. You do not read, write, test, or review project code — that's the worker's job.
+You are an **orchestrator**. You read subtask files, dispatch one or more workers via the Task tool, and advance the phase when every subtask is done. On harnesses with reliable parallel subagent dispatch, independent slices may run together; elsewhere the same flow runs sequentially. You do not read, write, test, or review project code — that's the worker's job.
 
 ### Step 1 — Validate subtask files
 
@@ -68,26 +68,32 @@ Scan the task folder for subtask files: `.hyper/tasks/T<N>-*/T<N>.*.md` (for exa
 Before picking anything to dispatch, validate. If any check fails, abort with an error naming the specific problem. Do not guess, default, or silently skip.
 
 - At least one subtask file exists in the task folder whose name starts with `T<N>.` and ends with `.md`. (If none found: *"no subtask files found at the task folder root — this task is either legacy checklist-in-spec, scope-classified wrong, or missing plan output. Re-run hyper-plan or migrate manually."*)
-- Every matching file has parseable YAML frontmatter with required fields (`id`, `parent`, `status`, `depends`).
+- Every matching file has parseable YAML frontmatter with required fields (`id`, `parent`, `status`, `depends`, `writes`).
 - Every file's `parent` matches the current task id.
 - No two files claim the same `id`.
 - Every id in every `depends` list exists as a subtask file in the task folder.
+- Every file's `writes` is a non-empty list of project-relative paths or narrow globs.
 - The `depends` graph has no cycles.
 - Any subtask with `awaiting: user-input` has a `## Open questions` section in its body.
 
-### Step 2 — Pick the next subtask
+### Step 2 — Pick the next batch
 
 Scan subtask files ordered by the numeric `M` component of the id — `T<N>.1, T<N>.2, …, T<N>.10` — not lexical order:
 
 - If **all** have `status: done` → go to Step 5 (advance phase).
 - If any has `awaiting: user-input` → go to Step 4 (propagate blocker).
-- Otherwise pick the **lowest-`M`** file where `status: todo` and every id in `depends` has `status: done` in its own file.
+- Otherwise build the eligible list: every `status: todo` file where every id in `depends` has `status: done` in its own file.
+- If the eligible list is empty and no blocker is set, you have a deadlock — abort with an error naming the stuck subtasks and their unsatisfied deps.
+- Default batch = the lowest-`M` eligible subtask.
+- On harnesses with reliable parallel subagent dispatch, expand the batch in numeric order by adding later eligible subtasks whose `writes` set is pairwise disjoint with every subtask already in the batch. If no later eligible subtask is disjoint, dispatch the single subtask alone — sequential is the normal case, not a fallback. If the harness has a practical concurrency cap, keep the earliest safe subset rather than inventing a second scheduling rule.
+- On inline-only or unreliable harnesses, keep the batch at one subtask. Sequential execution is the portability baseline, not a degraded mode.
+- Eligible subtasks left out only because their `writes` overlap stay `todo` and are reconsidered on the next iteration. That is normal, not a deadlock.
 
-If no file matches and no blocker is set, you have a deadlock — abort with an error naming the stuck subtasks and their unsatisfied deps.
+### Step 3 — Dispatch a worker batch
 
-### Step 3 — Dispatch a worker
+Dispatch the selected batch via the Task tool. Use `subagent_type: general-purpose`. The prompt for each worker must be self-contained — the sub-agent starts fresh with no memory of this conversation.
 
-Dispatch the selected subtask to a sub-agent via the Task tool. Use `subagent_type: general-purpose`. The prompt must be self-contained — the sub-agent starts fresh with no memory of this conversation.
+When the batch has more than one subtask, send one Task call per selected subtask in the same message. On sequential harnesses, this step still dispatches exactly one subtask.
 
 Prompt template:
 
@@ -104,6 +110,11 @@ Read the subtask file, the parent task.md, and spec.md. Follow the hyper-worker
 skill end-to-end: research, implement only this slice, run tests, self-review,
 write the ## Completion section, flip status: done in the frontmatter, and return.
 
+Do not modify files outside the subtask's declared `writes` list. If the slice
+cannot be completed without touching an additional file, set
+`awaiting: user-input`, explain which file is needed and why under
+`## Open questions`, and return without flipping status.
+
 If you hit a blocker you cannot resolve from the spec and the code, set the
 subtask's frontmatter `awaiting: user-input`, add the question under a
 `## Open questions` section in the subtask body, and return without flipping
@@ -113,28 +124,34 @@ Do not touch task.md, spec.md, or sibling subtask files — the orchestrator
 owns those.
 ```
 
-Wait for the sub-agent to return. Then re-read the subtask file's frontmatter:
+Wait for the whole dispatched batch to return. Before processing subtask frontmatter, run `git diff --name-only HEAD` and compare the changed paths against the union of the batch's declared `writes`. If any changed file falls outside every subtask's declared ownership, surface a warning to the user naming the file and the likely owning subtask — do not abort. The worker's `## Completion` is still the source of truth; the diff check catches silent contract violations before verify does.
 
-- `status: done` → go back to Step 1 (validate + pick next).
-- `awaiting: user-input` with `## Open questions` populated → go to Step 4.
-- `status: todo` unchanged and `awaiting` still null → worker did not claim the subtask. Abort with: *"T<N>.<M> returned from dispatch with no state change. Investigate before re-dispatching."*
-- `status: done` but no `## Completion` section → surface a warning to the user, proceed to Step 1. The diff is still the record; the missing summary is best-effort.
+Then re-read each selected subtask file in numeric order:
 
-If the worker's return one-liner named any `B<N>` ids (format: `… (backlog: B7, B8)`), add them to a running list of backlog ids created during this implement run. Step 5 surfaces the full list to the user.
+- `status: done` → accept it. If `## Completion` is missing, surface a warning to the user but keep going. The diff is still the record; the missing summary is best-effort.
+- `awaiting: user-input` with `## Open questions` populated → add that subtask to the blocked list for Step 4.
+- `status: todo` or `status: in-progress` with `awaiting` still null → worker did not claim the subtask cleanly. Abort with: *"T<N>.<M> returned from dispatch with no actionable state change. Investigate before re-dispatching."*
+- any other state drift → abort with a specific error naming the file and the unexpected frontmatter.
+
+If a worker's return one-liner named any `B<N>` ids (format: `… (backlog: B7, B8)`), add them to a running list of backlog ids created during this implement run. Step 5 surfaces the full list to the user.
+
+If the blocked list is non-empty, go to Step 4. Otherwise go back to Step 1 (validate + pick the next batch).
 
 ### Step 4 — Propagate blocker to user
 
-The dispatched worker set its subtask's `awaiting: user-input` and added a question under `## Open questions` in the subtask body.
+One or more dispatched workers set `awaiting: user-input` and added question(s) under `## Open questions` in their subtask files. Surface exactly one unanswered question at a time, ordered by the numeric `M` component of the blocked subtask id.
 
-1. Read the first unanswered question from the blocked subtask's `## Open questions`.
+1. Read the first unanswered question from the lowest-`M` blocked subtask's `## Open questions`.
 2. Return verdict `awaiting-input` to `hyper` with the question as your summary. Present the question verbatim. If it has multiple plausible answers, offer numbered-question + lettered-option shorthand, mark one option as the recommendation, and give a one-line reason grounded in the task, code, or the user's stated goal. `hyper` sets `task.md` `awaiting: user-input` and relays the question. Never batch.
 
 When the user answers on a later turn, `hyper` clears `task.md` `awaiting` and re-dispatches this skill because the task is still `phase: implement`:
 
-- Record the answer under the question in the blocked subtask's `## Open questions` (indented bullet or short paragraph). The file is the durable record of both question and answer.
-- If more unanswered questions remain in that subtask's section, return `awaiting-input` again with the next question. Never batch.
-- When the section has no unanswered questions left, rename the heading to `## Resolved questions`, clear the **subtask's** `awaiting: null`, and re-dispatch that subtask's worker (back to Step 3). Do not write `task.md` `awaiting` — `hyper` owns it.
-- If the user's response is a change request or a meta question rather than an answer, apply the change, then return `awaiting-input` with the first still-unanswered question.
+- Record the answer under the surfaced question in that blocked subtask's `## Open questions` (indented bullet or short paragraph). The file is the durable record of both question and answer.
+- If more unanswered questions remain in that same subtask's section, return `awaiting-input` again with the next question. Never batch.
+- When that subtask's section has no unanswered questions left, rename the heading to `## Resolved questions` and clear that **subtask's** `awaiting: null`.
+- If any other subtask still has `awaiting: user-input`, return `awaiting-input` again with the first unanswered question from the next lowest-`M` blocked subtask. Never batch.
+- If no blocked subtasks remain, go back to Step 1 and resume normal dispatching. Do not write `task.md` `awaiting` — `hyper` owns it.
+- If the user's response is a change request or a meta question rather than an answer, apply the change, then either surface the next unanswered question or return to Step 1, depending on whether any blocked subtasks remain.
 
 ### Step 5 — Advance the phase
 
@@ -201,6 +218,7 @@ Only save things that will matter to a *different* task. Details of the current 
 ## Rules
 
 - **Feature scope: orchestrate, don't implement — except on a verify remediation pass.** In the normal feature flow you do not write, test, or review project code. You dispatch workers and propagate their state. If you find yourself about to edit a `.ts` / `.php` / `.py` file outside `.hyper/`, stop — unless you are explicitly fixing blocked findings from `checks.md`.
+- **Only batch disjoint ownership.** Parallel dispatch is allowed only when the selected subtasks' `writes` sets are pairwise disjoint. Overlapping ownership stays sequential.
 - **Quick scope: stay scoped.** Do not widen scope by touching adjacent code, fixing pre-existing bugs, or adding features the approach did not name. Deepen the code you are writing: validation at boundaries, error-path handling, edge-case guards are part of the change, not scope creep.
 - **Fail loudly on malformed state.** No subtask files found, cycles in `depends`, unparseable frontmatter — abort with a specific error. Silent skips turn small bugs into mysterious ones. Use `../hyper/reference/state-recovery.md` for the repair path.
 - **Ask, don't guess.** If `spec.md` contradicts itself or leaves a critical decision unmade, return verdict `awaiting-input` with the specific question. Guessing usually costs more than a round-trip.

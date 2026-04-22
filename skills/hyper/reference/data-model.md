@@ -11,7 +11,7 @@ All Hyper state lives on disk under `.hyper/` in the project root. Plain markdow
       task.md           # status + what the user asked for
       exploration.md    # what exists in the code + how we'll approach it
       spec.md           # acceptance criteria + subtask index + out-of-scope + edge cases
-      T20.1-first-slice.md   # subtask file (feature scope): id, parent, status, depends, awaiting + what/why/done-when/completion
+      T20.1-first-slice.md   # subtask file (feature scope): id, parent, status, depends, writes, awaiting + what/why/done-when/completion
       T20.2-second-slice.md  # subtask file
       plan-review.md    # review of spec + subtasks before approval; written by hyper-plan-review
       checks.md         # test results, review findings, qa notes; docs phase appends docs outcome
@@ -154,6 +154,7 @@ parent: T1
 title: Wire login endpoint
 status: todo
 depends: [T1.1, T1.2]
+writes: [src/auth/login.ts, tests/auth/login.test.ts]
 awaiting: null
 ---
 
@@ -192,6 +193,7 @@ Removed or renamed to "Resolved questions" once answered.>
 | `title` | short string | Human-readable title. Mirrored in the `spec.md` ToC index. |
 | `status` | `todo` · `in-progress` · `done` | Current state. `todo` is the initial state and the only one the orchestrator dispatches from (next `todo` whose `depends` are all `done`). `in-progress` is set by the worker as its first mutation so an interrupted dispatch can be diagnosed. `done` is the terminal state, set by the worker after tests pass and `## Completion` is written. User-intervention blockers use `awaiting: user-input` — not a status value. |
 | `depends` | list of sibling ids | Subtask ids (e.g. `[T1.1, T1.2]`) that must have `status: done` before this one can be dispatched. Empty list means independently dispatchable. |
+| `writes` | list of project-relative paths / narrow globs | Files this slice is allowed to edit. The orchestrator uses `writes` to batch only pairwise-disjoint subtasks on harnesses that support parallel workers. Workers treat the list as a hard ownership boundary and block if the slice needs an additional file. Two entries overlap if any concrete path matches both patterns; when in doubt, treat them as overlapping. |
 | `awaiting` | `null` · `user-input` | Subtask-level gate, written by the worker. When `user-input`, the worker hit a clarification blocker; the orchestrator surfaces it via an `awaiting-input` verdict and `hyper` propagates the gate to the parent `task.md`'s `awaiting`. Cleared by the orchestrator when the user answers. |
 
 ### Awaiting propagation
@@ -202,8 +204,11 @@ Subtask-level `awaiting: user-input` is surfaced by `hyper-implement` via an `aw
 
 The orchestrator in `hyper-implement` selects subtasks by scanning frontmatter:
 
-- Pick the lowest-`M` file (numeric order over the `M` component of the id — `T<N>.1, T<N>.2, …, T<N>.10`, not lexical) where `status: todo` and every id listed in `depends` has `status: done` in its own file.
-- If nothing matches and at least one subtask is still `todo`, either a dependency chain is unsatisfied (expected — other subtasks are still running or awaiting user input) or there's a deadlock (abort with error).
+- Build the eligible list: every `status: todo` file whose `depends` are all `status: done`.
+- On harnesses with reliable parallel subagent dispatch, start with the lowest-`M` eligible subtask and add later eligible subtasks whose `writes` sets are pairwise disjoint with the current batch. The batch may be capped by harness limits; if so, keep the earliest safe subset.
+- On inline-only or unreliable harnesses, dispatch only the lowest-`M` eligible subtask. Sequential execution is the portability baseline.
+- Eligible subtasks left out only because their `writes` overlap stay `todo` and are reconsidered on later iterations.
+- If nothing is eligible and at least one subtask is still `todo`, either a dependency chain is unsatisfied (expected — other subtasks are still running or awaiting user input) or there's a deadlock (abort with error).
 - If every subtask is `status: done`, return verdict `phase-complete` to `hyper`. `hyper` advances the parent task to `phase: verify` (with the `implement → verify` checkpoint).
 
 If verify later sends the task back with `checks.md` overall `blocked`, `hyper-implement` runs a remediation pass directly from `checks.md` instead of reopening or renumbering completed subtask files.
@@ -213,9 +218,10 @@ If verify later sends the task back with `checks.md` overall `blocked`, `hyper-i
 Before each dispatch iteration, the orchestrator scans the task folder for subtask files whose names start with `T<parent>.` and end with `.md` (for example `T27.1-wire-login-endpoint.md`) and aborts with a specific error if any of the following are true:
 
 - No subtask files exist on a feature-scope task.
-- Any subtask file's YAML frontmatter is unparseable or missing required fields (`id`, `parent`, `status`).
+- Any subtask file's YAML frontmatter is unparseable or missing required fields (`id`, `parent`, `status`, `writes`).
 - Two files claim the same `id`.
 - A `depends` list references an id that doesn't exist as a file in the task folder.
+- A subtask's `writes` field is missing, empty, or not parseable as a list of project-relative paths / narrow globs.
 - Cycles exist in the `depends` graph.
 - A subtask has `awaiting: user-input` but no `## Open questions` section in its body.
 

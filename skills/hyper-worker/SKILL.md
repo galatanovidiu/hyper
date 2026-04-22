@@ -26,12 +26,12 @@ Do **not** touch `task.md`, `spec.md`, or sibling subtask files. The orchestrato
 
 ## Flow
 
-1. **Load the subtask file.** Read frontmatter (`id`, `parent`, `title`, `status`, `depends`, `awaiting`) and body (`## What`, `## Why`, `## Done when`, optional `## Open questions` or `## Resolved questions` — the orchestrator renames the section after the last answer is recorded, so on re-dispatch you'll see `## Resolved questions`).
-2. **Verify state.** `status` must be `todo` or `in-progress`. `awaiting` must be `null` (if it's `user-input`, the orchestrator should have cleared it before re-dispatching — if not, stop and report). Every id in `depends` must be `status: done` in its own file.
+1. **Load the subtask file.** Read frontmatter (`id`, `parent`, `title`, `status`, `depends`, `writes`, `awaiting`) and body (`## What`, `## Why`, `## Done when`, optional `## Open questions` or `## Resolved questions` — the orchestrator renames the section after the last answer is recorded, so on re-dispatch you'll see `## Resolved questions`).
+2. **Verify state.** `status` must be `todo` or `in-progress`. `awaiting` must be `null` (if it's `user-input`, the orchestrator should have cleared it before re-dispatching — if not, stop and report). Every id in `depends` must be `status: done` in its own file. `writes` must be a non-empty list of project-relative files or narrow globs.
 3. **Load surrounding context.** Re-read the parent `task.md` (for scope and original goal) and `spec.md` (for acceptance criteria). Don't re-read exploration unless `## What` or `## Why` references it.
 4. **Mark in-progress.** Set the subtask's frontmatter `status: in-progress`. This is the one and only mutation before the work starts — it lets an interrupted dispatch be diagnosed.
-5. **Research.** Read the files named in `## What` and any others you'll touch. Understand existing patterns before changing anything. Go as deep as the slice needs, no deeper.
-6. **Implement.** Make the change. Scope to this subtask only. Do not fix adjacent code you notice — that goes to `.hyper/backlog.md` (see below).
+5. **Research.** Read whatever files you need to understand the slice. Reading is unrestricted; edits are bounded by `writes` (see step 6). Go as deep as the slice needs, no deeper.
+6. **Implement.** Make the change. Scope to this subtask only and stay within the declared `writes` set. If you discover the slice needs a file outside `writes`, stop and use **Mid-work blockers** instead of widening scope. Do not fix adjacent code you notice — that goes to `.hyper/backlog.md` (see below).
 7. **Test.** Run the project's test suite or the relevant subset. Run lint / type check if the project has them. Fix failures your change caused. If no test suite exists, say so in the completion record; do not fake it.
 8. **Self-review.** Read your own diff end-to-end. Ask:
    - Does the diff match `## Done when`?
@@ -60,7 +60,7 @@ Do **not** touch `task.md`, `spec.md`, or sibling subtask files. The orchestrato
 
 If you hit a question you cannot resolve from the spec, exploration, or the code, **stop** and escalate. Do not guess.
 
-1. Append (or create) a `## Open questions` section in the subtask body. Add your question as a list item. If the blocker has multiple plausible answers, draft it so one option is explicitly recommended and include a one-line reason grounded in the task, code, or user goal; if it is genuinely a single direct question, keep it direct and do not invent fake `A/B` options. Include context if it helps the user answer: *"Q: Should the cache key use `post_id` or `post_id + locale`? Recommendation: `post_id + locale`, because `pages.get` crosses locales and reusing the single-locale key risks collisions. Context: existing `PostCache::key()` uses `post_id` only."*
+1. Append (or create) a `## Open questions` section in the subtask body. Add your question as a list item. If the blocker has multiple plausible answers, draft it so one option is explicitly recommended and include a one-line reason grounded in the task, code, or user goal; if it is genuinely a single direct question, keep it direct and do not invent fake `A/B` options. Include context if it helps the user answer. Ownership-boundary blockers are normal here: *"Q: This slice needs `skills/hyper/reference/state-recovery.md`, but `writes` only declares `skills/hyper-implement/SKILL.md`. Should I expand `writes`, or should this change move to another slice?"*
 2. Set the subtask's frontmatter `awaiting: user-input`. Leave `status` unchanged.
 3. Return to the orchestrator with: *"T<N>.<M> blocked on <one-line question topic>"*. The orchestrator returns an `awaiting-input` verdict to `hyper`; `hyper` sets `task.md` `awaiting: user-input` and surfaces the question to the user. Once answered, the orchestrator records the answer, clears the subtask's `awaiting`, and re-dispatches you.
 
@@ -106,6 +106,7 @@ Any code that touches external input (HTTP, CLI args, file contents, environment
 ## Rules
 
 - **Only your subtask.** Widening scope into adjacent code is the most common way workers break other workers' assumptions. If you want to fix it, backlog it.
+- **Never edit outside `writes` without asking.** The orchestrator uses `writes` to keep concurrent workers from colliding. If the declared ownership is wrong, block and surface it instead of silently widening scope.
 - **Test before flipping `status: done`.** A done subtask with failing tests is a lie the verify phase has to unwind.
 - **Ask, don't guess.** If `## Done when` is ambiguous or contradicts the spec, raise it as a mid-work blocker. A round-trip is cheaper than rework.
 - **Research before changing.** Read the files, understand the patterns, then write. Code that doesn't match existing conventions slows every future change in that area.

@@ -1,7 +1,7 @@
 ---
 name: hyper-plan-review
 description: >
-  Reviews a Hyper feature-scope plan (exploration.md + spec.md + subtask files) before implementation starts. Runs calibrated criteria across completeness, spec-vs-exploration alignment, task decomposition, done-when specificity, out-of-scope and edge cases, and buildability, plus a codebase-verification sub-step that classifies every file / function / pattern reference in the plan as EXISTING vs PROPOSED and verifies only the EXISTING set. Writes a single `plan-review.md` at the task folder root with a `pass | needs-changes | blocked` verdict and a `continue | fix-in-place | rethink` recommendation. Invoked by `hyper-plan` after self-review; not user-invocable. Keywords: hyper, plan review, spec, exploration, verdict, plan-review.md.
+  Reviews a Hyper feature-scope plan (exploration.md + spec.md + subtask files) before implementation starts. Runs calibrated criteria across completeness, spec-vs-exploration alignment, task decomposition, write ownership, done-when specificity, out-of-scope and edge cases, and buildability, plus a codebase-verification sub-step that classifies every file / function / pattern reference in the plan as EXISTING vs PROPOSED and verifies only the EXISTING set. Writes a single `plan-review.md` at the task folder root with a `pass | needs-changes | blocked` verdict and a `continue | fix-in-place | rethink` recommendation. Invoked by `hyper-plan` after self-review; not user-invocable. Keywords: hyper, plan review, spec, exploration, verdict, plan-review.md.
 user-invocable: false
 ---
 
@@ -38,7 +38,7 @@ If the harness claims subagent support but the dispatch fails (quota, network, m
 
 ## Criteria
 
-Apply fourteen checks across six areas. The output contract uses the `pass | needs-changes | blocked` + `continue | fix-in-place | rethink` shape defined below.
+Apply fifteen checks across six areas. The output contract uses the `pass | needs-changes | blocked` + `continue | fix-in-place | rethink` shape defined below.
 
 ### Completeness
 
@@ -54,23 +54,24 @@ Apply fourteen checks across six areas. The output contract uses the `pass | nee
 ### Task decomposition
 
 6. Subtasks are vertical slices — each one produces a verifiable improvement, not a horizontal layer.
-7. Dependency chain is justified.
-8. Subtask count is proportional to the work described.
+7. Every subtask declares concrete `writes` ownership that matches what the slice actually edits. Check honesty, not decoupling — real overlap is a decomposition signal (merge or add a dependency), not something to mask with narrower `writes`. Parallelism is opportunistic; do not penalize shared files that reflect genuine coupling, and do not reward artificially narrow `writes` that will widen at runtime.
+8. Dependency chain is justified.
+9. Subtask count is proportional to the work described.
 
 ### Done-when specificity
 
-9. Every `## Done when` is testable — an observer could answer "done / not done" by reading the resulting file, not by interpretation.
-10. No vague criteria like "works correctly", "is complete", "code compiles".
+10. Every `## Done when` is testable — an observer could answer "done / not done" by reading the resulting file, not by interpretation.
+11. No vague criteria like "works correctly", "is complete", "code compiles".
 
 ### Out-of-scope and edge cases
 
-11. Out of scope names things that would plausibly have been folded in but are explicitly excluded.
-12. Edge cases cover the material failure modes.
+12. Out of scope names things that would plausibly have been folded in but are explicitly excluded.
+13. Edge cases cover the material failure modes.
 
 ### Buildability
 
-13. A worker agent following only the subtask file could implement it without re-interpreting the plan.
-14. Placement instructions are concrete enough that two different workers would produce compatible edits.
+14. A worker agent following only the subtask file could implement it without re-interpreting the plan.
+15. Placement instructions are concrete enough that two different workers would produce compatible edits.
 
 ## Codebase verification sub-step
 

@@ -34,8 +34,8 @@ Six Hyper skills are user-facing. Seven internal Hyper skills run under the hood
 | `hyper-explore` | Clarifies goal, scans code, proposes approach. Writes `exploration.md`. |
 | `hyper-plan` | Turns approach into acceptance criteria + one `T<N>.<M>-<slug>.md` file per vertical slice at the task folder root. Writes `spec.md`. |
 | `hyper-plan-review` | Reviews `exploration.md`, `spec.md`, and subtask files before approval. Writes `plan-review.md`. |
-| `hyper-implement` | For feature scope: orchestrates — dispatches one `hyper-worker` sub-agent per subtask file. For quick scope: implements directly. If verify sends work back blocked, handles the remediation pass from `checks.md`. |
-| `hyper-worker` | Dispatched by `hyper-implement` to finish one subtask end-to-end in a fresh sub-agent — research, implement, test, write a `## Completion` record, flip `status: done`. |
+| `hyper-implement` | For feature scope: orchestrates — batch-dispatches one or more `hyper-worker` sub-agents for eligible subtasks, running disjoint slices in parallel on capable harnesses and sequentially elsewhere. For quick scope: implements directly. If verify sends work back blocked, handles the remediation pass from `checks.md`. |
+| `hyper-worker` | Dispatched by `hyper-implement` to finish one subtask end-to-end in a fresh sub-agent — research, implement within the subtask's declared `writes` ownership, test, write a `## Completion` record, flip `status: done`. |
 | `hyper-verify` | Runs tests, reviews the diff, verifies behavior. Writes `checks.md`. |
 | `hyper-docs` | Updates affected existing human-facing docs (`README.md`, `docs/`, etc.) and records when no doc changes are needed. |
 
@@ -96,7 +96,7 @@ You: looks good
 Agent: [runs plan phase]
        Wrote spec.md and 4 subtask files (T1.1-wire-login-endpoint.md … T1.4-session-persistence.md) in the task folder. Summary: 4 acceptance criteria, 4 vertical slices. Approve to start implementation, or tell me what to change.
 You: approve
-Agent: [dispatches one worker per subtask, then verifies and updates docs]
+Agent: [dispatches one or more independent workers per batch, then verifies and updates docs]
        T1 is complete.
 ```
 
@@ -195,7 +195,7 @@ After first use, your project has:
       task.md         # goal + current phase (optional why; `bugfix: true/false` flag)
       exploration.md  # findings + approach (approved); bugfix tasks keep the same filename but use a root-cause-first body shape
       spec.md         # acceptance criteria + subtask index + out-of-scope + edge cases
-      T1.1-wire-login-endpoint.md   # subtask (feature scope): id, parent, status, depends, awaiting, what/why/done-when, worker's completion record
+      T1.1-wire-login-endpoint.md   # subtask (feature scope): id, parent, status, depends, writes, awaiting, what/why/done-when, worker's completion record
       T1.2-login-form.md            # subtask
       checks.md       # tests, review, qa, docs results
       handoff.md      # optional session handoff snapshot
