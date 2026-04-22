@@ -68,4 +68,3 @@ For Claude Code specifically: newly installed skills show up without a restart (
 - **Symlinks only.** The script never copies files. If a target path already exists but isn't our symlink, the script skips it — it won't overwrite real files.
 - **Uninstall is safe.** Only removes symlinks that point back into this repo. Non-symlinks at the target are left alone.
 - **One source of truth.** All targets symlink to the same folders under `skills/` in this repo. Edit once, every agent picks it up.
-- **This script is not the production install method.** It's for developing Hyper itself. End users follow the README's copy-based flow or an agent-specific install mechanism.
