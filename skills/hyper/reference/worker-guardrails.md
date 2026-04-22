@@ -26,7 +26,7 @@ Four rules, **G1** through **G4**. Each states the rule, why it exists, and the 
 
 **Why.** Mutating git state to turn a failing run green hides the real failure from the reviewer and the verify phase, and silently discards work the orchestrator expected to be present on disk.
 
-**Safe alternative.** If tests fail because of the change, fix the change. If they fail for reasons unrelated to the change, escalate to `.hyper/backlog.md` per the pre-existing-problem flow the consumer skill already documents. If a git mutation still looks genuinely needed, stop and surface a blocker via the consumer skill's mid-work-blocker flow (for the worker path, `../../hyper-worker/SKILL.md` lines 59–67) rather than mutating state and hoping.
+**Safe alternative.** If tests fail because of the change, fix the change. If they fail for reasons unrelated to the change, escalate to `.hyper/backlog.md` per the pre-existing-problem flow the consumer skill already documents. If a git mutation still looks genuinely needed, stop and surface a blocker via the consumer skill's mid-work-blocker flow (for the worker path, `../../hyper-worker/SKILL.md` §"Mid-work blockers") rather than mutating state and hoping.
 
 ## G4 — Current file lines for citations
 

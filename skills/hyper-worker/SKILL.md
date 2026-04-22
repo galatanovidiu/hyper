@@ -55,7 +55,7 @@ Do **not** touch `task.md`, `spec.md`, or sibling subtask files. The orchestrato
 
    Use project-relative paths, not absolute. Keep each bullet tight — the commit/diff is the detailed record; this is the human-readable summary.
 
-10. **Flip status.** Set the subtask's frontmatter `status: done`. Return to the orchestrator with a one-line summary: *"T<N>.<M> done: <one-liner>"*. If during this subtask you appended any entries to `.hyper/backlog.md`, include the ids in the summary: *"T<N>.<M> done: <one-liner> (backlog: B7, B8)"*.
+10. **Flip status.** Only flip `status: done` after step 7's tests pass — a done subtask with failing tests is a lie the verify phase has to unwind. Set the subtask's frontmatter `status: done`. Return to the orchestrator with a one-line summary: *"T<N>.<M> done: <one-liner>"*. If during this subtask you appended any entries to `.hyper/backlog.md`, include the ids in the summary: *"T<N>.<M> done: <one-liner> (backlog: B7, B8)"*.
 
 ## Mid-work blockers
 
@@ -104,12 +104,3 @@ Any code that touches external input (HTTP, CLI args, file contents, environment
 - Escape output at the render site, with the right context (HTML, attribute, URL, JSON).
 - Don't log secrets. Don't hardcode them. Env vars or a secret store only.
 
-## Rules
-
-- **Only your subtask.** Widening scope into adjacent code is the most common way workers break other workers' assumptions. If you want to fix it, backlog it.
-- **Never edit outside `writes` without asking.** The orchestrator uses `writes` to keep concurrent workers from colliding. If the declared ownership is wrong, block and surface it instead of silently widening scope.
-- **Test before flipping `status: done`.** A done subtask with failing tests is a lie the verify phase has to unwind.
-- **Ask, don't guess.** If `## Done when` is ambiguous or contradicts the spec, raise it as a mid-work blocker. A round-trip is cheaper than rework.
-- **Research before changing.** Read the files, understand the patterns, then write. Code that doesn't match existing conventions slows every future change in that area.
-- **Never touch task-level files.** `task.md`, `spec.md`, and sibling subtasks belong to the orchestrator. You only write project code and your own subtask file.
-- **Never complete the parent task.** You can only flip your own subtask's `status`. See `../hyper/reference/worker-guardrails.md` (G1).

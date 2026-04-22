@@ -102,6 +102,28 @@ Mirrors the Claude `code-review` plugin's four-agents-in-parallel pattern (agent
 
 Whenever a 2b or 2c sub-agent is dispatched, include a pointer to `skills/hyper/reference/worker-guardrails.md` in the dispatch prompt so the sub-agent inherits the same G1–G4 rules. Inline runs do not need a separate pointer — this session already read the reference at start.
 
+On a harness with a Task-tool primitive (Claude Code and equivalents), the concrete dispatch shape is one Task-tool call per pass with `subagent_type: general-purpose`. Use this prompt template — the portable "invoke the skill" wording stays the baseline; this is the concrete form for harnesses that have it:
+
+```
+Load the `hyper-code-review` skill and run pass <2b | 2c> against this diff:
+
+  <diff command, e.g. git diff HEAD or git diff <base>...<head>>
+
+Parent task folder (embedded mode only; omit for standalone):
+
+  <absolute path to .hyper/tasks/T<N>-*/>
+
+Read `skills/hyper/reference/worker-guardrails.md` first — its G1–G4 rules
+apply to this dispatch.
+
+Run only the named pass (do not run 2a, the other sub-pass, or validation).
+Return the findings list for your pass in the exact markdown shape shown
+under `## Pass <2b | 2c>` in the skill file. Do not write to `checks.md` —
+the caller merges the sub-pass outputs and runs validation.
+```
+
+Send one Task call per selected pass in the same message so they run concurrently. Wait for both to return before running validation. On harnesses without the Task primitive, run 2b and 2c inline in sequence and skip this template.
+
 The validation step (below) always runs after 2b and 2c finish, regardless of how they were dispatched.
 
 ## Pass 2a — Spec compliance (runs first, gates 2b and 2c)
@@ -297,7 +319,7 @@ Fresh dispatch (`/hyper-code-review …` with no existing task in play):
 2. **Derive a title.** Short human-readable description of the review target. Examples: *"Review PR #412"*, *"Review uncommitted diff"*, *"Review feat/payments branch vs main"*, *"Review src/auth/ files"*.
 3. **Allocate a task id.** Scan `.hyper/tasks/` and `.hyper/archive/` for the highest `T<N>` across both and use `T<N+1>`. Never reuse ids.
 4. **Create the task folder.** `.hyper/tasks/T<N>-<slug>/` with a kebab slug derived from the title (lowercase, hyphens, ~40 chars).
-5. **Write `task.md`.** Frontmatter: `id`, `title`, `scope: code-review`, `phase: review`, `created` (current local datetime in `YYYY-MM-DDTHH:MM:SS` form, e.g. `2026-04-21T14:35:00`), `bugfix: false`, `awaiting: null`. Body: one paragraph naming the review target (the exact diff command or PR number) and, if the user provided explicit acceptance criteria, a short `## Contract` section capturing them verbatim.
+5. **Write `task.md`.** Frontmatter: `id`, `title`, `phase: review`, `scope: code-review`, `created` (current local datetime in `YYYY-MM-DDTHH:MM:SS` form, e.g. `2026-04-21T14:35:00`), `bugfix: false`, `awaiting: null`. Body: one paragraph naming the review target (the exact diff command or PR number) and, if the user provided explicit acceptance criteria, a short `## Contract` section capturing them verbatim.
 6. **Run the review.** Follow passes 2a → 2b → 2c → validation above. 2a is skipped (or uses the `## Contract`) since there is no `spec.md`.
 7. **Write `checks.md`.** Top-level header plus the single `## review` block as shown under **Writing the `## review` block**.
 8. **Archive the review task and report the outcome.** See **Standalone completion** below.
@@ -320,10 +342,10 @@ When the user explicitly asks to promote a standalone review's critical findings
 2. Create `.hyper/tasks/T<M>-<slug>/task.md` with frontmatter:
    - `id: T<M>`
    - `title: Fix findings from T<N>` (or a more specific title if the critical findings cluster around one symptom)
-   - `scope: unknown` (explore will classify)
    - `phase: explore`
-   - `bugfix: true`
+   - `scope: unknown` (explore will classify)
    - `created: <current local datetime in YYYY-MM-DDTHH:MM:SS form, e.g. 2026-04-21T14:35:00>`
+   - `bugfix: true`
    - `awaiting: null`
 3. Body: one paragraph naming the source review (`Seeded from code review T<N>. See .hyper/archive/T<N>-<slug>/checks.md for the full review.`) plus a copy of the critical findings (not warnings or notes) as the symptom evidence. If the findings already cite file:line references, preserve them.
 4. Announce: *"Promoted T<N> review findings to T<M> — <title>. Starting explore phase."*
@@ -346,13 +368,3 @@ Called by `hyper-verify` during the verify phase:
 9. Return to the caller: verdict (`pass | needs-changes | blocked`), a one-line summary, and the finding counts per severity. The caller (`hyper-verify`) rolls this up against tests and QA and returns the overall verdict to `hyper`.
 
 You do not prompt the user in embedded mode. You do not create tasks. You do not write `task.md`. You do not return `redirect target: implement` — that is the caller's decision.
-
-## Rules
-
-- **Review the diff, not the file.** Pre-existing code is out of scope unless the change makes it worse.
-- **Critical means critical.** Don't inflate severity to look thorough, and don't downgrade real findings to ship faster. The high-signal bar for `critical` in 2b is strict; standards `critical` in 2c needs a hard rule cite.
-- **Cite rules in 2c.** Every standards finding must name the source rule and quote it. No cite, no finding.
-- **Drop, don't demote, on validation.** A `critical` that fails validation is dropped. It does not become a `warning`.
-- **Embedded mode never returns lifecycle verdicts.** Write the `## review` block and return. The caller owns the rollup. (See `../hyper/reference/worker-guardrails.md` (G1) for the `task.md` orchestration boundary.)
-- **Standalone mode creates a task.** Always. The user asked for it. The task is the record.
-- **Overwrite `## review` cleanly.** In embedded mode, replace any prior `## review` section in `checks.md` rather than appending. `checks.md` is current state, not history.

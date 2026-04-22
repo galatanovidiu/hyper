@@ -295,12 +295,3 @@ Every dispatch ends with one verdict. Shared contract in `../hyper/reference/gat
 - `redirect target: explore` — emitted on either of two paths, both requiring explicit user confirmation. Path one: the user asks to rethink the approach rather than approve at the Step 9 gate. Path two: Step 7 received a confirmed `blocked + rethink` plan-review outcome (the user agreed with the reviewer's exploration-level finding). A `rethink` recommendation never redirects without asking; a user's reply that isn't an explicit confirmation drops back into the `blocked + fix-in-place` flow. `hyper` sets `phase: explore` and re-enters dispatch.
 
 On a user reply that requests spec changes, revise `spec.md` and any affected subtask files, then return `awaiting-approval` again. On a direct question, answer it inline and return `awaiting-approval` with the artifacts unchanged.
-
-## Rules
-
-- **Every criterion independently testable.** "User can log in" is not a criterion; it's a wish.
-- **Vertical slices only.** Each subtask ships a thin working piece of the feature.
-- **Declare ownership honestly.** Every subtask needs a non-empty `writes` list that matches the files it actually edits. Do not narrow `writes` to enable parallel dispatch; do not split a coherent slice to decouple ownership. Parallelism is opportunistic.
-- **At least one subtask.** Zero is a failure. If the task truly has nothing to decompose, it probably was `scope: quick` — revisit the scope classification with the user.
-- **Spec effort proportional to implementation effort.** A 30-line change does not need 8 subtasks.
-- **No creative decisions here.** If exploration didn't answer a question, send the task back to explore rather than inventing an answer now.

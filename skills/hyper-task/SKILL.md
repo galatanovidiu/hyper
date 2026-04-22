@@ -57,12 +57,13 @@ Given a task id `T<N>`, look first in `.hyper/tasks/T<N>-*/`, then fall back to 
 - Location (`active` or `archived`) so the user knows where the folder is
 - Artifacts present in the folder (`exploration.md`, `spec.md`, subtask files like `T<N>.1-<slug>.md`, `checks.md`, etc.)
 - Subtask progress: list files in the task folder whose names start with `T<N>.` and end with `.md`, then count how many have `status: done` in frontmatter vs total (e.g., *"3 of 6 subtasks done"*).
-- For legacy checklist-in-spec tasks with no subtask files but a `spec.md` containing checkboxes: fall back to counting `- [x]` vs `- [ ]` lines. Note in the report that this is a legacy-model task.
 - For `phase: cancelled`: include `cancelled_at` and `cancelled_reason`
 
 Keep it tight — this is a status line, not a transcript. One screen.
 
 If the id doesn't exist in either location, say so and offer to list active tasks.
+
+**Legacy fallback.** If the task folder has no subtask files but has a `## Subtasks` checklist in `spec.md`, treat it as a legacy task — see `../hyper/reference/state-recovery.md` §2 for the fallback path.
 
 ## Operation: Create (deferred)
 
@@ -132,11 +133,3 @@ Steps:
    - Clear `awaiting` if set (`awaiting: null`).
 5. Archive the folder per `../hyper/reference/archive.md`.
 6. Report: *"Cancelled T<N> — <title>. Reason recorded in `task.md`. Folder archived."*
-
-## Rules
-
-- **One operation per invocation.** Don't chain list + defer + cancel in one run. Each natural-language request maps to one thing.
-- **Never start or run phases.** If the user's request is really about doing work ("start T5", "continue T3", "add X"), tell them and recommend `hyper` or `/hyper T<N>`.
-- **Never delete files.** Deferral is an in-place phase change; cancellation is a status change plus an archive move. Terminal tasks live in `.hyper/archive/` as history.
-- **Ask for missing info.** Create without a clear title? Ask. Cancel without a reason? Ask. Don't fabricate.
-- **Task state lives in `task.md` frontmatter.** That's the source of truth. Don't read or write status from anywhere else. See `../hyper/reference/state-recovery.md` for the repair path when files are malformed, partial, or clearly legacy.

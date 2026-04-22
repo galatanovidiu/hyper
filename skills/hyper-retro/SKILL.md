@@ -32,7 +32,8 @@ Prefer task-scoped when in doubt. Move to project-scoped only when the same less
    - **Project** — something about this codebase, its conventions, its pain points.
    - **Hyper** — something about the workflow itself.
    - **Me (the agent)** — something the agent did that should be different next time.
-4. Write the retro document. Append, don't overwrite.
+   Keep these honest: a project-level friction isn't a Hyper problem, and a Hyper problem isn't a personal failing.
+4. Write the retro document. Append, don't overwrite. Bullets should be specific — "implementation went well" is noise; "the explore phase caught the bcrypt-vs-argon2 decision before I wasted an hour on the wrong one" is signal.
 
 ## Output format
 
@@ -66,10 +67,3 @@ Paths:
 - Project-scoped: `.hyper/retro.md` (create if missing, append new dated block).
 
 Retention: retros are append-only. Task retros archive with their task; project retros stay at `.hyper/retro.md`.
-
-## Rules
-
-- **The user drives.** You prompt, you don't preach.
-- **Specific or nothing.** "Implementation went well" is noise. "The explore phase caught the bcrypt-vs-argon2 decision before I wasted an hour on the wrong one" is signal.
-- **Change items are actionable.** If you can't imagine what "doing differently" looks like, the item is too vague to keep.
-- **Separate scopes honestly.** A project-level friction isn't a Hyper problem. A Hyper problem isn't a personal failing.

@@ -183,7 +183,7 @@ For **feature** tasks: one or two paragraphs covering:
 
 For **research** tasks: this section becomes **Recommendation**. Structured around the actual research question, with evidence from the code and external sources where relevant. End with a clear recommendation.
 
-**YAGNI applies — for new features, not for robustness.** Remove scope you added for hypothetical features, abstractions, or "nice to have" behaviors the user didn't ask for. Tight > ambitious. But validation at boundaries, error-path handling, and edge-case guards for the code you are actually building are never speculative — they are part of the thing being asked for, not scope widening. The focus principle fences against adding unrelated work; it does not authorize skipping the guardrails that make the asked-for change robust.
+**YAGNI applies to speculative feature scope, not to the robustness of the code you are actually building** — validation at boundaries and error-path handling are part of the asked-for change, not scope widening.
 
 ## Step 5 — Write `exploration.md`
 
@@ -234,9 +234,3 @@ Every dispatch ends with one verdict. Shared contract in `../hyper/reference/gat
 - `phase-complete` — the user approved on a re-dispatch. `hyper` reads `scope:` and advances per its transition table: `plan` for feature, `implement` for quick, `done` + archive for research. You do not touch `phase:` or run the archive.
 
 On a user reply that requests changes, revise `exploration.md` (rewrite-over-patch for reframes; preserve resolved questions + pivot note) and return `awaiting-approval` again. On a direct question, answer it inline and return `awaiting-approval` with the artifact unchanged.
-
-## Rules
-
-- **Scan before asking.** Many "ambiguous" goals become clear after reading the code for two minutes. Don't fire off questions the codebase would answer.
-- **Facts and design are separate.** Findings are what *is*. Approach is what we'll *do*. Don't mix them.
-- **Length proportional to scope.** A `quick` exploration.md fits on one screen. A `feature` one is a page or two. A `research` one is as long as the evidence demands.

@@ -22,7 +22,7 @@ This phase runs for `scope: feature` tasks only. Quick tasks skip docs (the diff
 
 - Updated documentation files (if applicable)
 - A `## docs` section appended to `checks.md` describing what was done
-- A verdict to `hyper` per `../hyper/reference/gates.md`. You do **not** write `phase:` on `task.md` or run the archive move.
+- A verdict to `hyper` per `../hyper/reference/gates.md`. You do **not** write `phase:` or `awaiting:` on `task.md` or run the archive move.
 
 ## Step 1 — Decide whether the change is user-visible, then find affected docs
 
@@ -94,12 +94,3 @@ Every dispatch ends with one verdict. Shared contract in `../hyper/reference/gat
 - `phase-complete` — documentation pass done (updated files, or no-op with rationale recorded in `checks.md`). `hyper` sets `phase: done` and archives.
 
 Docs does not emit `awaiting-input` or `awaiting-approval` — it does not hold its own gate. If the change really needs new docs that don't fit anywhere existing, the `## docs` section of `checks.md` flags it and the verdict is still `phase-complete`; the user decides on follow-up separately.
-
-## Rules
-
-- **Update, don't create.** New docs need the user's explicit go-ahead.
-- **Only docs that exist already.** Don't invent structure that isn't there.
-- **Proportional effort.** One-line change = one-line update.
-- **Current state, not changelogs.** Describe what is, not what changed (unless you're actually updating a changelog file).
-- **Record the no-op.** "Nothing to update" with rationale is a real result — it says the phase happened.
-- **Never write `task.md` `phase:` or run the archive.** Return `phase-complete`; `hyper` owns the terminal transition.

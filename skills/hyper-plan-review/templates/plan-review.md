@@ -1,6 +1,6 @@
 ## Plan Review — T<N>
 
-**Verdict:** pass | needs-changes | blocked | skipped — user opted out
+**Verdict:** pass | needs-changes | blocked
 **Recommendation:** continue | fix-in-place | rethink
 **Date:** <YYYY-MM-DD>
 

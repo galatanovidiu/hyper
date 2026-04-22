@@ -98,6 +98,35 @@ Only EXISTING references are verified. PROPOSED references describe code the pla
 
 On harnesses with reliable subagent dispatch (Claude Code and any agent SDK exposing a comparable primitive), dispatch **one** Explore subagent with the batched EXISTING list. The subagent prompt batches all references into a single dispatch — do not fan out one subagent per reference. Include a pointer to `skills/hyper/reference/worker-guardrails.md` in that dispatch prompt so the Explore sub-agent inherits the same G1–G4 rules before it loads its own skill file.
 
+On inline-only harnesses, the reviewer invokes the skill inline in its own session; the shape below is for harnesses that do support sub-agent dispatch via a Task-tool-style primitive.
+
+Dispatch shape (use `subagent_type: general-purpose`, the absolute task folder path, and the batched EXISTING list as a prompt pointer):
+
+```
+Load the `hyper-explore` skill in verification mode and verify the following
+batched EXISTING references from a Hyper plan.
+
+Parent task folder:
+
+  <absolute path to .hyper/tasks/T<N>-*/>
+
+Read `skills/hyper/reference/worker-guardrails.md` first — its G1–G4 rules
+apply to this dispatch.
+
+EXISTING references to verify (batched — do not fan out):
+
+  - <file path, function, or pattern citation> — cited from `<spec.md | T<N>.<M>-<slug>.md>:<section>`
+  - <file path, function, or pattern citation> — cited from `<spec.md | T<N>.<M>-<slug>.md>:<section>`
+  - …
+
+For each reference, return one of: VERIFIED, BROKEN, HALLUCINATED, MISSING, STALE.
+Also surface any files the plan should reference but does not (MISSING) and any
+recent changes (last 5 commits) to referenced files (STALE).
+
+Do not modify any file. Do not touch task.md, spec.md, or subtask files — the
+reviewer owns the findings rollup.
+```
+
 The Explore subagent returns per-reference statuses in the vocabulary:
 
 - `VERIFIED` — the reference is correct.
@@ -242,13 +271,3 @@ Return plain data only: the verdict, the recommendation, the per-severity counts
 7. **Choose the recommendation.** Apply the legality invariants. Self-correct if the intended recommendation is illegal.
 8. **Write `plan-review.md`.** Use the template shape. Overwrite any prior file.
 9. **Return.** One structured line to `hyper-plan`: verdict, recommendation, counts, one-liner.
-
-## Rules
-
-- **Only review the plan.** Implementation-level choices are not plan-review findings. Workers discover those during implement.
-- **Cite everything.** Every finding names the file and the section it applies to. A finding without a citation is a phantom.
-- **Every `[blocker]` has a `**Fix:**`.** No exceptions. The fix hint is what `hyper-plan` uses for its auto-apply flow.
-- **Legality invariants are non-negotiable.** `continue` only with `pass`; `rethink` only with `blocked` + an exploration-level citation. Self-correct before writing.
-- **Overwrite cleanly.** `plan-review.md` represents the current review state, not history. No accumulation across rounds.
-- **Never write `task.md`.** Never return workflow verdicts. The caller owns the rollup and the user-facing flow.
-- **Do not invent findings.** A clean plan produces `pass` with 0–2 notes. Looking thorough by padding the list is a failure mode, not a virtue.

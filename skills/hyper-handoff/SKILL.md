@@ -45,7 +45,9 @@ Retention:
 
 ## What to include
 
-Write a short document covering only things that *aren't* already captured in the other artifacts. Don't restate the goal or the approach — those are in `task.md` and `exploration.md`.
+Write a short document covering only things that *aren't* already captured in the other artifacts. If it's in `task.md`, `exploration.md`, `spec.md`, any subtask file, or `checks.md`, don't repeat it here — reference it. Don't restate the goal or the approach — those are in `task.md` and `exploration.md`.
+
+Be specific. "The user wanted something more secure" is not useful. "The user said bcrypt is required and argon2id is out of scope" is useful.
 
 ```markdown
 # Handoff — T<N>: <title>
@@ -76,9 +78,3 @@ and continue. Reference the files to read and the first action to take.>
 
 <If any — questions for the user that blocked progress.>
 ```
-
-## Rules
-
-- **Don't duplicate.** If it's in `task.md`, `exploration.md`, `spec.md`, any subtask file, or `checks.md`, don't repeat it here. Reference it.
-- **Be specific.** "The user wanted something more secure" is not useful. "The user said bcrypt is required and argon2id is out of scope" is useful.
-- **One paragraph for the next step.** Don't write a plan; write a starting point.

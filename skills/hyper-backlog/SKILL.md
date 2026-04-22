@@ -58,6 +58,7 @@ the idea needs. Body ends at the next `## B<N>` heading or EOF.>
 
 - Entry boundaries: `^## B\d+ — ` headings. Bodies contain any markdown including code blocks and sub-headings (`###` or deeper — never `##`).
 - Bootstrap: if `backlog.md` is missing or only has the `# Backlog` heading, the next `add` creates the first entry as `B1`. If the file is missing entirely, create it with the heading + HTML comment before writing.
+- Single-writer assumption: don't defend against hand-edits mid-run. If the file looks unexpected, read fresh and retry once; see `../hyper/reference/state-recovery.md` for the repair path when state is malformed.
 
 ## Triage: idea or task?
 
@@ -162,11 +163,3 @@ Steps:
 4. **Report:** *"Dropped B<N>."*
 
 Dropped ids are not reused. No undo — the user would need to re-add manually.
-
-## Rules
-
-- **One operation per invocation.** Don't chain add + list in one run. Each natural-language request maps to one thing.
-- **Never start work on a promoted task.** `promote` creates a deferred task folder and returns. The user decides when to run `/hyper T<M>` to begin explore.
-- **Ids are immutable.** Never renumber entries after promote/drop. Gaps are fine.
-- **Respect explicit labels.** If the user says "this is just an idea" or "create a task for this", skip the triage prompt.
-- **Single-writer assumption.** Don't try to defend against the user editing `backlog.md` by hand while the skill is running. If the file looks unexpected, read fresh and retry once. See `../hyper/reference/state-recovery.md` for the repair path when state is malformed.
