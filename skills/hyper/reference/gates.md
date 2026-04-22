@@ -11,7 +11,7 @@ This file is the **single authority** for how `hyper` and the phase skills coord
 ## Ownership split
 
 - `hyper` owns **every mutation of `task.md`'s `phase:` and `awaiting:` fields**. Phase skills never write these two fields. `hyper` also owns the archive move for phase-driven terminal transitions (`done`).
-- `hyper-task` owns `phase: cancelled` and the archive move for user-initiated cancellation. That path is out-of-band from the phase workflow.
+- `hyper-task` owns `phase: cancelled` (archives the folder) and `phase: deferred` (non-terminal; does not archive) for user-initiated cancellation or deferral. Both paths are out-of-band from the phase workflow.
 - `hyper-code-review` owns the terminal `phase: done` transition and archive move for standalone `scope: code-review` tasks it creates directly. That path is user-facing and out-of-band from the normal `hyper` dispatch loop.
 - Phase skills own their **artifact** (`exploration.md`, `spec.md`, `checks.md`, subtask bodies, doc files) and the phase-specific classification fields on `task.md` (`scope`, `bugfix`). They do not touch `phase` or `awaiting`.
 - `hyper-worker` owns subtask files' `status` and `awaiting`. The subtask file is a phase-internal artifact, not top-level workflow state.
@@ -40,11 +40,11 @@ Phase skills must return exactly one verdict per dispatch. A verdict with no new
 | `explore` | `feature` | `plan` | no (approval already happened) |
 | `explore` | `research` | `done` | no — `hyper` archives and announces |
 | `plan` | `feature` | `implement` | no (approval already happened) |
-| `implement` | any | `verify` | **yes** — "T<N> implementation complete. Continue to verify?" |
+| `implement` | any | `verify` | **yes** — prompt verbatim: `"T<N> implementation complete. Continue to verify?"` |
 | `verify` | `quick` | `done` | no — `hyper` archives and announces |
-| `verify` | `feature` | `docs` | **yes** — if `checks.md` `**Overall:** pass`, ask "T<N> verify passed. Continue to docs?"; if `**Overall:** needs-changes`, surface a remediation-aware checkpoint instead of the clean-pass prompt |
+| `verify` | `feature` | `docs` | **yes** — if `checks.md` `**Overall:** pass`, prompt verbatim: `"T<N> verify passed. Continue to docs?"`; if `**Overall:** needs-changes`, surface a remediation-aware prompt that names the verify outcome and offers continue-to-docs / send-back-to-implement / stop-and-decide |
 | `docs` | `feature` | `done` | no — `hyper` archives and announces |
-| `review` | `code-review` | `done` | no — `hyper` archives and announces when it is dispatching an existing review task; standalone `hyper-code-review` archives its own direct review records |
+| `review` | `code-review` | `done` | no — `hyper` archives and announces. Only reached on a crash mid-review where a standalone `hyper-code-review` task was left with `phase: review` on disk before it could self-archive. Not used in normal flow. |
 
 For `redirect`:
 

@@ -26,14 +26,10 @@ The destination guard exists to catch id collisions or partial previous archives
 |-------|---------|
 | `hyper` | Any phase-driven terminal transition — research-scope explore approved, quick-scope verify passes, feature-scope docs finishes — any time `hyper` advances a task to `phase: done`. |
 | `hyper-task` | User-initiated cancellation; `phase: cancelled`. Out-of-band from the phase flow. |
+| `hyper-code-review` | Standalone `scope: code-review` task it created directly, on terminal `phase: done` transition. Out-of-band from the normal `hyper` dispatch loop. |
 
 Phase skills (`hyper-explore`, `hyper-verify`, `hyper-docs`, etc.) never run the archive move themselves. They return `phase-complete`; `hyper` applies the transition table, sets `phase: done`, and runs the snippet above.
 
 `archive/` is created lazily by `mkdir -p` on first use — no pre-creation needed during bootstrap.
 
-## Rules
-
-- Archive only on terminal phases (`done`, `cancelled`). Never archive an active task.
-- Set the terminal phase in `task.md` frontmatter **before** running the move.
-- If the destination already exists, stop and surface the collision — do not rename, merge, or overwrite.
-- Archived folders are read-only in practice. Do not edit artifacts inside `.hyper/archive/` as part of normal workflow.
+Archived folders are read-only in practice. Do not edit artifacts inside `.hyper/archive/` as part of normal workflow.
