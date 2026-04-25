@@ -1,8 +1,16 @@
-# Spec — T<N>: <title>
+# T<N>: <title>
+
+**Goal:** <One sentence in plain prose. The end-state and the intent. No file paths, no method names, no jargon a reviewer wouldn't recognise from `exploration.md`.>
+
+**Changes:** <3–5 bullets that show the SHAPE of the work. No file paths, no method names, no code. The reviewer reads these to judge "yes, that sounds right" before looking at acceptance criteria.>
+
+- <change 1>
+- <change 2>
+- <change 3>
 
 ## Acceptance criteria
 
-<Testable statements that define "done". Each must be independently verifiable.>
+<3–7 single-clause, verb-first, independently testable items. NO inline `path/to/file.ext` or `:NN` line citations — those move to subtask `## Edits` / `## Mirror`. NO bundled "X and Y and Z" — split bundled criteria into separate items.>
 
 1. <testable statement>
 2. <testable statement>
@@ -19,13 +27,13 @@ once at plan time.>
 
 ## Out of scope
 
-<Things this task explicitly will not do. Prevents scope creep during implement.>
+<What was tempting to fix inline but isn't. Each item names a concrete temptation that was deliberately deferred — NOT what the PR trivially doesn't include. If exploration spotted nothing tempting, write _No deferrals — the slice is the slice_ rather than leaving the section empty.>
 
 - <...>
 
 ## Edge cases
 
-<Known tricky scenarios the implementer needs to handle.>
+<Real risks the implementer would miss. If empty after exploration, write _None spotted in exploration_ — the heading is the contract that this was considered.>
 
 - <...>
 
@@ -42,3 +50,16 @@ section if there are none.>
 
 - <question 1? Options: A / B. Recommendation: A, because <reason>.>
 - <question 2? Options: A / B. Recommendation: B, because <reason>.>
+
+<!--
+Audience: the human reviewer making a 3–5 minute approve/reject decision.
+NOT the implementer agent.
+
+Body budget: ~80 lines (excluding the `## Subtasks` ToC). Above 100 lines
+is a `[warning]` from plan-review; above 150 is a `[blocker]`.
+
+Execution detail (file paths, line numbers, exact strings to find/replace,
+named clauses to preserve, runnable verify commands, anti-patterns) lives
+in the T<N>.<M>-<slug>.md subtask files. Compressing those details into
+spec prose loses the agent's data; relocating them does not.
+-->
