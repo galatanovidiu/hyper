@@ -42,7 +42,7 @@ If the harness claims subagent support but the dispatch fails (quota, network, m
 
 ## Criteria
 
-Apply sixteen checks across seven areas. The output contract uses the `pass | needs-changes | blocked` + `continue | fix-in-place | rethink` shape defined below.
+Apply twenty-two checks across nine areas. The output contract uses the `pass | needs-changes | blocked` + `continue | fix-in-place | rethink` shape defined below.
 
 ### Completeness
 
@@ -80,6 +80,18 @@ Apply sixteen checks across seven areas. The output contract uses the `pass | ne
 ### Provenance hygiene
 
 16. The plan does not instruct a worker to write provenance into any changed file. Provenance means absolute local paths (`/Users/...`, `/home/...`, `~/Projects/...`), external or predecessor repo names, or concrete historical task ids from an internal workflow. Applies anywhere a worker would write content — source files, comments, docs, config — not just documentation. Placeholder ids and paths taught as format (`T<N>`, `T1`, `T1.3`, `/path/to/thing`) are not findings; only ids and paths the worker would paste verbatim as historical references are. Severity `[warning]` by default; `[blocker]` when the plan explicitly targets user-facing distribution content or an absolute filesystem path that would only resolve on the author's machine.
+
+### Spec readability (reviewer-side audience contract)
+
+17. **Goal sentence present.** `spec.md` opens with a `**Goal:**` sentence under the title — single sentence, plain prose, no file paths or method names. Severity `[warning]` if missing; `**Fix:**` hint should propose a one-line goal derived from `exploration.md`.
+18. **Changes block present.** `spec.md` contains a `**Changes:**` block of 3–5 bullets that show the SHAPE of the work without naming files or methods. Severity `[warning]` if missing or has fewer than 3 / more than 5 bullets; `**Fix:**` hint proposes the bullet shape.
+19. **Spec body length.** Spec body (excluding the `## Subtasks` ToC and frontmatter) fits in ~80 lines. **>100 lines = `[warning]`**; **>150 lines = `[blocker]`**. `**Fix:**` hint identifies which sections carry execution detail (file paths, line numbers, exact strings) that should relocate into subtask `## Mirror` or `## Edits`.
+20. **Acceptance-criteria discipline.** Each AC is verb-first, single-clause, and contains no inline `path/to/file.ext` or `:NN` citations. Bundled "X and Y and Z" criteria are split into separate items. AC count is 3–7 (hard cap at 7). Each violation is one finding. Severity `[warning]` for inline citations or count >7; `**Fix:**` hint names the specific AC and the directive to relocate or split.
+
+### Subtask richness (agent-side audience contract)
+
+21. **Verify section present and runnable.** Every subtask file has a `## Verify` section with at least one runnable command and an expected outcome. Severity `[blocker]` when missing entirely (the agent cannot self-confirm `## Done when`); `[warning]` when present but contains no command (e.g. only prose). `**Fix:**` hint proposes a concrete command grounded in the slice's `writes` and `## Done when`.
+22. **Edits or concrete `## What`.** Every subtask either has a `## Edits` section with deterministic LOCATE/FIND/INJECT/REPLACE/PRESERVE directives, OR a `## What` concrete enough to act on without one (names exact files, identifiers, and pattern to apply). Vague `## What` without `## Edits` = `[warning]`; empty `## Edits` heading = `[warning]` (delete the heading or fill it). `**Fix:**` hint suggests promoting concrete content from `## What` into `## Edits` directives.
 
 ## Codebase verification sub-step
 
