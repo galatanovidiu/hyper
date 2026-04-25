@@ -1,6 +1,6 @@
 ---
 name: hyper-plan
-description: Runs the plan phase of a feature-scope Hyper task. Turns the approved exploration.md into a spec.md (acceptance criteria + ToC-style subtask index + out-of-scope + edge cases) and one file per vertical slice named `T<N>.<M>-<slug>.md` at the task folder root (each with status, depends, writes, and what/why/done-when). Sets an approval gate for the user before implementation starts. Runs only for feature-scope tasks (quick and research skip planning). Keywords hyper, plan, spec, acceptance criteria, subtasks, subtask files, spec.md.
+description: Runs the plan phase of a feature-scope Hyper task. Turns the approved exploration.md into a reviewer-facing spec.md (Goal + Changes + 3–7 testable acceptance criteria + ToC-style subtask index + out-of-scope + edge cases) and one agent-facing subtask file per vertical slice named `T<N>.<M>-<slug>.md` at the task folder root (each with status, depends, writes, what, why, mirror, edits, avoid, done-when, verify, escalate). Two-altitude contract — spec.md is for human review in 3–5 minutes, subtask files carry execution detail for sub-agent dispatch. Sets an approval gate for the user before implementation starts. Runs only for feature-scope tasks (quick and research skip planning). Keywords hyper, plan, spec, acceptance criteria, subtasks, subtask files, spec.md.
 user-invocable: false
 ---
 
@@ -10,6 +10,15 @@ You are in the **plan** phase. The explore phase produced an approved approach. 
 
 This phase runs only for `scope: feature` tasks. Quick tasks skip to implement. Research tasks end at explore.
 
+## Two-altitude contract
+
+The plan output is two artifacts at two altitudes for two audiences. Honour the split.
+
+- **`spec.md`** — reviewer-facing decision document. The audience is the human user making a 3–5 minute approve / push-back decision. Body fits in ~80 lines. Carries the **Goal**, **Changes**, **Acceptance criteria**, **Subtasks** ToC, **Out of scope**, **Edge cases**, and optional **Open questions**. Does **not** carry inline `path/to/file.ext:NN` citations, exact strings to find/replace, named clauses to preserve, or code. Compressing those details into spec prose would cost reviewer attention without giving the agent anything; relocating them into subtask files preserves both audiences.
+- **`T<N>.<M>-<slug>.md`** — agent-facing execution brief, one per vertical slice. The audience is a sub-agent dispatched by `hyper-implement` with FRESH context and no parent-session memory. Carries the orchestrator-load-bearing frontmatter (`status`, `depends`, `writes`, `awaiting`) plus the body sections needed for the agent to act deterministically (`## What`, `## Why`, optional `## Mirror`, `## Edits`, optional `## Avoid`, `## Done when`, `## Verify`, optional `## Escalate`). Token target ~1,500 per file; ~2,000 is the context-rot threshold for the sub-agent.
+
+If a piece of information is needed to *decide whether to approve*, it goes in `spec.md`. If it is needed to *execute the slice correctly*, it goes in the relevant subtask file. The two contracts are complementary, not duplicative.
+
 ## Inputs
 
 - `task.md` (phase=plan)
@@ -17,8 +26,8 @@ This phase runs only for `scope: feature` tasks. Quick tasks skip to implement. 
 
 ## Outputs
 
-- `spec.md` with acceptance criteria + ToC-style subtask index + out-of-scope + edge cases
-- `T<N>.<M>-<slug>.md` — one file per vertical slice, stored directly in the task folder (alongside `task.md` and `spec.md`), each with frontmatter (`id`, `parent`, `title`, `status: todo`, `depends: [...]`, `writes: [...]`, `awaiting: null`) and body sections (`## What`, `## Why`, `## Done when`)
+- `spec.md` — reviewer-facing decision document. **Goal** sentence + **Changes** block + acceptance criteria + ToC-style subtask index + out-of-scope + edge cases (+ optional open questions). Body fits in ~80 lines. No inline `path:NN` citations.
+- `T<N>.<M>-<slug>.md` — one agent-facing brief per vertical slice, stored directly in the task folder (alongside `task.md` and `spec.md`), each with frontmatter (`id`, `parent`, `title`, `status: todo`, `depends: [...]`, `writes: [...]`, `awaiting: null`) and body sections (`## What`, `## Why`, optional `## Mirror`, `## Edits`, optional `## Avoid`, `## Done when`, `## Verify`, optional `## Escalate`). Token target ~1,500 per file.
 - A verdict to `hyper` per `../hyper/reference/gates.md`. You do **not** write `phase:` or `awaiting:` on `task.md`.
 
 ## Flow
@@ -48,13 +57,17 @@ If the exploration approach is vague about implementation details, that's fine �
 
 ## Step 2 — Acceptance criteria
 
-Write testable statements that define "done". Each criterion must be independently verifiable — either by running a command, clicking something, or checking an output.
+Write testable statements that define "done". Each criterion must be independently verifiable — either by running a command, clicking something, or checking an output. Each criterion is **verb-first**, **single-clause**, and **independently approvable**. Bundled "X and Y and Z" criteria split into separate items.
 
 **Good:** *"POST /auth/login with valid credentials returns 200 and a JSON body containing a JWT."*
 
 **Bad:** *"User can log in."* — not testable. What does "can" mean? What's the success signal?
 
-Aim for 3–7 criteria. If you have more, you probably have multiple tasks bundled together; consider splitting.
+**Bad:** *"Validates input AND escapes output AND returns WP_Error on failure."* — three criteria pretending to be one. Split.
+
+**Hard cap: 7 criteria.** Aim for 3–7. If you have more than 7, the slice is multi-track; either split the spec or cut scope.
+
+**No inline `path/to/file.ext` or `:NN` citations in acceptance criteria.** Execution-altitude detail (file paths, line numbers, exact strings to find/replace, named clauses to preserve) lives in subtask `## Mirror` and `## Edits`, not in spec ACs. Compressing it into AC prose costs reviewer attention without giving the agent anything; the agent reads its subtask file, not `spec.md`.
 
 **Cover error paths, not only happy paths.** Robust software passes its tests against bad input as well as good. For every criterion that asserts the happy-path behavior, write or fold in at least one that asserts the failure behavior — invalid input rejected with a specific error, partial failure surfaced not swallowed, boundary condition handled. Criteria that only describe the success case leave the implementer free to ship code that crashes or silently no-ops on anything unexpected, and verify cannot catch what the spec never asked for.
 
@@ -88,12 +101,21 @@ Number subtasks as `T<N>.1`, `T<N>.2`, … where `T<N>` is the parent task id. F
   - `depends: []` — or `[T<N>.1, T<N>.2]` when this slice can only run after others are `done`. Empty list means independently dispatchable.
   - `writes: [path/to/file, another/path]` — concrete project-relative files (or the narrowest justified glob) this slice is allowed to edit.
   - `awaiting: null`
-- **Body sections.**
-  - `## What` — specific change: files, functions, behavior. Concrete enough that a worker sub-agent can start without re-deriving the decomposition. Include file:line refs from `exploration.md` when helpful.
-  - `## Why` — which acceptance criterion from `spec.md` this slice supports, and context from exploration that matters for doing it right.
-  - `## Done when` — one or more testable criteria. What the worker checks before flipping `status: done`. "Code compiles" is not a criterion; "the new test case asserts X and passes" is.
+- **Body sections (in order).**
+  - `## What` — specific change: files, functions, behavior. Concrete enough that a worker sub-agent with FRESH context can start without re-deriving the decomposition. Name the patterns or conventions the worker should follow.
+  - `## Why` — ≤3 bullets connecting this slice to the spec's `**Goal:**` and the specific acceptance criterion it satisfies. Format: `supports AC<n>: <one-line link>`. Keep tight — over-justification displaces technical context.
+  - `## Mirror` *(optional)* — patterns to anchor on. Each entry is `path:line — what to copy`. Use the same identifiers and vocabulary the agent will see in the code (vocabulary alignment improves long-context retrieval). Delete the section if there is nothing concrete to anchor on.
+  - `## Edits` — exact directives the agent treats as deterministic grep-and-edit ops. Use LOCATE / FIND / INJECT / REPLACE / PRESERVE verbs. For new files use CREATE and reference a Mirror entry or give the full intended content shape inline. This is where the file paths, line numbers, and exact strings live — relocated from spec ACs.
+  - `## Avoid` *(optional)* — anti-patterns specific to THIS task with a one-line reason. Generic style rules belong in project guidance, not here. Delete when there is nothing task-specific to forbid.
+  - `## Done when` — one or more testable criteria. What the worker checks before flipping `status: done`. "Code compiles" is not a criterion; "the new test case asserts X and passes" is. Each item must be answerable yes/no by reading a file or running a command.
+  - `## Verify` — runnable commands the agent self-runs to confirm `## Done when`. Each entry is `<command>` followed by the expected outcome. Highest-leverage field empirically — verify commands materially raise sub-agent task-completion rate.
+  - `## Escalate` *(optional)* — when to STOP and surface a blocker, not when to retry. Single sentence usually enough. Delete when there is no realistic stop-and-ask scenario for this slice.
 
 Do **not** pre-write `## Completion` or `## Open questions` — those sections are added by the worker during/after execution.
+
+**Token budget per subtask file: target ~1,500 tokens. Above ~2,000 = context-rot risk for the dispatched sub-agent.** If a slice genuinely needs more than the budget, split it into two subtasks rather than write a brief that crosses the rot threshold.
+
+**Optional sections (`## Mirror`, `## Avoid`, `## Escalate`) are deleted when not applicable, never kept as empty headings or filled with "N/A" / "None".** An absent section says "nothing task-specific here"; an empty section is a smell.
 
 `writes` is the orchestrator's concurrency contract. Use concrete project-relative files when you can; use a glob only when the slice genuinely owns a bounded family of files. Keep the list as small as the slice allows. If two slices would need the same file, either add a dependency so they cannot be dispatched together or merge them into one slice. Do not leave `writes` empty.
 
@@ -122,7 +144,20 @@ Both sections prevent scope creep and missed cases during implement.
 
 ## Step 5 — Write `spec.md`
 
-Use the shape in `templates/spec.md` (bundled with this skill): acceptance criteria, ToC-style subtask index, out-of-scope, edge cases.
+Use the shape in `templates/spec.md` (bundled with this skill):
+
+1. `# T<N>: <title>`
+2. `**Goal:**` — one sentence in plain prose: end-state and intent. No file paths, no method names, no jargon a reviewer wouldn't recognise from `exploration.md`.
+3. `**Changes:**` — 3–5 bullets that show the SHAPE of the work. No file paths, no method names, no code. The reviewer reads these to judge "yes, that sounds right" before looking at acceptance criteria.
+4. `## Acceptance criteria`
+5. `## Subtasks` — ToC-style index (see below).
+6. `## Out of scope`
+7. `## Edge cases`
+8. `## Open questions` (optional — delete if none)
+
+**Body length budget: ~80 lines, excluding the `## Subtasks` ToC and frontmatter.** Above 100 lines `hyper-plan-review` returns `needs-changes`; above 150 it returns `blocked`. If the body wants to grow past the budget, the spec is carrying execution detail that belongs in subtask files — relocate it.
+
+**No inline `path/to/file.ext` or `:NN` citations in the spec body.** Acceptance criteria especially — those move to subtask `## Mirror` and `## Edits`. The spec is the reviewer's surface, not the agent's.
 
 The `## Subtasks` section is a human-readable table of contents, not a progress tracker. One list item per subtask file, title + link (relative to `spec.md`, so just the filename), no checkboxes:
 
@@ -135,18 +170,37 @@ Progress lives in each subtask file's `status` frontmatter. The orchestrator in 
 
 ## Step 6 — Self-review before presenting
 
-Re-read `spec.md` and every `T<N>.<M>-<slug>.md` subtask file from disk. Check:
+Re-read `spec.md` and every `T<N>.<M>-<slug>.md` subtask file from disk. Check both audiences.
 
-- Every acceptance criterion is independently testable.
-- Every subtask file has a non-empty `## Done when` with at least one testable criterion. An empty or hand-wavy "done when" is not ready to implement.
-- Every `depends` list references ids that exist as subtask files in the task folder. No dangling refs.
-- Every subtask file has a non-empty `writes` list, and any subtasks intended to be independently dispatchable have disjoint `writes`.
+**Reviewer-side (`spec.md`):**
+
+- `**Goal:**` sentence is present under the title, single sentence, plain prose, no file paths or method names.
+- `**Changes:**` block is present, 3–5 bullets, no file paths or code.
+- Acceptance criteria are 3–7 in count, verb-first, single-clause, independently testable.
+- No inline `path/to/file.ext` or `:NN` citations anywhere in the spec body. Move any to the relevant subtask's `## Mirror` or `## Edits`.
+- Spec body fits in ~80 lines, excluding the `## Subtasks` ToC and frontmatter. If it doesn't, relocate execution detail or split the spec.
+- `## Out of scope` names concrete temptations that were deliberately deferred — not trivially-excluded items.
+- `## Edge cases` is present even when empty (write `_None spotted in exploration_`).
+- The `## Subtasks` ToC lists every `T<N>.<M>-<slug>.md` file in the task folder, and every subtask file appears in the ToC.
+
+**Agent-side (each subtask file):**
+
+- Frontmatter is complete: `id` follows `T<N>.<M>`, `parent` matches the task id, `status: todo`, `awaiting: null`, `writes` is non-empty and concrete (or a justified narrow glob), `depends` references existing subtask ids only.
+- `## What` is concrete enough that a sub-agent with FRESH context can act without re-deriving the slice.
+- `## Why` connects this slice to one or more acceptance criteria from `spec.md`.
+- `## Edits` (or a `## What` concrete enough to substitute) gives the agent deterministic, file-level directives — exact paths, exact strings, named clauses to preserve.
+- `## Done when` is non-empty, every item answerable yes/no by reading a file or running a command.
+- `## Verify` is non-empty with at least one runnable command and an expected outcome. This is load-bearing — never omit.
+- Optional sections (`## Mirror`, `## Avoid`, `## Escalate`) are either present with concrete content or absent. No empty headings, no `N/A`, no `None`.
+- Subtask file body is roughly within the ~1,500 token target; no single file approaches ~2,000 (split if needed).
+
+**Cross-cutting:**
+
 - No cycles in the `depends` graph.
-- `parent` on every subtask matches the task id (`T<N>`), and `id` follows `T<N>.<M>`.
-- Each subtask is a vertical slice with a verifiable outcome, not a horizontal layer.
-- Scope matches what the user approved in `exploration.md`. If the spec is significantly bigger than the approach described, something drifted — fix before presenting.
-- No implementation code in the spec or subtask files. They say *what* and *done when*, not *how in detail*.
-- The `## Subtasks` ToC in `spec.md` lists every `T<N>.<M>-<slug>.md` file in the task folder, and every subtask file appears in the ToC.
+- Subtasks intended to be independently dispatchable have disjoint `writes`.
+- Each subtask is a vertical slice with a verifiable outcome, not a horizontal layer (no two-or-more subtasks sharing a verb like "scaffold / wire / add-tests").
+- Scope matches what the user approved in `exploration.md`. If the plan is significantly bigger than the approach described, something drifted — fix before presenting.
+- No implementation code in `spec.md`. Code shapes belong in subtask `## Edits` or `## Mirror`.
 
 If you find problems, fix them. Then continue.
 
