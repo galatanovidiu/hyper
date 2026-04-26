@@ -74,6 +74,24 @@ The bugfix sub-flow is stricter than the generic explore:
 
 Raw evidence (logs, traces, screenshots) lives in the task folder under `evidence/` and is linked from `exploration.md` by path, never pasted inline.
 
+## TDD pairing for behavior-change slices
+
+For `feature`-scope tasks, `hyper-plan` decomposes every slice that introduces, changes, or removes observable behavior into two paired sibling subtasks. The lower-`M` subtask carries `role: test`, owns only the test files, and is responsible for writing the failing tests plus a `## Test baseline` record. The higher-`M` subtask carries `role: impl`, owns only the implementation files, declares the test sibling in its `depends`, and has `writes` disjoint from it. Two co-dispatched workers, two fresh contexts, one structural guarantee.
+
+The guarantee: the impl worker is structurally locked out of editing the test files. The orchestrator's existing `writes` ownership boundary already enforces it — no new mechanism, just paired subtasks that put test files outside the impl worker's `writes` set. The same model never writes both the implementation and the tests that judge it, so it cannot quietly weaken those tests to manufacture a green run.
+
+Structural slices skip pairing and stay single with `role: none` (or no `role` field at all):
+
+- pure refactors that preserve behavior
+- config tweaks, dependency bumps, naming-only changes
+- docs edits
+
+The reason: pairing exists to mitigate the same-model-writes-both anti-pattern; structural slices have no behavior surface to weaken, so pairing them adds ceremony without addressing the risk. The pre-existing regression suite already catches accidental behavior change in refactors.
+
+`hyper-verify` adds a soft red→green confirmation for every `role: impl` subtask in scope: the test names recorded in the sibling's `## Test baseline` still pass on the current run, and the test files were not modified after the test subtask's `done_at` timestamp (using `git log` on test paths when available, filesystem mtime otherwise). A violation blocks the verify pass and bounces the task back to implement with a remediation brief. Tasks without any `role: impl` subtask see no change in verify behavior — the check skips silently.
+
+`role: none` is the back-compat default. Existing in-flight subtask files without a `role` field behave exactly as they did before TDD pairing landed.
+
 ## Backlog vs task
 
 Use backlog for rough future ideas.

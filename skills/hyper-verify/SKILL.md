@@ -105,11 +105,50 @@ Otherwise:
 
 <If failures: list each failure with file, test name, and error.>
 <If no test runner: say so explicitly — "Project has no test suite." — and do not fake a pass.>
+
+Red→green confirmation: pass for 2 impl subtask(s).
 ```
+
+The trailing `Red→green confirmation:` line is optional — see "Red→green confirmation for TDD-paired subtasks" below. It is omitted entirely when the task has no `role: impl` subtasks.
 
 **If tests fail because of the current change:** record the failures in `checks.md` and mark the `## tests` section `blocked`. Do not attempt fixes in verify — on `blocked`, you return `redirect target: implement` and the implement phase reads `checks.md` as its brief.
 
 **If tests fail for reasons unrelated to the change:** append a new entry to `.hyper/backlog.md`. Format: a `## B<N> — <short title>` heading (e.g. `## B<N> — Pre-existing failure in auth.test.ts`) followed by a body containing the test name, error message, and a note that it's pre-existing. Allocate `B<N>` by scanning `backlog.md` for the highest existing `^## B\d+ — ` heading and adding 1 (bootstrap with a `# Backlog` heading if missing). Don't fix inline. Record the pre-existing failures in `checks.md` but mark the verdict `pass` if current-change tests pass.
+
+### Red→green confirmation for TDD-paired subtasks
+
+After the standard test-suite run above, perform a soft red→green confirmation for any TDD-paired implementation slices in the current task. The check honors the "Verify never patches code." rule at the top of this file: a violation is recorded in `checks.md` and the section is marked `blocked`, which feeds the existing `redirect target: implement` flow — verify never edits anything itself.
+
+1. **Trigger.** Scan the task folder (`.hyper/tasks/T<N>-*/`) for subtask files with `role: impl` in frontmatter. If none, skip this confirmation entirely — write nothing in `## tests` for it. Tasks with no `role: impl` siblings (legacy tasks and pure-structural tasks) see no behavior change.
+
+2. **Per-impl-subtask checks.** For each `role: impl` subtask:
+
+   a. Read every sibling listed in its `depends` whose frontmatter carries `role: test`. From each such sibling, parse the `## Test baseline` body section (per `../hyper/reference/data-model.md` "`## Test baseline`") for the recorded test names. A missing or empty `## Test baseline` on a sibling `role: test` subtask is itself a violation — record it the same way as a missing test name; this is a worker-side gap surfaced here, not a verify-side concern to fix.
+
+   b. Confirm each named test still exists in its test file (file path + the test identifier the test runner uses to address it). A missing test is a violation.
+
+   c. Confirm each named test passes on the current run. A failing test is a violation. Do not re-run the test suite for this confirmation — the full-suite run already executed at the top of this section has the pass/fail data; parse or filter that output.
+
+   d. Confirm the test files (the union of every sibling `role: test` subtask's `writes`) were not modified after the test subtask's `**done_at:**` timestamp recorded at the top of its `## Test baseline` section (per `../hyper/reference/data-model.md` "`## Test baseline`"). Prefer `git log --format='%H %ct' -- <path>` to find commits touching each path on projects that commit between subtasks; otherwise fall back to comparing the file's filesystem mtime against the sibling's `done_at`. A modification after that timestamp is a violation — the impl worker (or someone else) edited a file the impl subtask was structurally forbidden from owning. A `role: test` subtask whose `## Test baseline` is missing the `**done_at:**` line is itself a violation (record alongside any missing-baseline finding from check (a)) — without `done_at` this check has no usable data source on a non-committing project.
+
+3. **On any violation,** append to the `## tests` section:
+
+   ```
+   Red→green confirmation: blocked
+
+   - <T<N>.<M> impl subtask id> — <violation kind>: <evidence>
+   - <...>
+   ```
+
+   Mark the `## tests` verdict `blocked`. The existing redirect-to-implement flow at the top of this file handles the rest — verify does not patch the offending subtask.
+
+4. **On all-green,** append a single line to `## tests`:
+
+   ```
+   Red→green confirmation: pass for <N> impl subtask(s).
+   ```
+
+   The trailing line in the `## tests` example above shows this shape. The line is omitted entirely when the task has no `role: impl` subtasks; it appears only when at least one paired impl slice is in scope.
 
 ## Section 2 — Review
 

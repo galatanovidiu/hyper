@@ -6,6 +6,7 @@ status: todo
 depends: []
 writes: []
 awaiting: null
+role: none
 ---
 
 # T<N>.<M> — <title>
@@ -27,3 +28,10 @@ context from exploration that matters for doing this slice right.>
 <One or more testable criteria. What the worker checks before flipping
 `status: done`. "Code compiles" is not a criterion; "the new test case
 asserts the 403 response on the confidential-post path and passes" is.>
+
+<!--
+Set `role: test` or `role: impl` only when this slice is part of a
+TDD pair (see hyper-plan SKILL.md "TDD pairing for behavior-change
+slices" and data-model.md "TDD pairing pattern"). Omit or leave
+`role: none` for any slice that is not paired.
+-->

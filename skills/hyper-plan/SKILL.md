@@ -76,6 +76,58 @@ Decompose the work into vertical slices — chunks each verifiable on its own an
 
 Horizontal decomposition leaves subtasks that cannot be independently verified — the first slice doesn't actually work until the last slice lands.
 
+### TDD pairing for behavior-change slices
+
+Every slice that introduces, changes, or removes observable behavior is emitted as a paired sibling: a `role: test` subtask followed by a `role: impl` subtask. Structural slices — refactors that preserve behavior, config tweaks, dependency bumps, naming-only changes, docs edits — stay single with `role: none` (or no `role` field at all). Pairing exists to mitigate the same-model-writes-both anti-pattern; structural slices have no behavior surface to weaken, so pairing them adds ceremony without addressing the risk.
+
+The pair is still **one vertical slice** — two co-dispatched subtask files joined by `depends`, not two separate features. The lower-`M` subtask is the test; the higher-`M` subtask is the impl. Their `writes` sets must be disjoint so the orchestrator's existing ownership boundary structurally prevents the impl worker from editing the test files. See `../hyper/reference/data-model.md` "TDD pairing pattern" for the data-model contract this section emits.
+
+**Test subtask shape (`role: test`):**
+
+- `writes` lists only test files.
+- `depends` is whatever the slice's prerequisites already are (often empty, or earlier slices).
+- `## Done when` requires the named tests to **exist and to fail** with the expected gap when run via the project's test runner. The worker's existing test-running step (`hyper-worker` Flow step 7) executes this criterion — the worker confirms red and records the failure output in `## Test baseline`.
+
+**Impl subtask shape (`role: impl`):**
+
+- `writes` lists only the implementation files. **Disjoint** from the sibling test subtask's `writes` — no overlap, not even one file.
+- `depends` includes the sibling test subtask's id.
+- `## Done when` requires the same tests recorded in the sibling baseline to **pass** via the project's test runner, with no modification to the test files since the sibling test subtask completed.
+
+**Worked example.** A login-endpoint slice splits into:
+
+```yaml
+# T<N>.1-login-endpoint-tests.md
+---
+id: T<N>.1
+parent: T<N>
+title: Login endpoint contract tests
+status: todo
+depends: []
+writes: [tests/auth/login.test.ts]
+awaiting: null
+role: test
+---
+```
+
+```yaml
+# T<N>.2-login-endpoint-impl.md
+---
+id: T<N>.2
+parent: T<N>
+title: Wire login endpoint
+status: todo
+depends: [T<N>.1]
+writes: [src/auth/login.ts]
+awaiting: null
+role: impl
+---
+```
+
+The test subtask owns `tests/auth/login.test.ts`; the impl subtask owns `src/auth/login.ts`. The two `writes` sets share no path, so the orchestrator cannot dispatch them in parallel (the impl `depends` on the test anyway), and the impl worker cannot edit the test file even if it wanted to.
+
+**Fallback.** When a slice changes behavior but has no observable surface the planner can write tests against (e.g., touches only an internal helper with no public callers, or the gap is unreachable from any test), use a single `role: none` subtask and explain the fallback in `## Why`. The worker proceeds under the existing single-subtask flow.
+
 ### Writing each subtask file
 
 Number subtasks as `T<N>.1`, `T<N>.2`, … where `T<N>` is the parent task id. For each one, write a file named `T<N>.<M>-<slug>.md`, where `<slug>` is derived from the subtask title. Inside that file write:
@@ -88,6 +140,7 @@ Number subtasks as `T<N>.1`, `T<N>.2`, … where `T<N>` is the parent task id. F
   - `depends: []` — or `[T<N>.1, T<N>.2]` when this slice can only run after others are `done`. Empty list means independently dispatchable.
   - `writes: [path/to/file, another/path]` — concrete project-relative files (or the narrowest justified glob) this slice is allowed to edit.
   - `awaiting: null`
+  - `role: none | test | impl` — defaults to `none`. Set to `test` or `impl` only when this slice is part of a TDD pair. See the "TDD pairing for behavior-change slices" subsection above.
 - **Body sections.**
   - `## What` — specific change: files, functions, behavior. Concrete enough that a worker sub-agent can start without re-deriving the decomposition. Include file:line refs from `exploration.md` when helpful.
   - `## Why` — which acceptance criterion from `spec.md` this slice supports, and context from exploration that matters for doing it right.
@@ -147,6 +200,9 @@ Re-read `spec.md` and every `T<N>.<M>-<slug>.md` subtask file from disk. Check:
 - Scope matches what the user approved in `exploration.md`. If the spec is significantly bigger than the approach described, something drifted — fix before presenting.
 - No implementation code in the spec or subtask files. They say *what* and *done when*, not *how in detail*.
 - The `## Subtasks` ToC in `spec.md` lists every `T<N>.<M>-<slug>.md` file in the task folder, and every subtask file appears in the ToC.
+- For every `role: test` subtask: `writes` lists only test files and `## Done when` requires the named tests to fail when run via the project's test runner.
+- For every `role: impl` subtask: `depends` lists at least one corresponding `role: test` sibling, `writes` is non-empty and disjoint from every sibling test subtask's `writes`, and `## Done when` requires those tests to pass with no test-file modification since the sibling completed.
+- Every `role: impl` subtask has at least one corresponding `role: test` sibling listed in its `depends`. A bare `role: impl` with no test sibling is a planning bug — either pair it or downgrade it to `role: none`.
 
 If you find problems, fix them. Then continue.
 

@@ -131,7 +131,7 @@ After first use, your project has:
       task.md         # goal + current phase
       exploration.md  # findings + approach (approved)
       spec.md         # acceptance criteria + subtask index + out-of-scope
-      T1.1-wire-login-endpoint.md   # subtask: id, status, depends, writes, done-when
+      T1.1-wire-login-endpoint.md   # subtask: id, status, depends, writes, role, done-when
       T1.2-login-form.md
       checks.md       # tests, review, qa, docs results
       handoff.md      # optional session handoff
@@ -161,6 +161,14 @@ Phases are skipped by scope, never by agent judgment. Classification happens onc
 ### Bugfix detection
 
 Independently of scope, `explore` also checks whether the work is a bugfix or regression. If keywords (_bug, fix, regression, crash, failing …_) or attached artifacts (stack traces, failing-test output, issue links) suggest one, Hyper asks a single confirmation question and, on _yes_, sets `bugfix: true` on `task.md` and routes to a root-cause-first sub-flow. The body of `exploration.md` switches to a bugfix structure: symptom evidence, a `repro_status` classification, a single active hypothesis with a named acceptance proof, and a structured disproven-hypothesis ledger. After 3 distinct falsified hypotheses the sub-flow hard-stops with an escalation bundle so you can reframe instead of letting the agent keep guessing.
+
+### TDD pairing for behavior-change slices
+
+In a `feature`-scope plan, every slice that introduces, changes, or removes observable behavior is split into two paired sibling subtasks: a `role: test` subtask that owns the test files (and writes a `## Test baseline` red-baseline record) and a `role: impl` subtask that owns the implementation files, depends on the test sibling, and is structurally locked out of editing the test paths via the existing `writes` ownership boundary. Two different fresh-context workers, two `writes` scopes, one anti-weakening guarantee — the impl worker cannot weaken the tests that judge its own code, because it cannot touch them.
+
+Structural slices (refactor, config tweak, dependency bump, naming-only change, docs edit) stay single with `role: none` (or no `role` field). Pairing exists to mitigate the same-model-writes-both anti-pattern; structural slices have no behavior surface to weaken, so pairing them adds ceremony without addressing the risk. `role: none` is also the back-compat default — subtask files without a `role` field behave exactly as they did before T56 landed.
+
+`hyper-verify` then performs a soft red→green confirmation for every `role: impl` subtask: the test names recorded in the sibling baseline still pass, and the test files were not modified after the test subtask's `done_at` timestamp. A violation blocks the verify pass and bounces the task back to implement with a remediation brief.
 
 ## More example flows
 

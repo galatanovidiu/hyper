@@ -31,6 +31,11 @@ Do **not** touch `task.md`, `spec.md`, or sibling subtask files. The orchestrato
 2. **Verify state.** `status` must be `todo` or `in-progress`. `awaiting` must be `null` (if it's `user-input`, the orchestrator should have cleared it before re-dispatching — if not, stop and report). Every id in `depends` must be `status: done` in its own file. `writes` must be a non-empty list of project-relative files or narrow globs.
 3. **Load surrounding context.** Re-read the parent `task.md` (for scope and original goal) and `spec.md` (for acceptance criteria). Don't re-read exploration unless `## What` or `## Why` references it.
 4. **Mark in-progress.** Set the subtask's frontmatter `status: in-progress`. This is the one and only mutation before the work starts — it lets an interrupted dispatch be diagnosed.
+4b. **Branch on `role`.** Read the subtask's frontmatter `role` field (see `../hyper/reference/data-model.md` §"Subtask frontmatter fields" and §"TDD pairing pattern"):
+   - If `role: none` (or the field is absent) — continue with step 5 below. The remaining flow runs unchanged; this is the back-compatible default.
+   - If `role: test` — jump to `### \`role: test\` mode` after the Flow for the test-authorship sub-flow, then return to step 10.
+   - If `role: impl` — jump to `### \`role: impl\` mode` after the Flow for the test-locked implementation sub-flow, then return to step 10.
+   - If `role` carries any other value, stop and surface a blocker via the **Mid-work blockers** flow below. The orchestrator's pre-dispatch validation should already have rejected this; reaching the worker means a contract violation upstream — do not guess a mode.
 5. **Research.** Read whatever files you need to understand the slice. Reading is unrestricted; edits are bounded by `writes` (see step 6). Go as deep as the slice needs, no deeper.
 6. **Implement.** Make the change. Scope to this subtask only and stay within the declared `writes` set. If you discover the slice needs a file outside `writes`, stop and use **Mid-work blockers** instead of widening scope. Do not fix adjacent code you notice — that goes to `.hyper/backlog.md` (see below).
 7. **Test.** Run the project's test suite or the relevant subset. Run lint / type check if the project has them. Fix failures your change caused. If no test suite exists, say so in the completion record; do not fake it.
@@ -56,6 +61,27 @@ Do **not** touch `task.md`, `spec.md`, or sibling subtask files. The orchestrato
    Use project-relative paths, not absolute. Keep each bullet tight — the commit/diff is the detailed record; this is the human-readable summary.
 
 10. **Flip status.** Only flip `status: done` after step 7's tests pass — a done subtask with failing tests is a lie the verify phase has to unwind. Set the subtask's frontmatter `status: done`. Return to the orchestrator with a one-line summary: *"T<N>.<M> done: <one-liner>"*. If during this subtask you appended any entries to `.hyper/backlog.md`, include the ids in the summary: *"T<N>.<M> done: <one-liner> (backlog: B7, B8)"*.
+
+### `role: test` mode
+
+Reached from step 4b when the subtask's frontmatter sets `role: test`. The slice's job is to write the failing tests that judge a paired `role: impl` sibling, and to record a red baseline the impl worker and `hyper-verify` will read. The shape of the recorded baseline section is defined in `../hyper/reference/data-model.md` §"`## Test baseline`".
+
+1. Continue with steps 5–6 of the main Flow (Research, Implement) but scope the implementation to **writing the failing tests only**, inside the subtask's declared `writes` set. Do not add the implementation code — that belongs to the paired `role: impl` sibling.
+2. Run the project's test runner scoped to the new tests. Assert they FAIL with the gap described in `## Done when` (e.g., a specific assertion message, a missing function, a wrong return value). If the tests pass on the first run, stop and surface a mid-work blocker via the flow below — the slice's premise is wrong, the user decides whether to drop the slice or redefine the gap. Do not weaken the test to manufacture a red.
+3. Append a `## Test baseline` section to the subtask body. Open the section with one line `**done_at:** <YYYY-MM-DDTHH:MM:SS>` carrying the current local datetime — `hyper-verify`'s red→green check (d) reads this to detect post-baseline edits on projects that do not commit between subtasks (shell out to `date +"%Y-%m-%dT%H:%M:%S"` if needed). Below the `done_at` line, write file-grouped bullets in the same shape as `## Completion`. Each bullet names the test (file + test name) and quotes the failure message (one line is fine — the diff is the detailed record). If the project has no executable test runner, record that explicitly and quote the documented gap instead of inventing output. Write `done_at` once at this step and never update it on later re-dispatches — an updated timestamp would defeat the modification-time check.
+4. Append `## Completion` as in step 9 of the main Flow.
+5. Flip `status: done` and return as in step 10 of the main Flow.
+
+### `role: impl` mode
+
+Reached from step 4b when the subtask's frontmatter sets `role: impl`. The slice's job is to make the paired `role: test` sibling's failing tests pass — without touching any test file the sibling owns. The structural ban on editing test paths is the load-bearing anti-weakening guarantee; do not work around it.
+
+1. For every sibling subtask listed in the current subtask's `depends` whose frontmatter sets `role: test`, read its `## Test baseline` section to learn the test names that must pass. If any such sibling has no `## Test baseline` section (worker bug or orchestrator dispatched out of order), stop and surface a mid-work blocker via the flow below — do not proceed without the baseline.
+2. Compute the union of every sibling test subtask's `writes` — this is the **locked test-paths set** for this dispatch. The impl worker must not edit any path in this set, even if the path also appears in the impl subtask's own `writes` (the planner should have made them disjoint; if they overlap, treat the locked set as authoritative and surface a blocker).
+3. Continue with steps 5–6 of the main Flow (Research, Implement), scoped to the current subtask's own `writes` minus the locked test-paths set. If the slice would require editing a path in the locked set, stop and surface a mid-work blocker via the flow below — example question shape: *"Q: This slice needs to edit `tests/auth/login.test.ts`, which is owned by sibling T<N>.<M> (role: test). Editing it here would weaken the test that judges this implementation. Should the test be revised in T<N>.<M> instead, or is the pairing wrong?"*
+4. Run the named tests from step 1; they must all pass. Then run the project's broader test suite (or the relevant scoped subset) as in step 7 of the main Flow.
+5. Append `## Completion` as in step 9 of the main Flow.
+6. Flip `status: done` and return as in step 10 of the main Flow.
 
 ## Mid-work blockers
 

@@ -207,6 +207,12 @@ Removed or renamed to "Resolved questions" once answered.>
 >
 ```
 
+### `## Test baseline`
+
+Optional. Written by a worker dispatched on a `role: test` subtask. Records the test names that were just written and the failure output proving they are red. Read by the sibling `role: impl` worker (to confirm green) and by `hyper-verify` (to confirm red→green). File-grouped bullets, same shape as `## Completion`.
+
+The section opens with one frontmatter-style line `**done_at:** <YYYY-MM-DDTHH:MM:SS>` recording the local datetime at which the `role: test` worker flipped `status: done`. This is the timestamp `hyper-verify`'s red→green check (d) compares against the test files' last-modification time to detect post-baseline edits on projects that do not commit between subtasks. Without `done_at`, check (d) has no usable data source on a non-committing project. The worker writes `done_at` once and never updates it; an impl-side re-dispatch of the test sibling is a contract violation, not a normal flow.
+
 ### Subtask frontmatter fields
 
 | Field | Values | Meaning |
@@ -218,6 +224,11 @@ Removed or renamed to "Resolved questions" once answered.>
 | `depends` | list of sibling ids | Subtask ids (e.g. `[T1.1, T1.2]`) that must have `status: done` before this one can be dispatched. Empty list means independently dispatchable. |
 | `writes` | list of project-relative paths / narrow globs | Files this slice is allowed to edit. The orchestrator uses `writes` to batch only pairwise-disjoint subtasks on harnesses that support parallel workers. Workers treat the list as a hard ownership boundary and block if the slice needs an additional file. Two entries overlap if any concrete path matches both patterns; when in doubt, treat them as overlapping. |
 | `awaiting` | `null` · `user-input` | Subtask-level gate, written by the worker. When `user-input`, the worker hit a clarification blocker; the orchestrator surfaces it via an `awaiting-input` verdict and `hyper` propagates the gate to the parent `task.md`'s `awaiting`. Cleared by the orchestrator when the user answers. |
+| `role` | `none` · `test` · `impl` | Optional. Selects TDD pairing mode. `role: test` owns test files and records a red baseline; `role: impl` owns implementation files, depends on a sibling `role: test`, and confirms green. Default `none` — the current single-subtask flow. Missing field is treated as `none` for back-compat. Phase-owned classification, not workflow state. |
+
+### TDD pairing pattern
+
+Behavior-change slices may be split into a `role: test` subtask and a `role: impl` subtask. The impl subtask's `depends` lists the test subtask's id, and their `writes` sets must be disjoint: the test subtask owns the test paths, the impl subtask owns the implementation paths. The impl worker is structurally forbidden from editing test paths because the orchestrator's existing `writes` ownership boundary already enforces it — the boundary doesn't need a new mechanism, just paired subtasks that put test files outside the impl worker's `writes` set. A `role: none` subtask (or one with no `role` field at all) keeps the current single-subtask flow; pairing is opt-in per slice.
 
 ### Awaiting propagation
 
@@ -247,6 +258,7 @@ Before each dispatch iteration, the orchestrator scans the task folder for subta
 - A subtask's `writes` field is missing, empty, or not parseable as a list of project-relative paths / narrow globs.
 - Cycles exist in the `depends` graph.
 - A subtask has `awaiting: user-input` but no `## Open questions` section in its body.
+- A subtask file with a `role` value that isn't `none`, `test`, or `impl`.
 
 Fail loudly beats silent skip. Malformed state is a bug that needs human attention, not a condition to route around.
 

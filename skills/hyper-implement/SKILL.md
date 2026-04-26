@@ -75,6 +75,7 @@ Before picking anything to dispatch, validate. If any check fails, abort with an
 - Every file's `writes` is a non-empty list of project-relative paths or narrow globs.
 - The `depends` graph has no cycles.
 - Any subtask with `awaiting: user-input` has a `## Open questions` section in its body.
+- Every file's `role` field, if present, is one of `none`, `test`, or `impl`. A missing field is treated as `none` for back-compat. See `../hyper/reference/data-model.md` §"Validation" for the canonical list — this bullet duplicates the role-value rule because Step 1 enumerates its checklist rather than deferring.
 
 ### Step 2 — Pick the next batch
 
@@ -125,6 +126,10 @@ status. Do not guess.
 
 Do not touch task.md, spec.md, or sibling subtask files — the orchestrator
 owns those.
+
+If the subtask's frontmatter sets `role: test` or `role: impl`, follow the
+role-aware sub-flow in hyper-worker; `role: none` (or absent) keeps the
+standard single-step flow.
 ```
 
 Wait for the whole dispatched batch to return. Before processing subtask frontmatter, run `git diff --name-only HEAD` and compare the changed paths against the union of the batch's declared `writes`. If any changed file falls outside every subtask's declared ownership, surface a warning to the user naming the file and the likely owning subtask — do not abort. The worker's `## Completion` is still the source of truth; the diff check catches silent contract violations before verify does.
