@@ -1,0 +1,16 @@
+{
+  "name": "hyper7-evals",
+  "version": "0.1.0",
+  "description": "Eval harness for Hyper skills — sandboxed multi-turn runs with LLM-as-judge scoring.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "run": "node harness/run.mjs",
+    "test": "node --test harness/*.test.mjs",
+    "smoke": "node harness/run.mjs --skill hyper-explore --fixture F2-changelog-semver-line --dry-run"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {}
+}
