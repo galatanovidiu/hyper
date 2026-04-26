@@ -18,14 +18,14 @@ alternatives, any new abstractions or dependencies, and trade-offs.
 For research scope: rename this section to "Recommendation" and
 write the structured research answer with a clear final recommendation.>
 
-### Files to change
+## Files to change
 
 <Quick scope only — feature scope moves this into `spec.md`. Research omits
 this section.>
 
 - `<path>` — <what changes>
 
-### Out of scope
+## Out of scope
 
 <Quick scope only — feature scope moves this into `spec.md`. Research keeps
 this section.>

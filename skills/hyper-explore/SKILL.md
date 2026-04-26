@@ -64,14 +64,25 @@ Before settling the approach, make sure you understand the end goal behind the r
 - **If the user answers with useful end-goal context,** carry it into `exploration.md` and optionally persist it under `## Why` on `task.md` if that would help future readers.
 - **If the user declines, is unsure, or gives no additional context,** continue anyway. Missing Why is not a gate.
 
-Then read the task body. Does it unambiguously describe what to do?
+Then read the task body. Classify it into exactly one of the four branches below. Each branch has an explicit test for fit and a worked example so the classification is checklist-driven, not feel-driven.
 
-- **Clear** → continue to scope classification.
-- **One likely interpretation** → state it and ask one question: *"I read this as X. Sound right?"*
-- **Multiple plausible interpretations** → ask *one* multiple-choice question that recommends one option and gives a one-line reason.
-- **Vague / no goal** → summarize your understanding in 4 bullets and ask the user to correct.
+- **Clear** — the task body names all three of: a **surface** (file path, function name, endpoint, behavior), the **change** ("rename X to Y", "return 401 instead of 403", "add a `--dry-run` flag"), and at least one **success signal** (an observable outcome that says the change worked).
+  - *Worked example:* "Rename `validateUser` to `assertUser` in `src/auth/guards.ts` so the name reflects that it throws on failure." Surface (`src/auth/guards.ts:validateUser`), change (rename to `assertUser`), success signal (function name in source matches the new identifier).
+  - *Action:* skip clarification, continue to scope classification.
 
-Never ask more than one clarification question per message. Stop and wait for the answer. When you get it, continue.
+- **One likely interpretation** — surface and goal are present, but exactly one detail is ambiguous, and a single reading dominates the alternatives by code, convention, or the user's stated goal.
+  - *Worked example:* "Add rate limiting to the login endpoint." Surface (login endpoint), goal (rate limiting) are clear; ambiguous detail is the limit shape (per-IP vs per-user, fixed window vs sliding), but per-IP fixed-window is the dominant first-pass choice for a login endpoint.
+  - *Action:* state the reading and ask one confirmation question: *"I read this as X. Sound right?"*
+
+- **Multiple plausible interpretations** — two or more readings would lead to materially different file-level changes, and the body does not pick one. No reading clearly dominates.
+  - *Worked example:* "Make the dashboard faster." Could mean caching, query optimization, lazy-loading, pagination, or memoization — no shared file set across the alternatives.
+  - *Action:* ask *one* multiple-choice question that recommends the option with the strongest evidence (e.g. the slow query named in the body) and gives a one-line reason. Use numbered + lettered shorthand (1A, 1B, …).
+
+- **Vague / no goal** — the body states a problem, a wish, or a feeling without naming a surface, a specific change, or a success signal.
+  - *Worked example:* "The login flow is confusing." No surface (which step?), no specific change (UI? copy? error messages?), no success signal (less drop-off? fewer support tickets?).
+  - *Action:* summarize your understanding in four bullets — your read of the surface, the change shape, the success signal, and what's missing — and ask the user to correct.
+
+When a branch action requires a question, never ask more than one clarification question per message. Stop and wait for the answer. When you get it, continue.
 
 ### Step 1b — Detect bugfix intent
 
@@ -86,11 +97,23 @@ Also check for attached-artifact signals that imply a defect even without the ke
 - Issue-tracker links (GitHub, Linear, Jira).
 - Phrases like "used to work", "worked before X", "regressed after Y".
 
-**Rule.** If any keyword or artifact signal matches, ask the user exactly one confirmation question:
+**Tiered rule.** Classify the bugfix signal into one of three strengths and act accordingly. The goal is to keep the routing question off the critical path on strong-signal cases so Step 1's substantive clarification, when needed, owns the first turn.
 
-> *"This reads as a bugfix/regression — should I route through the root-cause-first sub-flow? (yes / no)"*
+- **Strong signal — silent flag-set, no routing question.** Set `bugfix: true` on `task.md` silently and continue. Strong signal is any one of:
+  - any artifact signal alone (pasted stack trace, failing-test output block, issue-tracker link, or a "used to work / regressed after X" phrase), OR
+  - any bugfix keyword combined with at least one corroborating piece of evidence anywhere in the body — a code path, a file name, a stated symptom, or a pasted error message.
 
-On **yes**, write `bugfix: true` to `task.md` frontmatter. On **no** or no match, leave `bugfix: false`. Do not ask the question when no signal matches — defaulting to `false` silently is the correct behavior.
+  The user can still flip `bugfix: false` later by saying so during the substantive clarification turn or before approval.
+
+- **Borderline signal — ask the routing question.** A single weak keyword in an otherwise unrelated body (for example, a feature request that mentions "bug-tracking"), with no artifact signals and no corroborating evidence. Ask exactly one confirmation question:
+
+  > *"This reads as a bugfix/regression — should I route through the root-cause-first sub-flow? (yes / no)"*
+
+  On **yes**, write `bugfix: true`. On **no** or no reply, leave `bugfix: false`. Two turns is acceptable for the rare borderline + ambiguous combination — Step 1's substantive clarification, if any, follows on the next dispatch.
+
+- **No signal — silent default.** Leave `bugfix: false` and ask nothing.
+
+When Step 1 also wants a clarification question, Step 1's substantive question wins the first turn — strong-signal bugfix flag has already been set silently above, and the borderline routing question, if any, is asked on the next dispatch.
 
 **Mid-explore flip.** If the user later reveals bugfix intent (a clarification turn surfaces it, or new context arrives), flip `bugfix` to `true` and restart at the bugfix sub-flow (Step 3.5). Preserve existing `exploration.md` content via rewrite-over-patch when the template switches — carry forward resolved questions and any evidence already collected.
 
@@ -187,12 +210,12 @@ For **research** tasks: this section becomes **Recommendation**. Structured arou
 
 ## Step 5 — Write `exploration.md`
 
-Use the shape in `templates/exploration.md` (bundled with this skill). It has two sections — **Findings** and **Approach** — with subsections for files to change and out-of-scope, plus an optional **Open questions** section.
+Use the shape in `templates/exploration.md` (bundled with this skill). It has four H2 sections — **Findings**, **Approach**, **Files to change**, and **Out of scope** — plus an optional **Open questions** H2 section. The bugfix template uses the same H2 standalone shape; both templates are aligned.
 
-**Template routing.** The artifact written to the task folder is always `exploration.md`. When `task.md` has `bugfix: true`, use the body structure from `templates/exploration-bugfix.md` (repro status, root-cause hypothesis, disproven-hypothesis ledger, acceptance proof, unchanged-behavior list — see `skills/hyper/reference/data-model.md` § exploration.md for the schema); otherwise use `templates/exploration.md` (Findings + Approach). Both templates are source files in this skill, not artifact names; the output filename stays `exploration.md` in either case. Scope rules for the "Files to change" and "Out of scope" subsections (same rules apply to the bugfix template's top-level sections of the same name):
+**Template routing.** The artifact written to the task folder is always `exploration.md`. When `task.md` has `bugfix: true`, use the body structure from `templates/exploration-bugfix.md` (repro status, root-cause hypothesis, disproven-hypothesis ledger, acceptance proof, unchanged-behavior list — see `skills/hyper/reference/data-model.md` § exploration.md for the schema); otherwise use `templates/exploration.md` (Findings + Approach). Both templates are source files in this skill, not artifact names; the output filename stays `exploration.md` in either case. Scope rules for the **Files to change** and **Out of scope** sections (same rules apply across both templates):
 
-- **quick scope** — keep both subsections. `exploration.md` is the only artifact, so the file list and out-of-scope note live here.
-- **feature scope** — omit both subsections. They move into `spec.md` (acceptance criteria + subtasks carry the file list; spec owns "Out of scope").
+- **quick scope** — keep both sections. `exploration.md` is the only artifact, so the file list and out-of-scope note live here.
+- **feature scope** — omit both sections. They move into `spec.md` (acceptance criteria + subtasks carry the file list; spec owns "Out of scope").
 - **research scope** — rename **Approach** to **Recommendation**, omit "Files to change", keep "Out of scope" (existing rule preserved).
 
 If any assumption in the approach could change the design depending on the user's answer, add a `## Open questions` section listing one question per list item. Prefer surfacing the assumption as an explicit question over burying it as a hidden default.

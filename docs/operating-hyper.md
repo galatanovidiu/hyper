@@ -62,7 +62,7 @@ Use when the main output is a recommendation, audit, or feasibility finding.
 
 ## Bug fixes and regressions
 
-Independently of quick / feature / research scope, `explore` detects bugfix intent from keywords or attached artifacts (stack traces, failing-test output, issue links) and asks a single confirmation question. On *yes*, the task gets `bugfix: true` and `explore` still writes `exploration.md`, but with the bugfix-specific body structure instead of the standard findings/approach shape.
+Independently of quick / feature / research scope, `explore` detects bugfix intent and routes to a stricter sub-flow. Detection is tiered: a **strong signal** (any artifact — stack trace, failing-test output, issue link, "used to work / regressed after X" phrasing — or any bugfix keyword combined with corroborating evidence) sets `bugfix: true` silently and continues. A **borderline signal** (a single weak keyword with no artifacts and no corroborating evidence) prompts one confirmation question first. **No signal** leaves the flag `false` silently. When the flag is set, `explore` still writes `exploration.md`, but with the bugfix-specific body structure instead of the standard findings/approach shape.
 
 The bugfix sub-flow is stricter than the generic explore:
 

@@ -52,7 +52,7 @@ test("loadFixture parses F2 correctly", () => {
 
 test("loadFixture parses F3 (bugfix) correctly", () => {
   const f = loadFixture("hyper-explore", "F3-install-hyper-dangling-symlink");
-  assert.equal(f.expected.scope, "feature");
+  assert.equal(f.expected.scope, "quick");
   assert.equal(f.expected.bugfix, true);
   assert.match(f.dispatchUtterance, /symlink/i);
 });
