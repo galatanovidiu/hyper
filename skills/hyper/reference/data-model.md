@@ -9,6 +9,7 @@ All Hyper state lives on disk under `.hyper/` in the project root. Plain markdow
   tasks/                # active tasks only
     T20-add-backlog-archive/
       task.md           # status + what the user asked for
+      dashboard.md      # PM-facing rollup; computed from primary artifacts + append-only Decisions log
       exploration.md    # what exists in the code + how we'll approach it
       spec.md           # acceptance criteria + subtask index + out-of-scope + edge cases
       T20.1-first-slice.md   # subtask file (feature scope): id, parent, status, depends, writes, awaiting + what/why/done-when/completion
@@ -82,6 +83,29 @@ Phases are skipped by scope, not by agent judgment. If a feature task has no doc
 A task in `phase: deferred` skips straight to `discover` the first time `hyper` is invoked on it — users "start" a deferred task the same way they continue any other task.
 
 Requests that the shared intake heuristic classifies as direct-handling work never become tasks. Requests that are future-looking or sketchy may become backlog entries instead of tasks.
+
+## `dashboard.md`
+
+PM-facing rollup of the task's current state. The audience is the human user wearing the project-manager hat — engineer-facing artifacts (`exploration.md`, `spec.md`, subtask files, `checks.md`) are unchanged in shape, and `dashboard.md` does not duplicate their depth. It is a one-file scan, readable in under a minute, that tells the reader the goal, the plan shape, where progress sits, the verification verdict, and what decisions were made along the way.
+
+Two halves: a **rollup** computed from primary artifacts (sections 1–5 below) and an **append-only Decisions log** (section 6) that captures load-bearing choices made during the task. The rollup half is regenerated; the log half is preserved.
+
+### Sections
+
+1. **`## Goal`** — read from `task.md`'s body paragraph plus the `## Why` section if present. Why is part of the goal context for PMs.
+2. **`## Plan`** — for `feature` scope: read from `spec.md`'s `## Acceptance criteria` (condensed to a short list) plus the `## Subtasks` ToC titles. For `quick` scope: read from `exploration.md`'s **Approach** section (no spec.md exists). For `research` scope: read from `exploration.md`'s **Recommendation** section.
+3. **`## Progress`** — read from each subtask file's `status` field plus a one-line digest of its `## Completion` section once written. For `quick` scope (no subtasks): one-line digest of the implement work. For `research` scope: not applicable, marked as such.
+4. **`## Verification`** — read from `checks.md`'s `**Overall:**` line plus the per-section verdicts (`tests`, `review`, `qa`, optional `docs`). Marked as not yet run when `checks.md` is absent.
+5. **`## Status`** — read from `task.md`'s `phase` and `awaiting` frontmatter fields.
+6. **`## Decisions`** — append-only log. Each entry is a single line in the format `- YYYY-MM-DD — <author> — <decision> (<context>)`, where `<author>` is one of `discover`, `plan`, `implement`, `verify`, `docs`, or `user`. The rollup never overwrites this section; phase skills append when a load-bearing choice is settled, and the user may append manually at any time.
+
+### Regeneration
+
+Owned by `hyper`. Regenerated at task creation (seeded from `templates/dashboard.md` with `## Goal` filled and other sections at the placeholder `_not yet written_`) and after every phase return (sections 1–5 recomputed, section 6 preserved). Phase skills never regenerate `dashboard.md` themselves.
+
+`scope: code-review` tasks are out of the regeneration loop — their lifecycle is `review → done` via `hyper-code-review` and they bypass the normal `hyper` dispatch. Standalone code-review tasks do not get a `dashboard.md`.
+
+The full algorithm — extraction rules per section, placeholder semantics, failure handling, and the Decisions-section preservation contract — lives in `skills/hyper/reference/dashboard.md`. This file documents the schema; the reference file documents the algorithm.
 
 ## `recipes/`
 
