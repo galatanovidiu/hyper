@@ -28,7 +28,7 @@ The destination guard exists to catch id collisions or partial previous archives
 | `hyper-task` | User-initiated cancellation; `phase: cancelled`. Out-of-band from the phase flow. |
 | `hyper-code-review` | Standalone `scope: code-review` task it created directly, on terminal `phase: done` transition. Out-of-band from the normal `hyper` dispatch loop. |
 
-Phase skills (`hyper-explore`, `hyper-verify`, `hyper-docs`, etc.) never run the archive move themselves. They return `phase-complete`; `hyper` applies the transition table, sets `phase: done`, and runs the snippet above.
+Phase skills (`hyper-discover`, `hyper-verify`, `hyper-docs`, etc.) never run the archive move themselves. They return `phase-complete`; `hyper` applies the transition table, sets `phase: done`, and runs the snippet above.
 
 `archive/` is created lazily by `mkdir -p` on first use — no pre-creation needed during bootstrap.
 

@@ -147,7 +147,7 @@ Steps:
 7. **Remove the entry** from `.hyper/backlog.md` — delete the heading line and all lines until (not including) the next `## B<N>` heading or EOF. Collapse the two blank lines this leaves into one so the file stays tidy.
 8. **Report:** *"Promoted B<N> → T<M> — <title> (deferred). Start it with `/hyper T<M>` when you're ready."*
 
-Do **not** invoke `hyper` or start the explore phase yourself. Promotion creates a deferred task folder; the user decides when to start it later.
+Do **not** invoke `hyper` or start the discover phase yourself. Promotion creates a deferred task folder; the user decides when to start it later.
 
 The promoted `B<N>` id is not reused. A future `add` allocates `B<N+1>` where N+1 is the new max, skipping the gap.
 

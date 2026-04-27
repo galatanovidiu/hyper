@@ -39,7 +39,7 @@ All Hyper state lives on disk under `.hyper/` in the project root. Plain markdow
 ---
 id: T1
 title: Add login page
-phase: explore
+phase: discover
 scope: feature
 created: 2026-04-17T09:14:32
 awaiting: null
@@ -52,7 +52,7 @@ Two or three paragraphs max. This is what the task is about — the
 artifacts below say how it gets done.>
 ```
 
-`## Why` is an optional body section on `task.md`. Add it when persisting the motivation, constraint, or triggering incident would help a future reader. When creating or promoting a task, the agent may reuse a clear reason already present in the request or source artifact, but it should not elicit a dedicated Why prompt just to satisfy structure. During explore, the agent may still ask about the end goal behind the requested change when that context is needed to reason well about alternatives; missing `## Why` does not block the workflow.
+`## Why` is an optional body section on `task.md`. Add it when persisting the motivation, constraint, or triggering incident would help a future reader. When creating or promoting a task, the agent may reuse a clear reason already present in the request or source artifact, but it should not elicit a dedicated Why prompt just to satisfy structure. During discover, the agent may still ask about the end goal behind the requested change when that context is needed to reason well about alternatives; missing `## Why` does not block the workflow.
 
 ### Frontmatter fields
 
@@ -60,10 +60,10 @@ artifacts below say how it gets done.>
 |-------|--------|---------|
 | `id` | `T1`, `T2`, … | Sequential integer. First task is `T1`. |
 | `title` | short string | Human-readable title, used in the folder name and headings. |
-| `phase` | `deferred` · `explore` · `plan` · `implement` · `verify` · `docs` · `review` · `done` · `cancelled` | Current phase. **Owned by `hyper`** (and by `hyper-task` on user-initiated deferral or cancellation, plus `hyper-code-review` when it archives a standalone code-review task it created directly). Phase skills return verdicts; they do not write this field. `done` and `cancelled` are terminal. `deferred` means the task is parked and not currently running — either newly created for later, or moved back there by `hyper-task` Defer. `review` is only used by `scope: code-review` tasks and is handled by `hyper-code-review`. |
-| `scope` | `quick` · `feature` · `research` · `code-review` · `unknown` | Set during explore by `hyper-explore`, or set at task creation by `hyper-code-review` for standalone code-review tasks. Drives which phases run. `unknown` before explore classifies it. Phase-owned classification, not workflow state. |
+| `phase` | `deferred` · `discover` · `plan` · `implement` · `verify` · `docs` · `review` · `done` · `cancelled` | Current phase. **Owned by `hyper`** (and by `hyper-task` on user-initiated deferral or cancellation, plus `hyper-code-review` when it archives a standalone code-review task it created directly). Phase skills return verdicts; they do not write this field. `done` and `cancelled` are terminal. `deferred` means the task is parked and not currently running — either newly created for later, or moved back there by `hyper-task` Defer. `review` is only used by `scope: code-review` tasks and is handled by `hyper-code-review`. |
+| `scope` | `quick` · `feature` · `research` · `code-review` · `unknown` | Set during discover by `hyper-discover`, or set at task creation by `hyper-code-review` for standalone code-review tasks. Drives which phases run. `unknown` before discover classifies it. Phase-owned classification, not workflow state. |
 | `created` | Local datetime in `YYYY-MM-DDTHH:MM:SS` form (e.g. `2026-04-17T09:14:32`) | When the task was created. |
-| `bugfix` | `true` · `false` | Set by `hyper-explore` when the task is a bugfix or regression. Routes `hyper-explore` to the root-cause-first sub-flow. Defaults to `false`; detection lives in `hyper-explore` Step 1. Missing field is treated as `false` for back-compat. Phase-owned classification, not workflow state. |
+| `bugfix` | `true` · `false` | Set by `hyper-discover` when the task is a bugfix or regression. Routes `hyper-discover` to the root-cause-first sub-flow. Defaults to `false`; detection lives in `hyper-discover` Step 1. Missing field is treated as `false` for back-compat. Phase-owned classification, not workflow state. |
 | `awaiting` | `null` · `user-approval` · `user-input` | When set, the gate is open. **Owned by `hyper`.** `hyper` sets and clears this field based on the verdict returned by the phase skill (`awaiting-approval` → `user-approval`, `awaiting-input` → `user-input`, `phase-complete` → clear). `hyper` pauses normal routing while the gate is open, surfaces the gate on blank / generic resume turns, and routes the next substantive reply back to the current phase skill. See `reference/gates.md` for the verdict contract. |
 | `cancelled_at` | Local datetime in `YYYY-MM-DDTHH:MM:SS` form (e.g. `2026-04-17T09:14:32`) | Present only when `phase: cancelled`. When the task was cancelled. |
 | `cancelled_reason` | short string | Present only when `phase: cancelled`. One-line reason. |
@@ -72,14 +72,14 @@ artifacts below say how it gets done.>
 
 | Scope | Flow |
 |-------|------|
-| `quick` | explore → implement → verify → done |
-| `feature` | explore → plan → implement → verify → docs → done |
-| `research` | explore → done (terminal artifact is `exploration.md`; no code changes) |
-| `code-review` | review → done (terminal artifact is `checks.md` with a `## review` block; no code changes, no explore/plan/implement) |
+| `quick` | discover → implement → verify → done |
+| `feature` | discover → plan → implement → verify → docs → done |
+| `research` | discover → done (terminal artifact is `exploration.md`; no code changes) |
+| `code-review` | review → done (terminal artifact is `checks.md` with a `## review` block; no code changes, no discover/plan/implement) |
 
 Phases are skipped by scope, not by agent judgment. If a feature task has no docs to update, `docs` phase still runs and writes `checks.md` recording "no docs changed, rationale: …".
 
-A task in `phase: deferred` skips straight to `explore` the first time `hyper` is invoked on it — users "start" a deferred task the same way they continue any other task.
+A task in `phase: deferred` skips straight to `discover` the first time `hyper` is invoked on it — users "start" a deferred task the same way they continue any other task.
 
 Requests that the shared intake heuristic classifies as direct-handling work never become tasks. Requests that are future-looking or sketchy may become backlog entries instead of tasks.
 
@@ -107,7 +107,7 @@ Recipes are standalone project-local automation notes. They do not create tasks,
 
 ### Internal vs user-facing skills
 
-Users invoke seven Hyper skills directly: `hyper`, `hyper-task`, `hyper-backlog`, `hyper-handoff`, `hyper-retro`, `hyper-code-review` (for standalone code reviews on arbitrary diffs), and `recipe`. The phase skills (`hyper-explore`, `hyper-plan`, `hyper-implement`, `hyper-verify`, `hyper-docs`), the plan reviewer (`hyper-plan-review`), and `hyper-worker` are internal — invoked by `hyper`, `hyper-plan`, or `hyper-implement`, not by the user. They are marked `user-invocable: false` so they don't clutter the slash-command menu. `hyper-code-review` is dual-mode: user-invocable for standalone reviews, and also invoked internally by `hyper-verify` as its review pass on in-flight tasks.
+Users invoke seven Hyper skills directly: `hyper`, `hyper-task`, `hyper-backlog`, `hyper-handoff`, `hyper-retro`, `hyper-code-review` (for standalone code reviews on arbitrary diffs), and `recipe`. The phase skills (`hyper-discover`, `hyper-plan`, `hyper-implement`, `hyper-verify`, `hyper-docs`), the plan reviewer (`hyper-plan-review`), and `hyper-worker` are internal — invoked by `hyper`, `hyper-plan`, or `hyper-implement`, not by the user. They are marked `user-invocable: false` so they don't clutter the slash-command menu. `hyper-code-review` is dual-mode: user-invocable for standalone reviews, and also invoked internally by `hyper-verify` as its review pass on in-flight tasks.
 
 This repo also ships the companion `team` skill, but it sits outside the Hyper task-state model described in this file.
 
@@ -115,19 +115,19 @@ To manually re-run a phase on a task, edit `phase:` in the task's frontmatter an
 
 ## `exploration.md`
 
-Written by the `hyper-explore` skill. Two required sections plus one optional:
+Written by the `hyper-discover` skill. Two required sections plus one optional:
 
 1. **Findings** — what exists in the code that matters for this task, bullet-point style. File paths + line numbers when relevant. Facts, not opinions.
 2. **Approach** — how we'll do the work. For `quick`, two or three sentences. For `feature`, one or two paragraphs plus alternatives considered. For `research`, this is where the recommendation goes.
-3. **Open questions** (optional) — a list of questions for the user whose answers would change the approach. When present, `hyper-explore` asks them serially in chat (one per message) and records each answer under the question in this file, renaming the section to `Resolved questions` once all are answered. While questions are pending, `awaiting: user-input`; once answered, it transitions to `awaiting: user-approval`.
+3. **Open questions** (optional) — a list of questions for the user whose answers would change the approach. When present, `hyper-discover` asks them serially in chat (one per message) and records each answer under the question in this file, renaming the section to `Resolved questions` once all are answered. While questions are pending, `awaiting: user-input`; once answered, it transitions to `awaiting: user-approval`.
 
-The exploration template also carries `### Files to change` and `### Out of scope` subsections under **Approach**. These are **template-level, quick-scope only** — feature-scope exploration defers both to `spec.md` (acceptance criteria + subtasks cover the file list; spec owns "Out of scope"), and research-scope exploration omits "Files to change" while keeping "Out of scope". See `hyper-explore` SKILL.md Step 5 for the full rule.
+The exploration template also carries `### Files to change` and `### Out of scope` subsections under **Approach**. These are **template-level, quick-scope only** — feature-scope exploration defers both to `spec.md` (acceptance criteria + subtasks cover the file list; spec owns "Out of scope"), and research-scope exploration omits "Files to change" while keeping "Out of scope". See `hyper-discover` SKILL.md Step 5 for the full rule.
 
-`exploration.md` is the approval artifact for the explore phase. Once the user approves, phase advances.
+`exploration.md` is the approval artifact for the discover phase. Once the user approves, phase advances.
 
 ### Bugfix body structure
 
-When `task.md` has `bugfix: true`, `exploration.md`'s body follows a different shape — the standard Findings/Approach sections are replaced by a root-cause-first structure authored by `hyper-explore`'s bugfix sub-flow (Step 3.5). The artifact filename stays `exploration.md`; downstream skills read it the same way they read any other `exploration.md`. The bugfix-specific sections:
+When `task.md` has `bugfix: true`, `exploration.md`'s body follows a different shape — the standard Findings/Approach sections are replaced by a root-cause-first structure authored by `hyper-discover`'s bugfix sub-flow (Step 3.5). The artifact filename stays `exploration.md`; downstream skills read it the same way they read any other `exploration.md`. The bugfix-specific sections:
 
 - **Symptom evidence** — links to raw artifacts stored at `evidence/<slug>.<ext>` in the task folder.
 - **Repro status** — one of `deterministic`, `intermittent`, `no-repro` (see enum below).
@@ -298,7 +298,7 @@ Followed by two required sections:
 `continue | fix-in-place | rethink`. The recommendation tells `hyper-plan` what action to drive next and is subject to three legality invariants:
 
 - **`continue`** is legal with `**Verdict:** pass` (reviewer-emitted) or `**Verdict:** skipped — user opted out` (caller-emitted). The plan is ready for approval.
-- **`fix-in-place`** is legal with either `**Verdict:** needs-changes` or `**Verdict:** blocked`. It is the only legal recommendation for `needs-changes` and is the default for every non-`pass` case. Findings can be resolved by editing `spec.md` or subtask files without rewinding to explore, so any `[warning]` on a `needs-changes + fix-in-place` artifact must include a concrete `**Fix:**` hint.
+- **`fix-in-place`** is legal with either `**Verdict:** needs-changes` or `**Verdict:** blocked`. It is the only legal recommendation for `needs-changes` and is the default for every non-`pass` case. Findings can be resolved by editing `spec.md` or subtask files without rewinding to discover, so any `[warning]` on a `needs-changes + fix-in-place` artifact must include a concrete `**Fix:**` hint.
 - **`rethink`** is legal only with `**Verdict:** blocked` **and** only when at least one finding in `## Findings` cites an exploration-level issue (scope drift from `exploration.md`, an approach the subtasks cannot make work, or a fundamental decomposition error). A `rethink` recommendation without such a citation is malformed.
 
 An artifact that violates the legality rule is malformed; the writing skill is required to self-correct to the closest legal pairing (using a finding already in `## Findings` — never inventing a new one) before writing the file. The invariants are enforced inside `hyper-plan-review` so downstream readers can trust the pairing.

@@ -1,7 +1,7 @@
 ---
 name: hyper
 description: >
-  Starts or resumes structured development work through the Hyper workflow. Reads the current task state on disk under .hyper/, picks the right phase (explore, plan, implement, verify, docs), and dispatches to the matching hyper-* skill. On cold resumes of active tasks, it sanity-checks whether the saved work still deserves continuation before dispatching. Use when the user asks to build a feature, fix a non-trivial bug, refactor, investigate something in the codebase, resume a specific task by id (e.g. "resume T3"), or continue in-progress Hyper work. Keywords: hyper, structured work, workflow, task, phase, explore, plan, implement, resume.
+  Starts or resumes structured development work through the Hyper workflow. Reads the current task state on disk under .hyper/, picks the right phase (discover, plan, implement, verify, docs), and dispatches to the matching hyper-* skill. On cold resumes of active tasks, it sanity-checks whether the saved work still deserves continuation before dispatching. Use when the user asks to build a feature, fix a non-trivial bug, refactor, investigate something in the codebase, resume a specific task by id (e.g. "resume T3"), or continue in-progress Hyper work. Keywords: hyper, structured work, workflow, task, phase, discover, plan, implement, resume.
 ---
 
 # hyper
@@ -14,7 +14,7 @@ For task *management* operations (list, create-deferred, defer, cancel, status) 
 
 Ensure `.hyper/` is bootstrapped per `reference/bootstrap.md`. The canonical folder shape, seed content, and the lazy `archive/` rule live there — any write-side entry point follows the same contract.
 
-**Project rules (optional).** If `.hyper/rules.md` exists, read it once at session start and treat its contents as normative constraints for every phase (explore, plan, implement, verify, docs). It captures conventions, workflow rules, and preferences the user does not want to restate each session — Git workflow, branch naming, commit style, forbidden patterns, etc. Create the file when the user asks to record a project-level rule and it does not already exist; append new rules to the existing file otherwise. Rules there override defaults but never the user's in-session instructions.
+**Project rules (optional).** If `.hyper/rules.md` exists, read it once at session start and treat its contents as normative constraints for every phase (discover, plan, implement, verify, docs). It captures conventions, workflow rules, and preferences the user does not want to restate each session — Git workflow, branch naming, commit style, forbidden patterns, etc. Create the file when the user asks to record a project-level rule and it does not already exist; append new rules to the existing file otherwise. Rules there override defaults but never the user's in-session instructions.
 
 The data model — frontmatter fields, artifact filenames, phase values — is in `reference/data-model.md` next to this SKILL.md. Read it once per session; the rest of this skill assumes you know it.
 
@@ -22,7 +22,7 @@ The data model — frontmatter fields, artifact filenames, phase values — is i
 
 For routing, classify every task by its `phase`:
 
-- **Active** — `explore`, `plan`, `implement`, `verify`, `docs`. Currently in flight.
+- **Active** — `discover`, `plan`, `implement`, `verify`, `docs`. Currently in flight.
 - **Deferred** — `deferred`. Exists but not started. Created by `hyper-task` for later.
 - **Terminal** — `done`, `cancelled`. Finished; don't resume.
 
@@ -78,7 +78,7 @@ Apply the shared intake heuristic in `reference/intake-triage.md`.
 If the request is direct-handling shaped — tiny, low-risk, and not in a sensitive area — ask once: *"This looks micro-sized and probably faster outside Hyper. I recommend handling it directly without task tracking because <reason>. If you want it tracked in Hyper anyway, say so."*
 
 - If the user chooses direct handling, stop. Do not create Hyper state.
-- If the user says to track it anyway, or the request is not direct-handling shaped, jump to **Create task**, then route to explore.
+- If the user says to track it anyway, or the request is not direct-handling shaped, jump to **Create task**, then route to discover.
 
 Routing decides *which* task to work on, including replies to open gates. **Dispatch phase** below decides which phase skill to invoke for that task.
 
@@ -90,7 +90,7 @@ Given task id `T<N>`:
 2. Read `task.md` frontmatter.
 3. If `phase: done` — report *"T<N> is already complete."* Stop. (Archived folder — don't reopen.)
 4. If `phase: cancelled` — report *"T<N> was cancelled (<reason>)."* Stop. (Archived folder — don't reopen.)
-5. If `phase: deferred` — set `phase: explore`, save, then continue to **Dispatch phase**. Announce: *"Starting T<N> — <title>."*
+5. If `phase: deferred` — set `phase: discover`, save, then continue to **Dispatch phase**. Announce: *"Starting T<N> — <title>."*
 6. If the request explicitly says `resume T<N> anyway` / `continue T<N> anyway` (or a clear equivalent), skip **Cold-resume check** once and continue to **Dispatch phase**.
 7. Otherwise — continue to **Cold-resume check**.
 
@@ -99,7 +99,7 @@ Given task id `T<N>`:
 Given an already-selected task in an active phase:
 
 1. If `awaiting != null`, skip this check. The existing gate owns the next user turn.
-2. If `phase: deferred`, skip this check. First-time starts go straight to explore.
+2. If `phase: deferred`, skip this check. First-time starts go straight to discover.
 3. Decide whether this looks like a cold resume using **durable signals only**:
    - `task.md` `created` is earlier than the current local date, and/or
    - `handoff.md` exists in the task folder.
@@ -130,11 +130,11 @@ This is a read-side pause, not a workflow gate: do not write `task.md` `awaiting
 2. Determine the next task id: scan **both** `.hyper/tasks/` and `.hyper/archive/` for the highest `T<N>` prefix across both, use `T<N+1>`. Archived ids count — they are never reused.
 3. Derive a short title from the user's goal (trim filler, keep it under ~60 chars, imperative phrasing when possible).
 4. Derive a kebab-case slug from the title (lowercase, spaces → hyphens, strip punctuation, ~40 chars).
-5. Draft the frontmatter using the `templates/task.md` shape, with `id`, `title`, `created` (current local datetime in `YYYY-MM-DDTHH:MM:SS` form, e.g. `2026-04-21T14:35:00` — shell out to `date +"%Y-%m-%dT%H:%M:%S"` if needed), `phase: explore`, `scope: unknown`, `bugfix: false`, and `awaiting: null`.
+5. Draft the frontmatter using the `templates/task.md` shape, with `id`, `title`, `created` (current local datetime in `YYYY-MM-DDTHH:MM:SS` form, e.g. `2026-04-21T14:35:00` — shell out to `date +"%Y-%m-%dT%H:%M:%S"` if needed), `phase: discover`, `scope: unknown`, `bugfix: false`, and `awaiting: null`.
 6. Draft the body: one short paragraph restating the user's goal in their words.
 7. **Optional `## Why`.** If the current request already includes a clear motivation, constraint, or triggering incident and persisting it would help future readers, append a blank line followed by `## Why`, a blank line, and that reason to the body. Preserve the user's wording as closely as practical. If the reason is embedded inside a longer request, extract only the reason span rather than copying unrelated instruction text. If the request does not already contain a clear enough reason, skip the section. Do **not** ask a dedicated Why prompt just to satisfy structure.
 8. Create `.hyper/tasks/T<N>-<slug>/task.md` using the frontmatter from step 5 and the body from steps 6–7.
-9. Announce: *"Created T<N> — <title>. Starting explore phase."*
+9. Announce: *"Created T<N> — <title>. Starting discover phase."*
 
 ## Dispatch phase
 
@@ -161,8 +161,8 @@ Read the task's `phase` field and route:
 
 | `phase` | Next step |
 |---------|-----------|
-| `deferred` | Set `phase: explore`, clear `awaiting`, then recurse through this table. |
-| `explore` | Invoke the `hyper-explore` skill for this task. |
+| `deferred` | Set `phase: discover`, clear `awaiting`, then recurse through this table. |
+| `discover` | Invoke the `hyper-discover` skill for this task. |
 | `plan` | Invoke the `hyper-plan` skill for this task. |
 | `implement` | Invoke the `hyper-implement` skill for this task. |
 | `verify` | Invoke the `hyper-verify` skill for this task. |
@@ -181,7 +181,7 @@ Two operational rules `hyper` owns on top of the gate contract:
 
 ### Archive on terminal
 
-When a phase-driven transition sets `phase: done` (`explore → done` for research, `verify → done` for quick, `docs → done` for feature, or the crash-recovery `review → done`), run the archive snippet from `reference/archive.md` before announcing. `hyper-task` runs its own archive for user-initiated cancellation; `hyper-code-review` archives its own standalone records. Neither path goes through this block.
+When a phase-driven transition sets `phase: done` (`discover → done` for research, `verify → done` for quick, `docs → done` for feature, or the crash-recovery `review → done`), run the archive snippet from `reference/archive.md` before announcing. `hyper-task` runs its own archive for user-initiated cancellation; `hyper-code-review` archives its own standalone records. Neither path goes through this block.
 
 ### Verdict: `redirect target: <phase>`
 
