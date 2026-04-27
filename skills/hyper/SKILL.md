@@ -134,7 +134,8 @@ This is a read-side pause, not a workflow gate: do not write `task.md` `awaiting
 6. Draft the body: one short paragraph restating the user's goal in their words.
 7. **Optional `## Why`.** If the current request already includes a clear motivation, constraint, or triggering incident and persisting it would help future readers, append a blank line followed by `## Why`, a blank line, and that reason to the body. Preserve the user's wording as closely as practical. If the reason is embedded inside a longer request, extract only the reason span rather than copying unrelated instruction text. If the request does not already contain a clear enough reason, skip the section. Do **not** ask a dedicated Why prompt just to satisfy structure.
 8. Create `.hyper/tasks/T<N>-<slug>/task.md` using the frontmatter from step 5 and the body from steps 6–7.
-9. Announce: *"Created T<N> — <title>. Starting discover phase."*
+9. **Seed `dashboard.md`.** Copy `templates/dashboard.md` to `.hyper/tasks/T<N>-<slug>/dashboard.md`, fill the `## Goal` section from the new task's body paragraph (and `## Why` content if step 7 added one), substitute `<phase>` with `discover` and `<awaiting>` with `none` in `## Status`, and leave the other rollup sections at their `_not yet written_` placeholders. The `## Decisions` section keeps its template comment and starts empty. Per `reference/dashboard.md` § Per-section extraction rules.
+10. Announce: *"Created T<N> — <title>. Starting discover phase."*
 
 ## Dispatch phase
 
@@ -177,7 +178,15 @@ When re-dispatching on a user reply to an open gate, **clear `task.md` `awaiting
 
 The phase skill ends its dispatch by returning exactly one verdict plus a short human summary. `reference/gates.md` owns the verdict vocabulary, the phase-transition table, and the concrete checkpoint prompt strings. Apply it: set `awaiting` as the verdict row prescribes, advance `phase:` per the transition table, and when a checkpoint cell calls for a prompt, read the verbatim string from that row and stop.
 
-Two operational rules `hyper` owns on top of the gate contract:
+Three operational rules `hyper` owns on top of the gate contract:
+
+### Regenerate dashboard on phase return
+
+After applying the phase-transition table — but before the archive move (when terminal) and before announcing or stopping — regenerate `dashboard.md` per `reference/dashboard.md`. The rollup reads current primary-artifact state for sections 1–5 (`## Goal`, `## Plan`, `## Progress`, `## Verification`, `## Status`) and preserves section 6 (`## Decisions`) byte-for-byte from the existing file. If `dashboard.md` does not yet exist (in-flight task created before this rule landed), seed it from `templates/dashboard.md` first, then run the rollup.
+
+Skip regeneration when `scope: code-review` — those tasks are out of the normal `hyper` dispatch loop and do not produce `dashboard.md`.
+
+A rollup error never blocks phase advance. Per `reference/dashboard.md` § Failure handling, missing or malformed primary artifacts degrade per-section to the `_not yet written_` placeholder; if the rollup itself crashes, log the failure inline in the return summary but continue with the rest of this block (archive move when terminal, then the user-facing prompt or announce).
 
 ### Archive on terminal
 
