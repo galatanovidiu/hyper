@@ -18,14 +18,14 @@ alternatives, any new abstractions or dependencies, and trade-offs.
 For research scope: rename this section to "Recommendation" and
 write the structured research answer with a clear final recommendation.>
 
-### Files to change
+## Files to change
 
 <Quick scope only — feature scope moves this into `spec.md`. Research omits
 this section.>
 
 - `<path>` — <what changes>
 
-### Out of scope
+## Out of scope
 
 <Quick scope only — feature scope moves this into `spec.md`. Research keeps
 this section.>
@@ -35,7 +35,7 @@ this section.>
 ## Open questions
 
 <Optional. List questions the user must answer before approving the approach.
-Use list items — each item is one question. The hyper-explore skill will ask
+Use list items — each item is one question. The hyper-discover skill will ask
 them serially in chat (one per message), record each answer under the question
 in this file, and rename the section to "Resolved questions" once all are
 answered. If a question has multiple plausible answers, show the

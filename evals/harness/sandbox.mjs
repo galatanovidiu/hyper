@@ -17,8 +17,9 @@ const TASK_FOLDER_PARENT = ".hyper/tasks";
 
 export function createSandbox({ runId, fixture }) {
   const tag = `${fixture.skill}-${fixture.id}-${runId}-${crypto.randomBytes(3).toString("hex")}`;
-  const root = path.join(os.tmpdir(), `hyper7-eval-${tag}`);
-  fs.mkdirSync(root, { recursive: true });
+  const tmpRoot = path.join(os.tmpdir(), `hyper7-eval-${tag}`);
+  fs.mkdirSync(tmpRoot, { recursive: true });
+  const root = fs.realpathSync(tmpRoot);
 
   for (const entry of COPY_INCLUDE) {
     const src = path.join(REPO_ROOT, entry);

@@ -9,7 +9,7 @@ user-invocable: false
 
 You review a Hyper feature-scope plan before implementation starts. One pass across the plan's text, one codebase-verification sub-step over the references the plan makes, one `plan-review.md` artifact out. The review has no opinions on style, speculative concerns, or implementation-level choices workers will make during implement — only real problems in the plan itself.
 
-You are invoked by `hyper-plan` after its Step 6 self-review and before its open-question serialization step. You are not user-invocable. You return control (and plain data — verdict + recommendation + finding counts) to `hyper-plan`. You do not return lifecycle verdicts like `awaiting-approval` or `redirect target: explore` — that is the caller's job. See `../hyper/reference/worker-guardrails.md` (G1) for the `task.md` orchestration boundary.
+You are invoked by `hyper-plan` after its Step 6 self-review and before its open-question serialization step. You are not user-invocable. You return control (and plain data — verdict + recommendation + finding counts) to `hyper-plan`. You do not return lifecycle verdicts like `awaiting-approval` or `redirect target: discover` — that is the caller's job. See `../hyper/reference/worker-guardrails.md` (G1) for the `task.md` orchestration boundary.
 
 The caller may also skip invoking you when the user declines a prompt at `hyper-plan` Step 7. In that case `hyper-plan` writes a stub `plan-review.md` with `**Verdict:** skipped — user opted out` directly and never dispatches you. You do not participate in that decision — the caller owns the skip prompt and the stub write.
 
@@ -32,11 +32,11 @@ If the path is missing or malformed, stop and report — do not guess. If `spec.
 - A single `plan-review.md` at the task folder root, overwritten cleanly on each invocation (findings do not accumulate across re-reviews — the file always represents the current review state, matching `checks.md`'s overwrite rule).
 - A return summary to the caller with one line of prose, per-severity finding counts (e.g. `1 blocker, 2 warnings, 3 notes`), and the rollup verdict (`pass | needs-changes | blocked`) plus the recommendation (`continue | fix-in-place | rethink`).
 
-See `../hyper/reference/worker-guardrails.md` (G1) for the `task.md` orchestration boundary. You do **not** return `awaiting-approval`, `redirect target: explore`, or any other workflow verdict. The caller (`hyper-plan`) owns the post-review flow.
+See `../hyper/reference/worker-guardrails.md` (G1) for the `task.md` orchestration boundary. You do **not** return `awaiting-approval`, `redirect target: discover`, or any other workflow verdict. The caller (`hyper-plan`) owns the post-review flow.
 
 ## Portability
 
-Inline-first. On Claude Code and any harness with reliable subagent dispatch, the codebase-verification sub-step dispatches one Explore subagent for context isolation (keeps the reviewer's full-file reads out of the current session). On Codex CLI, Gemini CLI, PI, Aider, Continue, and any inline-only mode, the reviewer performs the same reads inline in its own session — slower, same correctness. The skill file is a normal `SKILL.md`, read and executed the same way in either case.
+Inline-first. On Claude Code and any harness with reliable subagent dispatch, the codebase-verification sub-step dispatches one Discover subagent for context isolation (keeps the reviewer's full-file reads out of the current session). On Codex CLI, Gemini CLI, PI, Aider, Continue, and any inline-only mode, the reviewer performs the same reads inline in its own session — slower, same correctness. The skill file is a normal `SKILL.md`, read and executed the same way in either case.
 
 If the harness claims subagent support but the dispatch fails (quota, network, malformed payload), fall back to inline reads of the EXISTING list and note the fallback in `## Summary`. Verdict and findings are still emitted; the run does not abort.
 
@@ -96,14 +96,14 @@ Only EXISTING references are verified. PROPOSED references describe code the pla
 
 ### Verify the EXISTING list
 
-On harnesses with reliable subagent dispatch (Claude Code and any agent SDK exposing a comparable primitive), dispatch **one** Explore subagent with the batched EXISTING list. The subagent prompt batches all references into a single dispatch — do not fan out one subagent per reference. Include a pointer to `skills/hyper/reference/worker-guardrails.md` in that dispatch prompt so the Explore sub-agent inherits the same G1–G4 rules before it loads its own skill file.
+On harnesses with reliable subagent dispatch (Claude Code and any agent SDK exposing a comparable primitive), dispatch **one** Discover subagent with the batched EXISTING list. The subagent prompt batches all references into a single dispatch — do not fan out one subagent per reference. Include a pointer to `skills/hyper/reference/worker-guardrails.md` in that dispatch prompt so the Discover sub-agent inherits the same G1–G4 rules before it loads its own skill file.
 
 On inline-only harnesses, the reviewer invokes the skill inline in its own session; the shape below is for harnesses that do support sub-agent dispatch via a Task-tool-style primitive.
 
 Dispatch shape (use `subagent_type: general-purpose`, the absolute task folder path, and the batched EXISTING list as a prompt pointer):
 
 ```
-Load the `hyper-explore` skill in verification mode and verify the following
+Load the `hyper-discover` skill in verification mode and verify the following
 batched EXISTING references from a Hyper plan.
 
 Parent task folder:
@@ -127,7 +127,7 @@ Do not modify any file. Do not touch task.md, spec.md, or subtask files — the
 reviewer owns the findings rollup.
 ```
 
-The Explore subagent returns per-reference statuses in the vocabulary:
+The Discover subagent returns per-reference statuses in the vocabulary:
 
 - `VERIFIED` — the reference is correct.
 - `BROKEN` — the file / function exists but was renamed or changed; reference no longer applies.
@@ -190,7 +190,7 @@ The fourth legal verdict on `plan-review.md`, `skipped — user opted out`, is e
 The `**Recommendation:**` line is orthogonal to the verdict. It tells `hyper-plan` what action to drive next:
 
 - **`continue`** — the plan is ready for approval. Only legal with `**Verdict:** pass`.
-- **`fix-in-place`** — findings can be resolved by editing `spec.md` or subtask files without rewinding to explore. Legal with either `needs-changes` or `blocked`. This is the default for every non-`pass` case. When you emit `fix-in-place`, every actionable finding the caller may apply directly must carry a concrete `**Fix:**` hint.
+- **`fix-in-place`** — findings can be resolved by editing `spec.md` or subtask files without rewinding to discover. Legal with either `needs-changes` or `blocked`. This is the default for every non-`pass` case. When you emit `fix-in-place`, every actionable finding the caller may apply directly must carry a concrete `**Fix:**` hint.
 - **`rethink`** — the approach itself is the problem; the plan is structurally wrong and cannot be patched in place. Only legal with `**Verdict:** blocked`, **and** only when at least one finding in `## Findings` cites an exploration-level issue (scope drift from `exploration.md`, an approach the subtasks cannot make work, or a fundamental decomposition error that affects most subtasks).
 
 ### Legality invariants (must not be violated)
@@ -266,7 +266,7 @@ Return plain data only: the verdict, the recommendation, the per-severity counts
 2. **Read plan artifacts.** `exploration.md`, `spec.md`, and every subtask file at the folder root. If any expected artifact is missing or unparseable, switch to **Malformed-plan handling** above — write the artifact, return, done.
 3. **Run the plan-text pass.** Apply the sixteen criteria across the loaded artifacts. Collect findings with severity and file:section citations. Apply the calibration filter as you go — do not collect findings only to drop them later.
 4. **Classify references.** Walk `spec.md` and subtask files. Produce the EXISTING and PROPOSED lists.
-5. **Verify the EXISTING list.** Dispatch one Explore subagent on supporting harnesses; inline reads elsewhere. Map returned statuses to finding severities per the table above. Append those findings to the collected list.
+5. **Verify the EXISTING list.** Dispatch one Discover subagent on supporting harnesses; inline reads elsewhere. Map returned statuses to finding severities per the table above. Append those findings to the collected list.
 6. **Roll up the verdict.** Apply the severity rule to the final findings set.
 7. **Choose the recommendation.** Apply the legality invariants. Self-correct if the intended recommendation is illegal.
 8. **Write `plan-review.md`.** Use the template shape. Overwrite any prior file.

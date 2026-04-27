@@ -39,7 +39,7 @@ If the area is sensitive — auth, payments, migrations, deletes, security bound
 ### Quick task
 
 ```text
-ask → explore → implement → verify → done
+ask → discover → implement → verify → done
 ```
 
 Use for small but still meaningful changes where planning would add little value.
@@ -47,7 +47,7 @@ Use for small but still meaningful changes where planning would add little value
 ### Feature task
 
 ```text
-ask → explore → plan → implement → verify → docs → done
+ask → discover → plan → implement → verify → docs → done
 ```
 
 Use when multiple files, trade-offs, approval points, or durable sequencing matter.
@@ -55,18 +55,18 @@ Use when multiple files, trade-offs, approval points, or durable sequencing matt
 ### Research task
 
 ```text
-ask → explore → done
+ask → discover → done
 ```
 
 Use when the main output is a recommendation, audit, or feasibility finding.
 
 ## Bug fixes and regressions
 
-Independently of quick / feature / research scope, `explore` detects bugfix intent from keywords or attached artifacts (stack traces, failing-test output, issue links) and asks a single confirmation question. On *yes*, the task gets `bugfix: true` and `explore` still writes `exploration.md`, but with the bugfix-specific body structure instead of the standard findings/approach shape.
+Independently of quick / feature / research scope, `discover` detects bugfix intent and routes to a stricter sub-flow. Detection is tiered: a **strong signal** (any artifact — stack trace, failing-test output, issue link, "used to work / regressed after X" phrasing — or any bugfix keyword combined with corroborating evidence) sets `bugfix: true` silently and continues. A **borderline signal** (a single weak keyword with no artifacts and no corroborating evidence) prompts one confirmation question first. **No signal** leaves the flag `false` silently. When the flag is set, `discover` still writes `exploration.md`, but with the bugfix-specific body structure instead of the standard findings/approach shape.
 
-The bugfix sub-flow is stricter than the generic explore:
+The bugfix sub-flow is stricter than the generic discover:
 
-- It is read-only — no code edits during explore, only evidence and hypotheses.
+- It is read-only — no code edits during discover, only evidence and hypotheses.
 - It classifies reproduction as `deterministic`, `intermittent`, or `no-repro` (with a run matrix for intermittent failures to fence against retry storms).
 - It requires a single written root-cause hypothesis at a time, paired inline with an acceptance proof — the specific failing test or repro command whose output must change when fixed.
 - Falsified hypotheses move to a structured ledger (hypothesis, experiment, observed result, evidence path, conclusion). Blind reruns without new evidence do not count toward the budget.
@@ -102,7 +102,7 @@ A good rule of thumb:
 - `maybe later` → backlog
 - `ship this` → task
 
-When Hyper creates or promotes a task, it may persist a short `Why` in `task.md` when that would help future readers. If the current request or source artifact already makes the reason clear, Hyper may reuse that context. It should not ask a separate Why prompt just to satisfy structure. During explore, though, Hyper may still ask about the end goal behind the requested change so it can reason like a companion and not just implement the first proposed solution.
+When Hyper creates or promotes a task, it may persist a short `Why` in `task.md` when that would help future readers. If the current request or source artifact already makes the reason clear, Hyper may reuse that context. It should not ask a separate Why prompt just to satisfy structure. During discover, though, Hyper may still ask about the end goal behind the requested change so it can reason like a companion and not just implement the first proposed solution.
 
 ## What to do when the repo is already dirty
 

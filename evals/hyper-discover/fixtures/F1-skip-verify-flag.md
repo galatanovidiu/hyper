@@ -1,6 +1,6 @@
 ---
 id: F1-skip-verify-flag
-skill: hyper-explore
+skill: hyper-discover
 expected_scope: feature
 expected_bugfix: false
 expected_first_response: clarify
@@ -25,7 +25,7 @@ The fixture assumes `hyper` has already created the task folder and written `tas
 ---
 id: T99
 slug: skip-verify-flag
-phase: explore
+phase: discover
 awaiting: skill
 created: 2026-04-26
 ---

@@ -33,7 +33,7 @@ Prefer task-scoped when in doubt. Move to project-scoped only when the same less
    - **Hyper** — something about the workflow itself.
    - **Me (the agent)** — something the agent did that should be different next time.
    Keep these honest: a project-level friction isn't a Hyper problem, and a Hyper problem isn't a personal failing.
-4. Write the retro document. Append, don't overwrite. Bullets should be specific — "implementation went well" is noise; "the explore phase caught the bcrypt-vs-argon2 decision before I wasted an hour on the wrong one" is signal.
+4. Write the retro document. Append, don't overwrite. Bullets should be specific — "implementation went well" is noise; "the discover phase caught the bcrypt-vs-argon2 decision before I wasted an hour on the wrong one" is signal.
 
 ## Output format
 

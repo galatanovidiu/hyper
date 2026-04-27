@@ -99,7 +99,7 @@ export async function runConversation({
 
 function buildInitialUserMessage(fixture, sandbox) {
   return [
-    `You are dispatched on the explore phase of task \`${fixture.id}\`.`,
+    `You are dispatched on the discover phase of task \`${fixture.id}\`.`,
     "",
     `Task folder (relative to current working directory): \`${sandbox.taskFolderRelative}\``,
     `task.md is already present at \`${sandbox.taskFolderRelative}/task.md\` — read it before responding.`,
@@ -108,7 +108,7 @@ function buildInitialUserMessage(fixture, sandbox) {
     "",
     `> ${fixture.dispatchUtterance.split("\n").join("\n> ")}`,
     "",
-    "Begin your normal explore-phase flow.",
+    "Begin your normal discover-phase flow.",
   ].join("\n");
 }
 

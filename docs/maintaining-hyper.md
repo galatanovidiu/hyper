@@ -90,7 +90,7 @@ At minimum, check:
 - `hyper`
 - `hyper-task`
 - `hyper-backlog`
-- `hyper-explore`
+- `hyper-discover`
 - `hyper-plan`
 - `hyper-implement`
 - `hyper-worker`

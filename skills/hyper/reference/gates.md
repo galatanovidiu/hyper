@@ -26,7 +26,7 @@ Every phase dispatch ends with the phase skill returning exactly one verdict to 
 | `awaiting-approval` | Artifact written; user approval gate required. | Set `task.md` `awaiting: user-approval`. Stop and surface the phase skill's approval summary, which should include a concise chat-readable synopsis of the artifact plus the approve/change prompt. |
 | `awaiting-input` | Open question(s) recorded in the artifact, a surfaced blocked-subtask question, or a fresh-dispatch user-choice prompt (e.g. verify's opt-out gate). | Set `task.md` `awaiting: user-input`. Stop and relay the first unanswered question verbatim from the phase skill's return summary. |
 | `phase-complete` | Phase produced its artifact and is ready to advance. | Clear `awaiting`. Apply the phase-transition table. Apply the checkpoint rule, reading the phase artifact when the prompt depends on the outcome. |
-| `redirect target: <phase>` | Non-linear transition — `plan → explore` on user rewind, or `verify → implement` on blocked `checks.md`. | Clear any stale `awaiting`. Set `phase: <target>`. For `verify → implement`, also set `awaiting: user-input` (verify's blocked findings become the remediation brief). Re-enter Dispatch. |
+| `redirect target: <phase>` | Non-linear transition — `plan → discover` on user rewind, or `verify → implement` on blocked `checks.md`. | Clear any stale `awaiting`. Set `phase: <target>`. For `verify → implement`, also set `awaiting: user-input` (verify's blocked findings become the remediation brief). Re-enter Dispatch. |
 
 Phase skills must return exactly one verdict per dispatch. A verdict with no new artifact change is still valid — e.g. when a user reply only adds a single answer to `## Open questions` but leaves other questions unanswered, the phase skill records that answer and returns `awaiting-input` again.
 
@@ -36,9 +36,9 @@ Phase skills must return exactly one verdict per dispatch. A verdict with no new
 
 | From phase | Task scope | Next phase | Checkpoint before advancing? |
 |------------|------------|------------|------------------------------|
-| `explore` | `quick` | `implement` | no (approval already happened) |
-| `explore` | `feature` | `plan` | no (approval already happened) |
-| `explore` | `research` | `done` | no — `hyper` archives and announces |
+| `discover` | `quick` | `implement` | no (approval already happened) |
+| `discover` | `feature` | `plan` | no (approval already happened) |
+| `discover` | `research` | `done` | no — `hyper` archives and announces |
 | `plan` | `feature` | `implement` | no (approval already happened) |
 | `implement` | any | `verify` | **yes** — prompt verbatim: `"T<N> implementation complete. Continue to verify?"` |
 | `verify` | `quick` | `done` | no — `hyper` archives and announces |
@@ -50,10 +50,10 @@ For `redirect`:
 
 | From phase | Verdict | `hyper` sets |
 |------------|---------|--------------|
-| `plan` | `redirect target: explore` | `phase: explore`, `awaiting: null` |
+| `plan` | `redirect target: discover` | `phase: discover`, `awaiting: null` |
 | `verify` | `redirect target: implement` | `phase: implement`, `awaiting: user-input` (remediation brief lives in `checks.md`) |
 
-The checkpoint rule is uniform about **when** it applies: approval-gated phases (`explore`, `plan`) auto-advance because the user already approved the artifact; agent-completion transitions (`implement → verify`, `verify → docs`) stop and ask before moving on.
+The checkpoint rule is uniform about **when** it applies: approval-gated phases (`discover`, `plan`) auto-advance because the user already approved the artifact; agent-completion transitions (`implement → verify`, `verify → docs`) stop and ask before moving on.
 
 The checkpoint wording is **not** uniform. It must describe the actual phase outcome. A clean pass keeps the terse continue prompt. A non-clean but non-blocking result (currently `verify` with `checks.md` `**Overall:** needs-changes`) surfaces remediation as an explicit option instead of defaulting to the same framing used for a clean pass.
 
@@ -89,7 +89,7 @@ A blank resume or generic `continue` with no open gate context is not a reply on
 
 - Record the user's answer or change in the artifact (`exploration.md`, `spec.md`, blocked subtask file, `checks.md`-driven remediation).
 - Do **not** write `phase:` or `awaiting:` on `task.md`. Return a verdict instead.
-- If more open questions remain, return `awaiting-input`. If the user approved, return `phase-complete`. If revisions were requested, apply them and return `awaiting-approval`. If the user asked to rethink the approach from plan, return `redirect target: explore`.
+- If more open questions remain, return `awaiting-input`. If the user approved, return `phase-complete`. If revisions were requested, apply them and return `awaiting-approval`. If the user asked to rethink the approach from plan, return `redirect target: discover`.
 
 ## Question serialization
 
@@ -99,11 +99,11 @@ When the open gate is `user-input`:
 - If the question has multiple plausible answers, recommend one and give a one-line reason grounded in the task, code, or user goal. Short accept / override replies (`yes`, `1A`, `1B`) stay possible.
 - Record the answer in the artifact under the question (the artifact is the durable record).
 - If more unanswered questions remain, return `awaiting-input` again.
-- Once all answered, rename `Open questions` → `Resolved questions` (or delete the section if redundant) and return the next verdict — `awaiting-approval` for explore/plan, or `phase-complete` for implement remediation.
+- Once all answered, rename `Open questions` → `Resolved questions` (or delete the section if redundant) and return the next verdict — `awaiting-approval` for discover/plan, or `phase-complete` for implement remediation.
 
 ## Approval gates
 
-For `explore` and `plan`:
+For `discover` and `plan`:
 
 - Write the approval artifact.
 - Return `awaiting-approval` with a concise chat-readable synopsis of the artifact plus the approve/change prompt. `hyper` sets `awaiting: user-approval` and stops.

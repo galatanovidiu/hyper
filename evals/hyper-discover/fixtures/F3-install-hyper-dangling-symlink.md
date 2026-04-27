@@ -1,7 +1,7 @@
 ---
 id: F3-install-hyper-dangling-symlink
-skill: hyper-explore
-expected_scope: feature
+skill: hyper-discover
+expected_scope: quick
 expected_bugfix: true
 expected_first_response: clarify
 ambiguity: low
@@ -13,7 +13,7 @@ A real-feeling bug report against the `install-hyper` skill. Tests whether explo
 
 ## Dispatch utterance
 
-> install-hyper just created a broken symlink at ~/.codex/skills/hyper-explore that points nowhere. Codex won't load any skills now. I think it stopped checking whether the target directory exists before linking.
+> install-hyper just created a broken symlink at ~/.codex/skills/hyper-discover that points nowhere. Codex won't load any skills now. I think it stopped checking whether the target directory exists before linking.
 
 ## task.md (input state)
 
@@ -21,17 +21,17 @@ A real-feeling bug report against the `install-hyper` skill. Tests whether explo
 ---
 id: T101
 slug: install-hyper-dangling-symlink
-phase: explore
+phase: discover
 awaiting: skill
 created: 2026-04-26
 ---
 
 # install-hyper creates dangling symlinks when target dir is missing
 
-After running `install-hyper`, `~/.codex/skills/hyper-explore` is a broken symlink. Output of `ls -la ~/.codex/skills/`:
+After running `install-hyper`, `~/.codex/skills/hyper-discover` is a broken symlink. Output of `ls -la ~/.codex/skills/`:
 
 ```
-lrwxr-xr-x ovidiu hyper-explore -> /Users/ovidiu/Projects/hyper7/skills/hyper-explore
+lrwxr-xr-x user hyper-discover -> ~/Projects/hyper7/skills/hyper-discover
 ```
 
 `readlink -f` resolves but the parent of the link (`~/.codex/skills/`) didn't exist before install ran. Codex now refuses to load skills with: `Error: skill directory contains broken symlinks`.
@@ -40,7 +40,7 @@ lrwxr-xr-x ovidiu hyper-explore -> /Users/ovidiu/Projects/hyper7/skills/hyper-ex
 ## Why this fixture
 
 - **Bugfix signals are explicit.** "Broken", "stopped checking", existing behaviour failing, error message present. A skill that misses these and writes a non-bugfix `## Findings` / `## Approach` artifact is wrong on the template-routing rule.
-- **Scope is `feature`** in the explore taxonomy (bugfixes flow through the feature path with `bugfix: true`). A skill that picks `quick` because the fix is probably small is missing the methodology — bugfix tasks always take the bugfix template.
+- **Scope is `quick`** because the fix is two-to-three files of mechanical change (the install script plus README and SKILL.md doc updates) and plan-phase decomposition adds little value here. Bugfix template routing is independent of scope per `skills/hyper-discover/SKILL.md` § Step 1b ("bugfix is orthogonal to scope") — this fixture preserves bugfix-template coverage via `expected_bugfix: true` while staying in `quick` scope. Broader coverage of the `bugfix: true` + `feature` scope combination is left to a follow-up fixture (an explicit gap, not an oversight).
 - **Has real evidence.** The error message and `ls` output are the kind of artifact the SKILL.md says to store under `evidence/<slug>.<ext>` rather than pasting into prose. A passing run links to evidence rather than inlining the dump.
 - **Has a stated hypothesis.** The user already proposed a root cause ("stopped checking whether the target directory exists"). A passing run records this in the root-cause hypothesis section but does not assume it's correct without verification — and uses the disproven-hypothesis ledger if the verification rules it out.
 - **Low ambiguity.** The bug is clear; the explore doesn't need much clarification. But it does need to confirm one thing: does the user want install-hyper to create the missing parent dir, or refuse to install with a clear error? Both are defensible. One focused clarifying question is appropriate; multiple is over-asking.
@@ -55,7 +55,7 @@ lrwxr-xr-x ovidiu hyper-explore -> /Users/ovidiu/Projects/hyper7/skills/hyper-ex
    - `## Acceptance proof` — what would prove the fix: a test that runs install-hyper with the parent dir absent and asserts (a) no symlink created, (b) non-zero exit, (c) clear error message.
    - `## Unchanged-behavior list` — install-hyper still works when the parent dir exists; the install-hyper status command is unaffected; existing valid symlinks are not modified.
 
-   Sets `scope: feature` and `bugfix: true` on `task.md`. Returns `awaiting-approval`.
+   Sets `scope: quick` and `bugfix: true` on `task.md`. Returns `awaiting-approval`.
 3. **Turn 3 — approve.** User approves. Skill returns `phase-complete`.
 
 ## Failure modes the rubric should catch

@@ -1,6 +1,6 @@
 ---
 id: F2-changelog-semver-line
-skill: hyper-explore
+skill: hyper-discover
 expected_scope: quick
 expected_bugfix: false
 expected_first_response: write
@@ -21,7 +21,7 @@ A trivially scoped task grounded in the real repo. Tests whether explore recogni
 ---
 id: T100
 slug: changelog-semver-line
-phase: explore
+phase: discover
 awaiting: skill
 created: 2026-04-26
 ---

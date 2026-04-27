@@ -1,11 +1,11 @@
 ---
-skill: hyper-explore
+skill: hyper-discover
 version: 1
 scoring: 0-2 per axis
 pass: total >= 8 AND no axis scored 0
 ---
 
-# hyper-explore rubric
+# hyper-discover rubric
 
 Score every run against these five axes. Each axis is 0 (fail) / 1 (partial) / 2 (pass). A run passes when the total is at least 8 AND no axis scored 0.
 
@@ -31,7 +31,7 @@ Did the skill set `scope:` on `task.md` to the value the fixture expects?
 ### 2. Artifact structure
 Does `exploration.md` follow the template the situation requires?
 
-- Non-bugfix: `## Findings` and `## Approach` present, with `## Files to change` and `## Out of scope` as required by the scope rules in `skills/hyper-explore/SKILL.md` § Step 5.
+- Non-bugfix: `## Findings` and `## Approach` present, with `## Files to change` and `## Out of scope` as required by the scope rules in `skills/hyper-discover/SKILL.md` § Step 5.
 - Bugfix: repro status, root-cause hypothesis, disproven-hypothesis ledger, acceptance proof, unchanged-behavior list — all five present.
 
 Score:

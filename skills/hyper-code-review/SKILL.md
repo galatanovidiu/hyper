@@ -342,16 +342,16 @@ When the user explicitly asks to promote a standalone review's critical findings
 2. Create `.hyper/tasks/T<M>-<slug>/task.md` with frontmatter:
    - `id: T<M>`
    - `title: Fix findings from T<N>` (or a more specific title if the critical findings cluster around one symptom)
-   - `phase: explore`
-   - `scope: unknown` (explore will classify)
+   - `phase: discover`
+   - `scope: unknown` (discover will classify)
    - `created: <current local datetime in YYYY-MM-DDTHH:MM:SS form, e.g. 2026-04-21T14:35:00>`
    - `bugfix: true`
    - `awaiting: null`
 3. Body: one paragraph naming the source review (`Seeded from code review T<N>. See .hyper/archive/T<N>-<slug>/checks.md for the full review.`) plus a copy of the critical findings (not warnings or notes) as the symptom evidence. If the findings already cite file:line references, preserve them.
-4. Announce: *"Promoted T<N> review findings to T<M> — <title>. Starting explore phase."*
+4. Announce: *"Promoted T<N> review findings to T<M> — <title>. Starting discover phase."*
 5. Leave the archived code-review task in place as the source record. Do not reopen it.
 
-The code-review task stays archived on promotion — it has served its purpose. The bugfix task is independent work with its own full phase flow (`explore → …`).
+The code-review task stays archived on promotion — it has served its purpose. The bugfix task is independent work with its own full phase flow (`discover → …`).
 
 ## Embedded mode — step by step
 

@@ -121,7 +121,7 @@ keeps this section. -->
 
 ## Pause — reframe required
 
-<!-- Populated by `hyper-explore` only when the N=3 hard stop triggers.
+<!-- Populated by `hyper-discover` only when the N=3 hard stop triggers.
 Escalation bundle: evidence-packet summary, `repro_status`, disproven-
 hypothesis ledger (already above — referenced here), most-likely-remaining
 branch (`code | environment | data | test-harness | architecture`), one

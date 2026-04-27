@@ -1,7 +1,7 @@
 ---
 id: T<N>
 title: <title>
-phase: explore
+phase: discover
 scope: unknown
 created: <YYYY-MM-DDTHH:MM:SS>
 bugfix: false

@@ -48,7 +48,7 @@ Usage:
   node harness/run.mjs --skill <name> --all-fixtures [--runs N]
 
 Options:
-  --skill <name>        Skill name under skills/ (e.g. hyper-explore).
+  --skill <name>        Skill name under skills/ (e.g. hyper-discover).
   --fixture <id>        Fixture id under evals/<skill>/fixtures/.
   --all-fixtures        Run every fixture for the skill.
   --runs N              Repeat each fixture N times for stability (default ${DEFAULT_RUNS_PER_FIXTURE}).

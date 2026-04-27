@@ -9,7 +9,7 @@ A lightweight, structured development workflow for AI coding agents. Delivered a
 Hyper replaces "prompt the agent and hope" with an explicit flow:
 
 ```
-explore → plan → implement → verify → docs → done
+discover → plan → implement → verify → docs → done
 ```
 
 Each phase writes one markdown artifact on disk. Two phases pause for your approval (`exploration.md` and `spec.md`). You and the agent share the same view of _what phase the work is in_, _what's been agreed_, and _what's next_.
@@ -22,7 +22,7 @@ Work in plain language:
 
 ```
 You: /hyper Add a login page with email + password, persist the session across reloads.
-Agent: [runs explore phase]
+Agent: [runs discover phase]
        Wrote exploration.md. Scope: feature. Summary: add an auth endpoint,
        a login form, and session persistence. Approve to continue.
 You: looks good
@@ -116,7 +116,7 @@ Seven Hyper skills are user-facing. `hyper` is the main workflow entry point; th
 
 Seven internal Hyper skills run under the hood.
 
-`hyper-explore`, `hyper-plan`, `hyper-plan-review`, `hyper-implement`, `hyper-worker`, `hyper-verify`, `hyper-docs`. They don't appear in your slash-command menu.
+`hyper-discover`, `hyper-plan`, `hyper-plan-review`, `hyper-implement`, `hyper-worker`, `hyper-verify`, `hyper-docs`. They don't appear in your slash-command menu.
 
 To rerun a phase manually, edit `phase:` in the task's `task.md` and invoke `hyper`. To re-run a single subtask, edit its file's `status:` back to `todo` and invoke `hyper`.
 
@@ -150,17 +150,17 @@ Add `.hyper/` to `.gitignore` unless you want to share task history with your te
 
 ## Scope drives the flow
 
-Each task is classified during `explore`:
+Each task is classified during `discover`:
 
-- `quick` — explore → implement → verify → done (skips plan and docs)
+- `quick` — discover → implement → verify → done (skips plan and docs)
 - `feature` — full flow
-- `research` — explore → done (terminal artifact is `exploration.md` with findings)
+- `research` — discover → done (terminal artifact is `exploration.md` with findings)
 
-Phases are skipped by scope, never by agent judgment. Classification happens once, with your approval, during explore.
+Phases are skipped by scope, never by agent judgment. Classification happens once, with your approval, during discover.
 
 ### Bugfix detection
 
-Independently of scope, `explore` also checks whether the work is a bugfix or regression. If keywords (_bug, fix, regression, crash, failing …_) or attached artifacts (stack traces, failing-test output, issue links) suggest one, Hyper asks a single confirmation question and, on _yes_, sets `bugfix: true` on `task.md` and routes to a root-cause-first sub-flow. The body of `exploration.md` switches to a bugfix structure: symptom evidence, a `repro_status` classification, a single active hypothesis with a named acceptance proof, and a structured disproven-hypothesis ledger. After 3 distinct falsified hypotheses the sub-flow hard-stops with an escalation bundle so you can reframe instead of letting the agent keep guessing.
+Independently of scope, `discover` also checks whether the work is a bugfix or regression. Detection is tiered. On a **strong signal** — any artifact (stack trace, failing-test output, issue link, "used to work / regressed after X" phrasing), or any bugfix keyword combined with corroborating evidence in the body — Hyper sets `bugfix: true` silently and continues, leaving the first turn free for the substantive clarifying question. On a **borderline signal** — a single weak keyword in an otherwise unrelated body, no artifacts, no corroborating evidence — Hyper asks one confirmation question before setting the flag. On **no signal**, the flag stays `false` and nothing is asked. Either way, when the flag is set, `exploration.md` switches to a bugfix structure: symptom evidence, a `repro_status` classification, a single active hypothesis with a named acceptance proof, and a structured disproven-hypothesis ledger. After 3 distinct falsified hypotheses the sub-flow hard-stops with an escalation bundle so you can reframe instead of letting the agent keep guessing.
 
 ### TDD pairing for behavior-change slices
 
@@ -260,7 +260,7 @@ Approval gates, durable artifacts, non-skippable verify — all carry over from 
 The bullets above describe what Hyper is. These describe how an agent working inside Hyper should operate:
 
 - **Question the framing.** The user's ask is a hypothesis, not a directive. After scanning the code, state the current framing alongside one plausible alternate framing; raise the alternate as a clarification only if the evidence supports it.
-- **Pivots during explore are normal.** When the direction shifts mid-explore, rewrite `exploration.md` — but carry forward resolved questions and the pivot rationale so the artifact stays the durable record.
+- **Pivots during discover are normal.** When the direction shifts mid-discover, rewrite `exploration.md` — but carry forward resolved questions and the pivot rationale so the artifact stays the durable record.
 - **Robustness before cleverness.** Handle error paths, validate at boundaries, fail loudly. Validation and error-path handling for the code you are writing are part of the work, not speculative scope.
 - **Stay focused, park the drift.** Pre-existing problems go to `.hyper/backlog.md`, not inline "while I'm here" fixes. Deepen the task you were given; don't widen it.
 

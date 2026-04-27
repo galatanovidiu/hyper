@@ -19,23 +19,23 @@ Node 20+ required (the harness uses native fetch and ESM).
 
 ```bash
 node harness/run.mjs \
-  --skill hyper-explore \
+  --skill hyper-discover \
   --fixture F2-changelog-semver-line \
   --runs 3
 ```
 
-This runs the fixture three times for trigger-rate stability per Anthropic's published methodology. Outputs land in `evals/hyper-explore/runs/batch-<timestamp>/`.
+This runs the fixture three times for trigger-rate stability per Anthropic's published methodology. Outputs land in `evals/hyper-discover/runs/batch-<timestamp>/`.
 
 ## Run every fixture for a skill
 
 ```bash
-node harness/run.mjs --skill hyper-explore --all-fixtures --runs 3
+node harness/run.mjs --skill hyper-discover --all-fixtures --runs 3
 ```
 
 ## Dry run (no API calls)
 
 ```bash
-node harness/run.mjs --skill hyper-explore --fixture F1-skip-verify-flag --dry-run
+node harness/run.mjs --skill hyper-discover --fixture F1-skip-verify-flag --dry-run
 ```
 
 Verifies that the fixture parses, the sandbox builds correctly, and canned replies extract — without spending tokens. Use this whenever you change a fixture or a harness module.
@@ -115,7 +115,7 @@ A full pass (3 fixtures × 3 runs each) lands around $5–$10 depending on tool-
    ```yaml
    ---
    id: F4-something
-   skill: hyper-explore
+   skill: hyper-discover
    expected_scope: feature
    expected_bugfix: false
    expected_first_response: clarify

@@ -6,9 +6,9 @@ user-invocable: false
 
 # hyper-plan
 
-You are in the **plan** phase. The explore phase produced an approved approach. Your job is to translate it into a spec the implement phase can follow without further interpretation.
+You are in the **plan** phase. The discover phase produced an approved approach. Your job is to translate it into a spec the implement phase can follow without further interpretation.
 
-This phase runs only for `scope: feature` tasks. Quick tasks skip to implement. Research tasks end at explore.
+This phase runs only for `scope: feature` tasks. Quick tasks skip to implement. Research tasks end at discover.
 
 ## Inputs
 
@@ -304,15 +304,15 @@ Exactly one path reaches `rethink`: the reviewer cited an exploration-level find
 >
 > <exploration-level finding>
 >
-> This looks like the approach itself, not something we can patch in spec or subtasks. Rewind to explore and revise the approach? Reply `yes, rewind to explore` to confirm, or say no / request changes to handle it in-place.
+> This looks like the approach itself, not something we can patch in spec or subtasks. Rewind to discover and revise the approach? Reply `yes, rewind to discover` to confirm, or say no / request changes to handle it in-place.
 
-On confirmation, return `redirect target: explore` to `hyper`. `hyper` sets `phase: explore` and re-enters dispatch. This is the only automatic path that returns `redirect target: explore`.
+On confirmation, return `redirect target: discover` to `hyper`. `hyper` sets `phase: discover` and re-enters dispatch. This is the only automatic path that returns `redirect target: discover`.
 
 On a non-confirming reply (plain "no", a question, a request to handle it in-place, anything that isn't the literal confirmation phrase or a clear equivalent), fall back to the `blocked + fix-in-place` flow — present options `(a) / (b) / (c)` using the cited `rethink` finding as a blocker, and add a one-line note that `rethink` was downgraded on the user's choice. From there the regular `blocked + fix-in-place` rules apply, including the `yes, proceed anyway` confirmation on `(c)`.
 
 ### Invariant
 
-`redirect target: explore` is returned to `hyper` **only** on a confirmed `blocked + rethink` outcome. The user-initiated rewind path that already exists in the Return contract (a user asking to rethink the approach during the approval gate) is unchanged and orthogonal to this step. A `rethink` recommendation with no user confirmation never redirects.
+`redirect target: discover` is returned to `hyper` **only** on a confirmed `blocked + rethink` outcome. The user-initiated rewind path that already exists in the Return contract (a user asking to rethink the approach during the approval gate) is unchanged and orthogonal to this step. A `rethink` recommendation with no user confirmation never redirects.
 
 ## Step 8 — Serialize open questions
 
@@ -348,6 +348,6 @@ Every dispatch ends with one verdict. Shared contract in `../hyper/reference/gat
 - `awaiting-input` — open questions remain in `spec.md`.
 - `awaiting-approval` — the spec + subtask files are ready for user approval, or a revision has been applied.
 - `phase-complete` — user approved on a re-dispatch. `hyper` advances to `implement` per the transition table.
-- `redirect target: explore` — emitted on either of two paths, both requiring explicit user confirmation. Path one: the user asks to rethink the approach rather than approve at the Step 9 gate. Path two: Step 7 received a confirmed `blocked + rethink` plan-review outcome (the user agreed with the reviewer's exploration-level finding). A `rethink` recommendation never redirects without asking; a user's reply that isn't an explicit confirmation drops back into the `blocked + fix-in-place` flow. `hyper` sets `phase: explore` and re-enters dispatch.
+- `redirect target: discover` — emitted on either of two paths, both requiring explicit user confirmation. Path one: the user asks to rethink the approach rather than approve at the Step 9 gate. Path two: Step 7 received a confirmed `blocked + rethink` plan-review outcome (the user agreed with the reviewer's exploration-level finding). A `rethink` recommendation never redirects without asking; a user's reply that isn't an explicit confirmation drops back into the `blocked + fix-in-place` flow. `hyper` sets `phase: discover` and re-enters dispatch.
 
 On a user reply that requests spec changes, revise `spec.md` and any affected subtask files, then return `awaiting-approval` again. On a direct question, answer it inline and return `awaiting-approval` with the artifacts unchanged.
