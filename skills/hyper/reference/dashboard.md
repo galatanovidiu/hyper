@@ -146,39 +146,37 @@ The contract is opt-in. Silence is correct for non-decisions. A phase that runs 
 
 ## Worked example
 
-After a feature task has finished discover, plan, and the first two of three subtasks, `dashboard.md` looks like:
+A feature task `T1: Add login page` has finished discover and plan, completed two of three subtasks, and is mid-third. `dashboard.md` looks like:
 
 ```markdown
-# Dashboard — T59: Reshape task.md into PM-facing dashboard
+# Dashboard — T1: Add login page
 
 ## Goal
 
-Reshape `task.md` into a PM-facing dashboard that lives alongside the existing
-engineer-facing artifacts. Two views, one task.
+Add a login page that authenticates users against the existing user table and
+issues a JWT on success. Plain email + password, no SSO yet.
 
-**Why:** In the agentic era I'm both engineer and project manager on the same
-work. I need a one-file, under-a-minute view of where each task is.
+**Why:** The product team needs a working signed-in surface before the upcoming
+billing milestone; today every authenticated route 401s.
 
 ## Plan
 
 **Acceptance criteria**
-- data-model.md documents `dashboard.md`'s artifact shape...
-- `skills/hyper/reference/dashboard.md` defines the rollup contract...
-- After hyper applies the phase-transition table on every phase return...
-- Phase skills append a dated one-line entry to `dashboard.md` § Decisions...
-- The rollup gracefully handles missing or malformed primary artifacts...
-- The shape of all pre-existing artifacts is unchanged...
+- POST `/auth/login` with valid credentials returns 200 and a JWT...
+- POST `/auth/login` with invalid credentials returns 401 with a generic error...
+- The login page renders the form and surfaces the 401 error inline...
+- bcrypt password hashing replaces the legacy plaintext column...
 
 **Subtasks**
-- T59.1 — Define the dashboard contract
-- T59.2 — Wire hyper to regenerate dashboard.md
-- T59.3 — Phase skills append to Decisions log
+- T1.1 — Add bcrypt + password hashing to User model
+- T1.2 — Add POST /auth/login endpoint with credential check
+- T1.3 — Add login form component and wire to endpoint
 
 ## Progress
 
-- **T59.1** — Define the dashboard contract — done — Added dashboard.md schema to data-model; created reference/dashboard.md and templates/dashboard.md.
-- **T59.2** — Wire hyper to regenerate dashboard.md — done — Wired Create-task seeding and after-phase-return regeneration into hyper SKILL.md.
-- **T59.3** — Phase skills append to Decisions log — pending
+- **T1.1** — Add bcrypt + password hashing to User model — done — Added bcrypt dependency; migrated `password_hash` column; updated User.verify().
+- **T1.2** — Add POST /auth/login endpoint — done — Added route + handler; integration test asserts 200 + JWT and 401 with generic error.
+- **T1.3** — Add login form component — in-progress
 
 ## Verification
 
@@ -190,9 +188,9 @@ _not yet run_
 
 ## Decisions
 
-- 2026-04-27 — discover — Picked Option D (computed rollup file + append-only Decisions log) over A/B/C (Resolved Q1).
-- 2026-04-27 — discover — Trigger is phase-return only, not lazy or on-demand (Resolved Q2).
-- 2026-04-27 — discover — Phase skills + user can both append to Decisions log; phase skills only on load-bearing choices (Resolved Q3).
+- 2026-04-15 — discover — Picked bcrypt over argon2 for password hashing — bcrypt is already a transitive dependency and the bcrypt-vs-argon2 difference is below the team's current threat model.
+- 2026-04-15 — plan — Split the endpoint slice into a separate `role: test` and `role: impl` pair so the impl worker cannot edit the contract test file (TDD pairing pattern).
+- 2026-04-16 — implement — Worker on T1.2 picked option B (return generic 401 message) over option A (return field-specific error) — option A leaks user-existence and was rejected at the awaiting-input gate.
 ```
 
 ## Out of scope for this contract
