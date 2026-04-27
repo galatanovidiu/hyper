@@ -24,7 +24,7 @@ const USER_FACING_HYPER = new Set([
 ]);
 
 const INTERNAL_HYPER = new Set([
-  "hyper-explore",
+  "hyper-discover",
   "hyper-plan",
   "hyper-plan-review",
   "hyper-implement",
@@ -190,8 +190,8 @@ function ensureContains(filePath, needle) {
 }
 
 function validateReadmeAndDataModel() {
-  ensureContains(README, "Seven Hyper skills are user-facing.");
-  ensureContains(README, "Seven internal Hyper skills run under the hood");
+  ensureContains(README, "You normally use one skill: **`hyper`**.");
+  ensureContains(README, "Internal skills such as");
   for (const skill of [...USER_FACING_HYPER, ...INTERNAL_HYPER, "team"].sort()) {
     ensureContains(README, `\`${skill}\``);
   }
