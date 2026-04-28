@@ -288,7 +288,7 @@ Fail loudly beats silent skip. Malformed state is a bug that needs human attenti
 
 ## `plan-review.md`
 
-Written during the plan phase of `feature`-scope tasks, after `hyper-plan`'s Step 6 self-review and before the open-question serialization step. Normally authored by the `hyper-plan-review` skill; when the user declines the Step 7 skip prompt in `hyper-plan`, `hyper-plan` itself writes a stub artifact with the `skipped — user opted out` verdict and the reviewer is not invoked. Not written at all for `quick` or `research` scope — those scopes skip plan entirely.
+Written by the `hyper-plan-review` skill during the plan phase of `feature`-scope tasks, after `hyper-plan`'s Step 6 self-review and before the open-question serialization step. Not written at all for `quick` or `research` scope — those scopes skip plan entirely.
 
 ### Structure
 
@@ -309,19 +309,17 @@ Followed by two required sections:
 
 ### Verdict vocabulary
 
-`pass | needs-changes | blocked | skipped — user opted out`. The first three match `checks.md` and `hyper-code-review` exactly and are computed from the finding severities, not authored independently:
+`pass | needs-changes | blocked`. These match `checks.md` and `hyper-code-review` exactly and are computed from the finding severities, not authored independently:
 
 - Any `[blocker]` finding → `blocked`.
 - No blocker, at least one `[warning]` → `needs-changes`.
 - Only `[note]` findings or no findings → `pass`.
 
-`skipped — user opted out` is caller-emitted, not reviewer-emitted. When the user declines the Step 7 skip prompt in `hyper-plan`, `hyper-plan` writes `plan-review.md` directly with this verdict (and `**Recommendation:** continue`) instead of invoking `hyper-plan-review`. The reviewer itself never produces `skipped` — it only runs when the user opted to run it.
-
 ### Recommendation vocabulary and legality
 
 `continue | fix-in-place | rethink`. The recommendation tells `hyper-plan` what action to drive next and is subject to three legality invariants:
 
-- **`continue`** is legal with `**Verdict:** pass` (reviewer-emitted) or `**Verdict:** skipped — user opted out` (caller-emitted). The plan is ready for approval.
+- **`continue`** is legal with `**Verdict:** pass`. The plan is ready for approval.
 - **`fix-in-place`** is legal with either `**Verdict:** needs-changes` or `**Verdict:** blocked`. It is the only legal recommendation for `needs-changes` and is the default for every non-`pass` case. Findings can be resolved by editing `spec.md` or subtask files without rewinding to discover, so any `[warning]` on a `needs-changes + fix-in-place` artifact must include a concrete `**Fix:**` hint.
 - **`rethink`** is legal only with `**Verdict:** blocked` **and** only when at least one finding in `## Findings` cites an exploration-level issue (scope drift from `exploration.md`, an approach the subtasks cannot make work, or a fundamental decomposition error). A `rethink` recommendation without such a citation is malformed.
 

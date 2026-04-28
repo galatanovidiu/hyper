@@ -10,14 +10,8 @@ Verdict rollup rule (severity-computed verdicts, emitted by hyper-plan-review):
 - No blocker, any [warning]  -> needs-changes
 - Only [note] or no findings -> pass
 
-Fourth verdict — skipped — user opted out — is caller-emitted only.
-hyper-plan writes it directly when the user declines the Step 7 skip
-prompt and never dispatches hyper-plan-review. Pair it with
-Recommendation: continue and a Findings section that states the skip.
-The reviewer itself never produces `skipped`.
-
 Recommendation legality invariants:
-- continue     -> legal with Verdict: pass OR skipped — user opted out
+- continue     -> legal with Verdict: pass
 - fix-in-place -> legal with needs-changes or blocked
 - rethink      -> only legal with Verdict: blocked AND at least one
                   exploration-level citation in ## Findings (scope drift
