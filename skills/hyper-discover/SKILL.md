@@ -13,6 +13,8 @@ Turn an unclear request into an approved approach — in one interactive session
 
 This is the first phase of every Hyper task. The skill clarifies what the user actually wants, scans the codebase for facts, challenges the framing when evidence suggests a different problem, classifies scope, and — for bugfix intent — runs a root-cause-first sub-flow with a falsification budget. The output is an `exploration.md` the user must approve before any implementation begins.
 
+Resolve the Hyper state root per `../hyper/reference/state-root.md` before reading or writing `.hyper/` paths. If the task folder path is provided, derive the state root from that path.
+
 ## Inputs
 
 - Task folder at `.hyper/tasks/T<N>-<slug>/` with `task.md` already created

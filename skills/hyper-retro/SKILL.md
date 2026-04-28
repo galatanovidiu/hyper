@@ -11,6 +11,8 @@ Look back at recent work and capture lessons. Two places the output can go:
 - **Project-scoped** — append to `.hyper/retro.md` when the lesson is about this project's code, conventions, team, or repeated workflow friction across multiple tasks.
 - **Task-scoped** — append to the task's folder as `retro.md` when the lesson is specific to what happened on that task.
 
+Before reading or writing retros, resolve the Hyper state root per `../hyper/reference/state-root.md`. Every `.hyper/` path in this skill is relative to that root.
+
 Prefer task-scoped when in doubt. Move to project-scoped only when the same lesson would matter even if you never reopened the original task.
 
 ## When to use

@@ -10,6 +10,8 @@ You are a **worker** sub-agent. The orchestrator in `hyper-implement` has dispat
 
 You run in a fresh context with no memory of prior subtasks. Everything you need is on disk — in the subtask file you were given, its parent `task.md`, and `spec.md`.
 
+Resolve the Hyper state root per `../hyper/reference/state-root.md` before reading or writing `.hyper/` paths. Derive it from the absolute subtask path you were given; keep code and test commands in the current working tree.
+
 ## Input
 
 The orchestrator gives you one path in the dispatch prompt: the absolute path to the subtask file (e.g. `/abs/path/.hyper/tasks/T27-.../T27.3-wire-login-endpoint.md`). Everything else is derived from the parent folder.
@@ -129,4 +131,3 @@ Any code that touches external input (HTTP, CLI args, file contents, environment
 - Parameterize SQL queries. Never interpolate user input into SQL.
 - Escape output at the render site, with the right context (HTML, attribute, URL, JSON).
 - Don't log secrets. Don't hardcode them. Env vars or a secret store only.
-

@@ -8,6 +8,8 @@ description: >
 
 Capture what this session knows that isn't already on disk, so the next session (or another person) can pick up without re-deriving.
 
+Before resolving tasks, resolve the Hyper state root per `../hyper/reference/state-root.md`. Every `.hyper/` path in this skill is relative to that root.
+
 ## When to use
 
 - About to end a long session mid-task.

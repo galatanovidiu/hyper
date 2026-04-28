@@ -1,6 +1,6 @@
 # Hyper — Data Model
 
-All Hyper state lives on disk under `.hyper/` in the project root. Plain markdown. No database, no CLI, no hidden state. A human can open any file and understand what's going on.
+All Hyper state lives on disk under `.hyper/` in the Hyper state root. In a normal project, that is the project root; in a linked Git worktree, it is the main project directory resolved by `reference/state-root.md`, not the linked worktree. Plain markdown. No database, no CLI, no hidden state. A human can open any file and understand what's going on.
 
 ## Layout
 

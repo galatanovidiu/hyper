@@ -13,6 +13,8 @@ You run a structured code review of a diff. Three ordered passes plus a validati
 
 Read `../hyper/reference/worker-guardrails.md` before any pass runs. Its four rules (G1–G4) are normative for this dispatch in both embedded and standalone mode — treat them as rules of the session, not background reading.
 
+Resolve the Hyper state root per `../hyper/reference/state-root.md` before reading or writing `.hyper/` paths. Review diff, code, and test commands still run in the current working tree; durable review records, `.hyper/rules.md`, and promoted bugfix tasks use the Hyper state root.
+
 ## Two modes
 
 This skill runs in one of two modes. Pick the mode from how you were invoked, not from a flag on disk.

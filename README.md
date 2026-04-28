@@ -175,6 +175,8 @@ The most useful files are:
 
 Add `.hyper/` to `.gitignore` unless you intentionally want to share task history. If you do share parts of it, `rules.md`, `recipes/`, and `team/providers/` are the usual candidates.
 
+When you work from a linked Git worktree, Hyper keeps this `.hyper/` directory in the main project directory instead of creating separate task state inside the linked worktree. Code changes, tests, and diffs still run in the worktree you opened.
+
 ## Useful Commands
 
 `hyper` is the main entry point.

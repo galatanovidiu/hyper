@@ -8,6 +8,8 @@ user-invocable: false
 
 You are in the **implement** phase. For `feature` scope, you usually orchestrate — you do not write code. For `quick` scope, you write the code yourself. The one exception: if verify sent the task back with a blocked `checks.md`, this invocation is a **remediation pass** and you implement the fixes directly from `checks.md` before returning to verify.
 
+Resolve the Hyper state root per `../hyper/reference/state-root.md` before reading or writing `.hyper/` paths. If the task folder path is provided, derive the state root from that path; keep code and test commands in the current working tree.
+
 ## Inputs
 
 - `task.md` (phase=implement)

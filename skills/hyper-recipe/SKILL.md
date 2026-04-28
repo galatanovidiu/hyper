@@ -10,6 +10,8 @@ Manage user-defined recipes in `.hyper/recipes/`. A recipe is a markdown playboo
 
 This skill runs standalone. It never creates tasks, advances phases, edits memory, or changes backlog.
 
+Before reading or writing recipes, resolve the Hyper state root per `../hyper/reference/state-root.md`. Every `.hyper/` path in this skill is relative to that root.
+
 ## Recipe File Shape
 
 Recipes live at `.hyper/recipes/<name>.md`, where `<name>` is a lowercase kebab-case identifier.

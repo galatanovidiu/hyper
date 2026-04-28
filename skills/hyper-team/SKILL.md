@@ -30,6 +30,8 @@ The agent running this skill is always the **team lead**. The agent(s) being cal
 
 This skill works from any agent platform. Claude can lead Codex. Codex can lead Gemini. Any agent with Hyper can lead any other.
 
+Resolve the Hyper state root per `../hyper/reference/state-root.md` before reading or writing `.hyper/team/` paths. Codebase context, diffs, and teammate CLI commands still run in the current working tree.
+
 ## Workflow
 
 ### Step 1 — Understand intent
@@ -67,7 +69,7 @@ The user can correct any part. **Never proceed without confirmation.**
 
 For each provider, resolve the provider file in this order:
 
-1. `.hyper/team/providers/{provider}.md` in the current project root (project-local teammates).
+1. `.hyper/team/providers/{provider}.md` in the Hyper state root (project-local teammates).
 2. `references/providers/{provider}.md` bundled with this skill (resolved relative to this `SKILL.md`).
 
 Use the first file that exists. If neither location has `{provider}.md`, stop and tell the user: list every available provider — the union of `.hyper/team/providers/*.md` and bundled `references/providers/*.md`, excluding `_template.md` — and ask which to use. Never guess.
@@ -85,7 +87,7 @@ If a CLI can't be installed or authenticated, stop — do not proceed without a 
 
 To add a teammate that only exists in this project (e.g. a sandboxed Claude reached over `docker exec` or SSH):
 
-1. Create `.hyper/team/providers/<name>.md` in the project root.
+1. Create `.hyper/team/providers/<name>.md` in the Hyper state root.
 2. Start from the bundled template at `references/providers/_template.md` (bundled with this skill) — copy it to the new path and fill in every section. Project-local files use the same contract as bundled ones.
 3. Invoke the teammate by name: "ask `<name>` to review …".
 

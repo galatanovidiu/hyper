@@ -15,6 +15,8 @@ You are in the **verify** phase. Implementation is done; now you check the work 
 
 One artifact: `checks.md`. One verdict.
 
+Resolve the Hyper state root per `../hyper/reference/state-root.md` before reading or writing `.hyper/` paths. If the task folder path is provided, derive the state root from that path; keep diff, test, and QA commands in the current working tree.
+
 ## Inputs
 
 - `task.md` (phase=verify)
