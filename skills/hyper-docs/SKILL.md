@@ -11,6 +11,8 @@ You are in the **docs** phase. Implementation passed verify. Now: did this chang
 
 This phase runs for `scope: feature` tasks only. Quick tasks skip docs (the diff is the doc). Research tasks end at explore.
 
+Resolve the Hyper state root per `../hyper/reference/state-root.md` before reading or writing `.hyper/` paths. If the task folder path is provided, derive the state root from that path; keep documentation edits in the current working tree.
+
 ## Inputs
 
 - `task.md` (phase=docs)

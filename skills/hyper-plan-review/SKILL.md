@@ -13,6 +13,8 @@ You are invoked by `hyper-plan` after its Step 6 self-review and before its open
 
 Read `../hyper/reference/worker-guardrails.md` before the review runs. Its four rules (G1–G4) are normative for this dispatch — treat them as rules of the session, not background reading.
 
+Resolve the Hyper state root per `../hyper/reference/state-root.md` before reading or writing `.hyper/` paths. If the task folder path is provided, derive the state root from that path.
+
 ## Inputs
 
 The caller hands you one path in the dispatch prompt: the absolute task folder path (for example `/abs/path/to/project/.hyper/tasks/T<N>-<slug>/`). Everything else is derived from there.

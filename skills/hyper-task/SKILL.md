@@ -10,6 +10,8 @@ Manage tasks without running the workflow. This skill handles listing, status ch
 
 Active tasks live at `.hyper/tasks/T<N>-<slug>/task.md`. Terminal (`done` / `cancelled`) task folders are moved to `.hyper/archive/T<N>-<slug>/` — same shape, different location. The frontmatter is documented in `skills/hyper/reference/data-model.md` (bundled with the `hyper` skill). Read it if you need to verify any field.
 
+Before reading or writing tasks, resolve the Hyper state root per `../hyper/reference/state-root.md`. Every `.hyper/` path in this skill is relative to that root.
+
 ## First-use bootstrap
 
 For write operations (`Create`, `Cancel`), ensure `.hyper/` is bootstrapped per `../hyper/reference/bootstrap.md`.

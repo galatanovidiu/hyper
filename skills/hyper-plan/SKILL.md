@@ -10,6 +10,8 @@ You are in the **plan** phase. The discover phase produced an approved approach.
 
 This phase runs only for `scope: feature` tasks. Quick tasks skip to implement. Research tasks end at discover.
 
+Resolve the Hyper state root per `../hyper/reference/state-root.md` before reading or writing `.hyper/` paths. If the task folder path is provided, derive the state root from that path.
+
 ## Inputs
 
 - `task.md` (phase=plan)

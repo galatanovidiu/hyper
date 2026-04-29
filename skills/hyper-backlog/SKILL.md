@@ -10,6 +10,8 @@ Manage `.hyper/backlog.md` — the idea-triage inbox that sits alongside `.hyper
 
 Tasks live at `.hyper/tasks/T<N>-<slug>/task.md`; the data model is documented in `skills/hyper/reference/data-model.md` (bundled with `hyper`). This skill assumes that background.
 
+Before reading or writing backlog or tasks, resolve the Hyper state root per `../hyper/reference/state-root.md`. Every `.hyper/` path in this skill is relative to that root.
+
 ## First-use bootstrap
 
 For write operations (`Add`, `Promote`, `Drop`), ensure `.hyper/` is bootstrapped per `../hyper/reference/bootstrap.md`.

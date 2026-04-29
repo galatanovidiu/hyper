@@ -6,7 +6,7 @@ Archiving is a **move, not a delete** — the folder and every artifact inside i
 
 ## Canonical snippet
 
-Run from the project root, substituting the real task folder name for `T<N>-<slug>`:
+Run from the Hyper state root (see `reference/state-root.md`), substituting the real task folder name for `T<N>-<slug>`:
 
 ```bash
 mkdir -p .hyper/archive

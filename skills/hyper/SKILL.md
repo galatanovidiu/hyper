@@ -12,6 +12,8 @@ For task *management* operations (list, create-deferred, defer, cancel, status) 
 
 ## Before anything else
 
+Resolve the Hyper state root per `reference/state-root.md`. Every `.hyper/` path in this skill is relative to that root, even when the current working tree is a linked Git worktree. Code, test, and diff commands still run in the current working tree unless the operation is explicitly about Hyper state.
+
 Ensure `.hyper/` is bootstrapped per `reference/bootstrap.md`. The canonical folder shape, seed content, and the lazy `archive/` rule live there — any write-side entry point follows the same contract.
 
 **Project rules (optional).** If `.hyper/rules.md` exists, read it once at session start and treat its contents as normative constraints for every phase (discover, plan, implement, verify, docs). It captures conventions, workflow rules, and preferences the user does not want to restate each session — Git workflow, branch naming, commit style, forbidden patterns, etc. Create the file when the user asks to record a project-level rule and it does not already exist; append new rules to the existing file otherwise. Rules there override defaults but never the user's in-session instructions.
