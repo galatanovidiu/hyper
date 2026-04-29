@@ -13,7 +13,7 @@ Hyper is delivered as [Agent Skills](https://agentskills.io): plain markdown
 files an agent can load. There is no CLI, plugin, server, database, or hidden
 state. Workflow state lives in `.hyper/` inside your project.
 
-You normally use one skill: **`hyper`**.
+You normally start with one skill: **`hyper`**.
 
 ## When To Use Hyper
 

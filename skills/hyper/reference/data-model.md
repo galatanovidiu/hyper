@@ -244,6 +244,9 @@ role: none
 
 ## Done when
 <One or more testable criteria.>
+
+## Completion
+<Worker writes this before setting `status: done`.>
 ```
 
 ### Subtask frontmatter fields

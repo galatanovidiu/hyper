@@ -194,7 +194,7 @@ function ensureContains(filePath, needle) {
 }
 
 function validateReadmeAndDataModel() {
-  ensureContains(README, "You normally use one skill: **`hyper`**.");
+  ensureContains(README, "You normally start with one skill: **`hyper`**.");
   ensureContains(README, "Internal skills such as");
   for (const skill of [...USER_FACING_HYPER, ...INTERNAL_HYPER].sort()) {
     ensureContains(README, `\`${skill}\``);
