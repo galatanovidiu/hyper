@@ -180,21 +180,15 @@ Output:
 
 ## Optional structural hook
 
-For stronger gating, add a hook that blocks a runner from claiming completion
-unless a loop file exists and contains the expected hot-state sections.
+For stronger gating, the repo now ships a hook script at:
 
-```bash
-# scripts/eval-hooks/validate-iterate-loop.sh
-#!/usr/bin/env bash
-set -euo pipefail
-case "$PWD" in /tmp/hyper-iterate-eval-*) ;; *) exit 0 ;; esac
-loop_file=$(find .hyper/loops -maxdepth 1 -name 'L*.md' -type f | head -1)
-[[ -z "$loop_file" ]] && { echo "no loop file created" >&2; exit 2; }
-grep -q '^status:' "$loop_file" || { echo "missing status frontmatter" >&2; exit 2; }
-grep -q '^## Current route$' "$loop_file" || { echo "missing Current route" >&2; exit 2; }
-grep -q '^## Handoff cues$' "$loop_file" || { echo "missing Handoff cues" >&2; exit 2; }
-exit 0
+```text
+scripts/eval-hooks/validate-iterate-loop.sh
 ```
+
+It blocks a runner from claiming completion unless a loop file exists and core
+hot-state sections are present. The script no-ops outside
+`/tmp/hyper-iterate-eval-*` clones, so it is safe to leave wired in.
 
 ## Cleanup
 
