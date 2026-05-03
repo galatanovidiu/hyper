@@ -12,6 +12,8 @@ const ROOT = path.resolve(__dirname, "..");
 const SKILLS_DIR = path.join(ROOT, "skills");
 const README = path.join(ROOT, "README.md");
 const DATA_MODEL = path.join(ROOT, "skills", "hyper", "reference", "data-model.md");
+const HYPER_ITERATE_SKILL = path.join(ROOT, "skills", "hyper-iterate", "SKILL.md");
+const HYPER_ITERATE_TEMPLATE = path.join(ROOT, "skills", "hyper-iterate", "templates", "loop.md");
 
 const USER_FACING_HYPER = new Set([
   "hyper",
@@ -212,9 +214,69 @@ function validateReadmeAndDataModel() {
   ensureContains(DATA_MODEL, "## `retro.md`");
 }
 
+function validateHyperIterate() {
+  const requiredTemplateSections = [
+    "## Goal",
+    "## Definition of done",
+    "## Current route",
+    "## Current focus",
+    "## Current bar",
+    "## Parts",
+    "## Evidence digest",
+    "## Relevant artifacts",
+    "## Bar history",
+    "## Route shifts",
+    "## Decisions",
+    "## Starting point",
+    "## Cycles",
+    "## Handoff cues",
+    "## Memory candidates",
+    "## Outcome",
+  ];
+
+  const requiredTemplateFrontmatter = [
+    "id: L<N>",
+    "title: <title>",
+    "status: active",
+    "created: <YYYY-MM-DDTHH:MM:SS>",
+    "updated: <YYYY-MM-DDTHH:MM:SS>",
+  ];
+
+  for (const needle of requiredTemplateSections) {
+    ensureContains(HYPER_ITERATE_TEMPLATE, needle);
+  }
+  for (const needle of requiredTemplateFrontmatter) {
+    ensureContains(HYPER_ITERATE_TEMPLATE, needle);
+  }
+
+  ensureContains(HYPER_ITERATE_TEMPLATE, "**Intent:** <probe | implement | validate | split | reroute | stop>");
+  ensureContains(HYPER_ITERATE_TEMPLATE, "- P1 — <first meaningful slice> — doing");
+  ensureContains(HYPER_ITERATE_TEMPLATE, "- Next atomic move: <what to do first on resume>");
+  ensureContains(HYPER_ITERATE_TEMPLATE, "- Dirty or unvalidated state: <none | what has changed but is not yet validated>");
+
+  ensureContains(HYPER_ITERATE_SKILL, "## Resume protocol for long loops");
+  ensureContains(HYPER_ITERATE_SKILL, "1. **Hot state — always read first**");
+  ensureContains(HYPER_ITERATE_SKILL, "2. **Warm state — read when the next move still needs context**");
+  ensureContains(HYPER_ITERATE_SKILL, "3. **Cold state — read only on demand**");
+  ensureContains(HYPER_ITERATE_SKILL, "## Delegation inside long loops");
+  ensureContains(HYPER_ITERATE_SKILL, "Default delegation patterns:");
+  ensureContains(HYPER_ITERATE_SKILL, "Require the child to return a compact summary with:");
+  ensureContains(HYPER_ITERATE_SKILL, "only these statuses: `todo`, `doing`, `done`, `blocked`, `dropped`.");
+  ensureContains(HYPER_ITERATE_SKILL, "Do not create `01-intake.md`, `02-spec.md`, `03-technical-plan.md`, `04-execution-plan.md`, or task folders from this skill.");
+
+  ensureContains(README, "/hyper-iterate L3");
+  ensureContains(README, "bounded delegated slices");
+  ensureContains(README, ".hyper/loops/");
+
+  ensureContains(DATA_MODEL, "## `.hyper/loops/`");
+  ensureContains(DATA_MODEL, "evidence digest");
+  ensureContains(DATA_MODEL, "relevant artifacts");
+}
+
 function main() {
   validateSkillFiles();
   validateReadmeAndDataModel();
+  validateHyperIterate();
 
   if (ERRORS.length > 0) {
     process.stdout.write("Hyper validation failed:\n\n");
