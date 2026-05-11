@@ -55,22 +55,23 @@ updated: <YYYY-MM-DDTHH:MM:SS>
 
 ## Cycles
 
-```markdown
-### Cycle N — <timestamp> — <short title>
-**Intent:** <probe | implement | validate | split | reroute | stop>
+<!--
+Cycle entry shape — append entries below this comment as `### Cycle N — <YYYY-MM-DDTHH:MM:SS> — <short title>`:
 
-**Orient:** <What matters now and why this move is next.>
+  **Intent:** <probe | implement | validate | split | reroute | stop>
 
-**Action:** <Smallest meaningful move taken.>
+  **Orient:** <What matters now and why this move is next.>
 
-**Evidence:** <Exact result.>
+  **Action:** <Smallest meaningful move taken.>
 
-**Learning:** <What changed in our understanding.>
+  **Evidence:** <Exact result.>
 
-**Next:** <Continue | back up | split further | validate | stop | promote to hyper.>
-```
+  **Learning:** <What changed in our understanding.>
 
-_Add cycles below as work happens._
+  **Next:** <Continue | back up | split further | validate | stop | promote to hyper.>
+-->
+
+_No cycles yet._
 
 ## Handoff cues
 - Next atomic move: <what to do first on resume>

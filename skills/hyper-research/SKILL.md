@@ -34,10 +34,15 @@ reading or writing `.hyper/` paths. The data model is in
    revise the artifact and return `awaiting-approval`.
 3. Re-read `01-intake.md`.
 4. Research the codebase and any relevant external sources the request needs.
+   Exhaust code exploration and online research first.
 5. Capture findings, alternatives, recommendation, and follow-ups in
    `research.md` from `templates/research.md`.
-6. Ask one question per message if a user answer is required to finish the
-   recommendation. Return `awaiting-input` while questions remain.
+6. Interview the user on anything only they can answer — intent, preference,
+   constraint, business context. Walk down each branch of the decision tree,
+   resolving dependencies between decisions one-by-one. One question per
+   message, wait for the answer, then ask the next. Return `awaiting-input`
+   while questions remain. If a question can be answered by reading the
+   codebase or public docs, answer it that way instead of asking.
 7. Return `awaiting-approval`.
 
 ## Return contract

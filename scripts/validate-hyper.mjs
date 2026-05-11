@@ -254,10 +254,11 @@ function validateHyperIterate() {
   ensureContains(HYPER_ITERATE_TEMPLATE, "- Next atomic move: <what to do first on resume>");
   ensureContains(HYPER_ITERATE_TEMPLATE, "- Dirty or unvalidated state: <none | what has changed but is not yet validated>");
 
-  ensureContains(HYPER_ITERATE_SKILL, "## Resume protocol for long loops");
+  ensureContains(HYPER_ITERATE_SKILL, "## Resume");
   ensureContains(HYPER_ITERATE_SKILL, "1. **Hot state — always read first**");
   ensureContains(HYPER_ITERATE_SKILL, "2. **Warm state — read when the next move still needs context**");
   ensureContains(HYPER_ITERATE_SKILL, "3. **Cold state — read only on demand**");
+  ensureContains(HYPER_ITERATE_SKILL, "<hyper-state-root>/.hyper/loops/L<N>-<slug>/");
   ensureContains(HYPER_ITERATE_SKILL, "## Delegation inside long loops");
   ensureContains(HYPER_ITERATE_SKILL, "Default delegation patterns:");
   ensureContains(HYPER_ITERATE_SKILL, "Require the child to return a compact summary with:");

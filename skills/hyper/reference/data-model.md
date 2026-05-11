@@ -33,6 +33,9 @@ worktree. Plain markdown. No database, no CLI, no hidden state.
   retro.md
   recipes/
   loops/
+    L1-fix-flaky-build/
+      loop.md
+      cycle3-build-log.txt
 ```
 
 - Task folders are named `T<N>-<kebab-slug>`.
@@ -294,9 +297,18 @@ Required sections:
 
 Owned by `hyper-iterate`.
 
-Loop files are named `L<N>-<kebab-slug>.md`. These loops are standalone
-adaptive-work artifacts, not task folders, and they do not participate in
-Hyper phase routing.
+Each loop lives in its own folder named `L<N>-<kebab-slug>/`. The folder
+contains:
+
+- `loop.md` — the canonical loop file, written from
+  `skills/hyper-iterate/templates/loop.md`.
+- optional evidence files (logs, command output, screenshots, diffs)
+  referenced from `## Relevant artifacts` in `loop.md`. Subfolders are allowed
+  when grouping helps.
+
+Loop ids are allocated by scanning `loops/` for folders matching `L<N>-*` and
+adding 1; ids are never reused. Loops are standalone adaptive-work artifacts,
+not Hyper task folders, and they do not participate in Hyper phase routing.
 
 Loop frontmatter fields:
 
