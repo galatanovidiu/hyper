@@ -22,6 +22,7 @@ worktree. Plain markdown. No database, no CLI, no hidden state.
       T20.1-first-slice.md
       T20.2-second-slice.md
       checks.md
+      plan-conflict.md
       handoff.md
       retro.md
   archive/
@@ -265,7 +266,7 @@ role: none
 | `status` | `todo` · `in-progress` · `done` | Dispatch state. |
 | `depends` | list of sibling ids | Required completed subtasks. |
 | `writes` | list of paths or narrow globs | Worker ownership boundary. |
-| `awaiting` | `null` · `user-input` | Subtask-level blocker. |
+| `awaiting` | `null` · `user-input` · `plan-conflict` | Subtask-level blocker. |
 | `role` | `none` · `test` · `impl` | Optional TDD pairing role. |
 
 ## `05-execution-plan-review.md`
@@ -294,6 +295,42 @@ Required sections:
 3. `## review`
 4. `## qa`
 5. `## docs` (feature tasks after docs phase)
+
+## `plan-conflict.md`
+
+Written by `hyper-implement` when one or more subtasks raise design conflicts.
+Read by `hyper-technical-plan` on conflict-triggered re-entry. Present only
+when the `implement -> technical-plan` redirect fires; deleted by
+`hyper-implement` on the next re-entry to `implement` after the revised plan
+is approved.
+
+Frontmatter:
+
+```yaml
+raised_at: <YYYY-MM-DDTHH:MM:SS>
+task: T<N>
+```
+
+Required sections:
+
+1. **Conflicts** — one entry per conflict, with sub-fields:
+   - `raised_by: <subtask-id|orchestrator>`
+   - `revival_signal: <alternative name from 03-technical-plan §Alternatives considered, or `none`>`
+   - **Broken assumption**
+   - **Evidence**
+   - **Recommendation** (optional)
+2. **Recommended re-slicing** — `none` · `partial` · `full` — what the
+   implementer believes the technical-plan revision will need.
+
+The orchestrator-raised path (`raised_by: orchestrator`) is reserved for a
+future iteration; in the current contract only workers raise conflicts. The
+frontmatter and per-conflict `raised_by` field are defined now for
+forward-compatibility.
+
+Subtask files raising a conflict carry an optional `## Plan conflict` section
+mirroring the per-conflict shape above (minus `raised_by`, which is implied
+by the file's own id). This section appears only when the subtask's
+`awaiting: plan-conflict`.
 
 ## `.hyper/loops/`
 

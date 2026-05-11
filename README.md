@@ -136,6 +136,7 @@ Approval gates happen where direction matters:
       T1.1-add-login-tests.md
       T1.2-implement-login.md
       checks.md
+      plan-conflict.md
       handoff.md
       retro.md
   archive/
@@ -155,6 +156,7 @@ The most useful files are:
 - `03-technical-plan.md`: approved technical shape
 - `04-execution-plan.md`: worker-facing execution overview
 - `checks.md`: test, review, QA, and docs results
+- `plan-conflict.md`: written when implementation surfaces a design conflict and the task redirects back to `technical-plan`; carries the broken assumption, evidence, and revival signal so the design phase can revise against a concrete trigger
 - `.hyper/loops/`: adaptive work logs that keep route, parts, evidence digest, relevant artifacts, decisions, and handoff cues for `hyper-iterate`; long loops can still use bounded delegated slices when the host supports sub-agents
 
 Add `.hyper/` to `.gitignore` unless you intentionally want to share task

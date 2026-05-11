@@ -19,6 +19,10 @@ coordinate.
 - Phase skills own their artifacts and the phase-specific classification fields
   on `task.md` (`scope`, `bugfix`). They do not write `phase` or `awaiting`.
 - `hyper-worker` owns subtask files' `status` and `awaiting`.
+- `hyper-implement` may write subtask files' `status` and `awaiting` *only*
+  when resetting subtasks named in the revised technical plan's `##
+  Invalidated subtasks` section, after a conflict-triggered re-entry.
+  Otherwise the worker-owns-its-own-fields rule above holds.
 
 ## Verdict vocabulary
 
@@ -29,7 +33,7 @@ Every phase dispatch ends with exactly one verdict:
 | `awaiting-approval` | Artifact written; user approval required. | Set `task.md` `awaiting: user-approval` and stop. |
 | `awaiting-input` | Open question(s) remain, or a user-choice prompt is required. | Set `task.md` `awaiting: user-input` and stop. |
 | `phase-complete` | Phase is done and ready to advance. | Clear `awaiting`, apply the transition table, and apply any checkpoint prompt. |
-| `redirect target: <phase>` | Non-linear transition. | Clear stale `awaiting`, set `phase: <target>`, and re-enter dispatch. For `verify -> implement`, also set `awaiting: user-input`. |
+| `redirect target: <phase>` | Non-linear transition. | Clear stale `awaiting`, set `phase: <target>`, and re-enter dispatch. For `verify -> implement` and `implement -> technical-plan`, also set `awaiting: user-input`. |
 
 ## Phase transition table
 
@@ -64,6 +68,8 @@ For `redirect`:
 |------------|---------|--------------|
 | `execution-plan` | `redirect target: spec` | `phase: spec`, `awaiting: null` |
 | `execution-plan` | `redirect target: technical-plan` | `phase: technical-plan`, `awaiting: null` |
+| `implement` | `redirect target: technical-plan` | `phase: technical-plan`, `awaiting: user-input` |
+| `technical-plan` | `redirect target: implement` | `phase: implement`, `awaiting: null` |
 | `verify` | `redirect target: implement` | `phase: implement`, `awaiting: user-input` |
 
 ## What counts as a reply
@@ -128,6 +134,12 @@ For blocked verify results:
 - `hyper` sets `phase: implement` and `awaiting: user-input`
 - `checks.md` is the remediation source for the next implement dispatch
 
+For blocked implement results from plan conflicts:
+
+- `hyper-implement` writes `plan-conflict.md` and returns `redirect target: technical-plan`
+- `hyper` sets `phase: technical-plan` and `awaiting: user-input`
+- `plan-conflict.md` is the remediation source for the next technical-plan dispatch
+
 ## Subtask-level awaiting propagation
 
 - `hyper-implement` detects blocked subtasks and returns `awaiting-input`
@@ -135,6 +147,15 @@ For blocked verify results:
 - on the user's reply, `hyper` re-dispatches `hyper-implement`
 - the orchestrator records the answer, clears the subtask's `awaiting`, and
   resumes dispatch
+
+For plan-conflict subtasks:
+
+- `hyper-implement` detects subtasks with `awaiting: plan-conflict`, rolls
+  them up into `plan-conflict.md`, and returns `redirect target:
+  technical-plan`
+- `hyper` sets `task.md` `phase: technical-plan` and `awaiting: user-input`
+- on the user's reply, `hyper` dispatches `hyper-technical-plan` which reads
+  `plan-conflict.md` before revising the plan
 
 ## Never do this
 

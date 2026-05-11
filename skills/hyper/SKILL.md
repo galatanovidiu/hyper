@@ -152,7 +152,14 @@ Apply `reference/gates.md`:
 - `awaiting-approval` -> set `awaiting: user-approval`, stop
 - `awaiting-input` -> set `awaiting: user-input`, stop
 - `phase-complete` -> clear `awaiting`, apply the transition table
-- `redirect target: <phase>` -> set that phase and re-enter dispatch
+- `redirect target: <phase>` -> set that phase and re-enter dispatch. For
+  `verify -> implement` and `implement -> technical-plan`, also set
+  `awaiting: user-input`.
+
+On `redirect target: technical-plan` from `implement`, do not delete
+`plan-conflict.md`; it is the input to the next technical-plan dispatch.
+`hyper-implement` deletes it on the subsequent re-entry per its re-entry
+behavior.
 
 ### Regenerate dashboard
 

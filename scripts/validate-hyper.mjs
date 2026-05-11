@@ -16,6 +16,11 @@ const HYPER_ITERATE_SKILL = path.join(ROOT, "skills", "hyper-iterate", "SKILL.md
 const HYPER_ITERATE_TEMPLATE = path.join(ROOT, "skills", "hyper-iterate", "templates", "loop.md");
 const HYPER_TECHNICAL_PLAN_TEMPLATE = path.join(ROOT, "skills", "hyper-technical-plan", "templates", "03-technical-plan.md");
 const HYPER_TECHNICAL_PLAN_BUGFIX_TEMPLATE = path.join(ROOT, "skills", "hyper-technical-plan", "templates", "03-technical-plan-bugfix.md");
+const HYPER_SKILL = path.join(ROOT, "skills", "hyper", "SKILL.md");
+const HYPER_GATES = path.join(ROOT, "skills", "hyper", "reference", "gates.md");
+const HYPER_IMPLEMENT_SKILL = path.join(ROOT, "skills", "hyper-implement", "SKILL.md");
+const HYPER_WORKER_SKILL = path.join(ROOT, "skills", "hyper-worker", "SKILL.md");
+const HYPER_TECHNICAL_PLAN_SKILL = path.join(ROOT, "skills", "hyper-technical-plan", "SKILL.md");
 
 const USER_FACING_HYPER = new Set([
   "hyper",
@@ -280,10 +285,39 @@ function validateHyperIterate() {
   ensureContains(DATA_MODEL, "relevant artifacts");
 }
 
+function validatePlanConflictRedirect() {
+  // Gates contract — new redirect row and remediation gates section.
+  ensureContains(HYPER_GATES, "`implement` | `redirect target: technical-plan`");
+  ensureContains(HYPER_GATES, "`phase: technical-plan`, `awaiting: user-input`");
+  ensureContains(HYPER_GATES, "`technical-plan` | `redirect target: implement`");
+  ensureContains(HYPER_GATES, "For blocked implement results from plan conflicts:");
+  ensureContains(HYPER_GATES, "For plan-conflict subtasks:");
+
+  // Data model — new artifact, new subtask enum value.
+  ensureContains(DATA_MODEL, "## `plan-conflict.md`");
+  ensureContains(DATA_MODEL, "`null` · `user-input` · `plan-conflict`");
+
+  // hyper-implement — extended return contract and re-entry section.
+  ensureContains(HYPER_IMPLEMENT_SKILL, "`redirect target: technical-plan`");
+  ensureContains(HYPER_IMPLEMENT_SKILL, "## Re-entry behavior");
+
+  // hyper-worker — plan-conflict awaiting value and revival_signal field.
+  ensureContains(HYPER_WORKER_SKILL, "`awaiting: plan-conflict`");
+  ensureContains(HYPER_WORKER_SKILL, "`revival_signal:");
+
+  // hyper-technical-plan — plan-conflict.md input and invalidated subtasks.
+  ensureContains(HYPER_TECHNICAL_PLAN_SKILL, "`plan-conflict.md`");
+  ensureContains(HYPER_TECHNICAL_PLAN_SKILL, "## Invalidated subtasks");
+
+  // hyper — redirect mention of the new transition.
+  ensureContains(HYPER_SKILL, "implement -> technical-plan");
+}
+
 function main() {
   validateSkillFiles();
   validateReadmeAndDataModel();
   validateHyperIterate();
+  validatePlanConflictRedirect();
 
   if (ERRORS.length > 0) {
     process.stdout.write("Hyper validation failed:\n\n");
