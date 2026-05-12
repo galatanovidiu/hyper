@@ -30,7 +30,9 @@ Skip Hyper for tiny, obvious edits.
 
 For tracked adaptive work where the destination is known or can be stated but
 the route should evolve through live feedback instead of a full phase workflow,
-use `hyper-iterate`.
+use `hyper-iterate`. It starts with an interview-style alignment pass: state
+your understanding, scan the codebase, report what already exists, agree the
+big plan, then implement part by part with approval gates.
 
 ## Install
 
@@ -157,7 +159,7 @@ The most useful files are:
 - `04-execution-plan.md`: worker-facing execution overview
 - `checks.md`: test, review, QA, and docs results
 - `plan-conflict.md`: written when implementation surfaces a design conflict and the task redirects back to `technical-plan`; carries the broken assumption, evidence, and revival signal so the design phase can revise against a concrete trigger
-- `.hyper/loops/`: adaptive work logs that keep route, parts, evidence digest, relevant artifacts, decisions, and handoff cues for `hyper-iterate`; long loops can still use bounded delegated slices when the host supports sub-agents
+- `.hyper/loops/`: adaptive work logs for `hyper-iterate` that keep task understanding, codebase findings, the agreed big plan, part-level plans, route, evidence digest, relevant artifacts, decisions, and handoff cues; long loops can still use bounded delegated slices when the host supports sub-agents
 
 Add `.hyper/` to `.gitignore` unless you intentionally want to share task
 history.
@@ -186,7 +188,7 @@ User-facing skill names:
 | `/hyper-retro` | Record lessons after a task or session. |
 | `/hyper-code-review` | Review an arbitrary diff, branch, PR, or staged change. |
 | `/hyper-recipe` | Manage reusable project-local procedures in `.hyper/recipes/`. |
-| `/hyper-iterate` | Run an adaptive OODA-style loop in `.hyper/loops/` for goal-led work that should course-correct while it executes; long loops may use bounded delegated slices while one parent-owned loop stays authoritative. |
+| `/hyper-iterate` | Run an adaptive OODA-style loop in `.hyper/loops/` for goal-led work that should course-correct while it executes. It begins with understanding, code scan, findings, and an agreed plan, then moves part by part through the same approval gate. Long loops may use bounded delegated slices while one parent-owned loop stays authoritative. |
 | `/hyper-team` | Ask another AI agent CLI for a second opinion. |
 
 Internal skills such as `hyper-intake`, `hyper-spec`,
