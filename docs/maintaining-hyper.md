@@ -18,9 +18,9 @@ The validator checks a small set of structural contracts:
 - referenced `templates/` and `reference/` files exist
 - named skill handoffs point to real shipped skills
 - README and the Hyper data model still describe the current skill inventory
-- `hyper-iterate` keeps its loop frontmatter, required sections, resume buckets,
-  intent vocabulary, and no-task-artifact boundary aligned across the skill,
-  template, README, and data model
+- `hyper-iterate` keeps its loop frontmatter, required sections, approval-gate
+  sections, resume buckets, intent vocabulary, and no-task-artifact boundary
+  aligned across the skill, template, README, and data model
 
 It is intentionally lightweight. Keep doing real `/hyper` dry runs in a
 throwaway project for workflow changes.
@@ -73,6 +73,7 @@ These surfaces are the easiest to drift:
    - README loop examples and wording
    - `scripts/validate-hyper.mjs`
    - optional eval hook: `scripts/eval-hooks/validate-iterate-loop.sh`
+   - hard gate stays intact: understanding -> code scan -> findings -> agreed big plan -> part-level approvals -> cycles
 
 ## When adding or renaming a skill
 
