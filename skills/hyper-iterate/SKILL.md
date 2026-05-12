@@ -2,6 +2,8 @@
 name: hyper-iterate
 description: >
   Adaptive OODA-style loop for goal-led work where the destination is known but the route should evolve through contact with reality. Each loop lives in `.hyper/loops/L<N>-<slug>/loop.md` so a fresh session can resume without re-deriving the task. Use when the user wants to work iteratively, course-correct mid-flight, probe before committing, or split a goal into adaptive slices. Keywords: hyper, iterate, loop, ooda, adaptive, probe, course correct.
+argument-hint: "[L<N>|new]"
+allowed-tools: Read Write Edit Glob Grep Bash(ls *) Bash(find *) Bash(mkdir *) Bash(date *) Bash(git log *) Bash(git status *)
 ---
 
 # hyper-iterate
@@ -9,6 +11,14 @@ description: >
 Run tracked adaptive work: observe, orient, decide, act, repeat. Use it when the goal is clear but the path is not, and the path should stay flexible while the work unfolds.
 
 Bad fits: tiny obvious edits, pure research with no system contact, or work that already needs formal approval gates.
+
+## Now
+
+!`date -u +%Y-%m-%dT%H:%M:%S`
+
+## Existing loops
+
+!`ls -1 .hyper/loops/ 2>/dev/null || echo "no loops yet"`
 
 ## Loop artifact
 
