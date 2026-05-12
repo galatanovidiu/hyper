@@ -120,10 +120,11 @@ For each cycle:
 1. **Observe** — read or run only enough to see the next useful move.
 2. **Orient** — state what matters now: hypothesis, risk, or why this slice is next.
 3. **Prior belief** — name what you expected to be true going into this cycle. `same as cycle N-1` is acceptable when nothing has shifted; the value is in making the belief explicit, not in forcing novelty.
-4. **Decide** — one intent: `probe | implement | validate | split | reroute | stop`.
+4. **Decide** — one intent: `probe | implement | validate | split | reroute | reframe | stop`.
+   - `reframe` — evidence suggests the loop's goal itself was wrong, not just the route. Stop the cycle, update `## Goal` and `## Why`, and re-run the alignment gate (`## Task understanding`, `## Existing code and findings`, `## Agreed big plan`) before any further work. Distinct from `reroute` (same goal, different path) and `stop` (goal reached or abandoned).
 5. **Act** — the smallest meaningful move that advances the chosen intent.
 6. **Evidence** — capture the exact result. If raw output is large, save it inside the loop folder, keep the decisive excerpt in the cycle, and link the file from `## Relevant artifacts`.
-7. **Learning** — what the evidence changed about the prior belief, the goal, route, parts, or risks.
+7. **Learning** — what the evidence changed about the prior belief, the route, the parts, or the risks. Then explicitly ask: **is the goal still the right goal?** If no, the next intent must be `reframe`, not `reroute`.
 8. **Route impact** — how this cycle changes the route or parts for the next cycle. `no change` is a valid finding and itself a useful signal.
 9. **Update living state** — refresh whatever sections the cycle changed.
 10. **If the next move opens a new part or changes a part plan, stop and refresh `## Part alignment` first.** Re-enter implementation only after the user approves that part plan.
@@ -168,6 +169,7 @@ Mark `status: done` and fill `## Outcome` when the definition of done is met, th
 - Do not reopen done loops.
 - When the work starts needing approvals or formal coordination beyond the loop-level and part-level gates, recommend switching to a planned workflow.
 - Do not create `01-intake.md`, `02-spec.md`, `03-technical-plan.md`, `04-execution-plan.md`, or task folders from this skill. Use `hyper` for tracked work.
+- When the user pivots mid-loop ("actually, I'm thinking about X", "what if we tried Y", "I want to investigate something else"), treat it as a goal-reframe signal until proven otherwise. Stop the current cycle, surface the pivot, and re-run the alignment gate if the goal shifted. Do not silently absorb the pivot as a part-plan tweak.
 
 ## Template — `loop.md`
 
