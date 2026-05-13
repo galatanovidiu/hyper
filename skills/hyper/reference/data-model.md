@@ -189,6 +189,15 @@ Bugfix structure:
 
 The `repro_status` enum is `deterministic`, `intermittent`, or `no-repro`.
 
+`## Invalidated subtasks` is a conditionally-present section appended by
+`hyper-technical-plan` on conflict-triggered re-entry only (the
+`implement -> technical-plan` redirect path). It lists subtask ids whose
+previously-`done` state is invalidated by the revised plan; `hyper-implement`
+reads it on re-entry and resets those subtasks. Legal body: a bullet list of
+subtask ids, or the single word `None.` when the revision invalidates no
+prior `done` subtask. The section is absent on the initial pass and on
+revisions that do not invalidate any prior work.
+
 Feature-scope tasks approve `03-technical-plan.md` before moving to
 `04-execution-plan.md`. Quick tasks approve it before moving to `implement`.
 
@@ -294,7 +303,8 @@ Required sections:
 2. `## tests`
 3. `## review`
 4. `## qa`
-5. `## docs` (feature tasks after docs phase)
+5. `## docs` — section is seeded by `hyper-verify` and filled by `hyper-docs`
+   on feature tasks; remains a stub on quick scope.
 
 ## `plan-conflict.md`
 
@@ -314,18 +324,13 @@ task: T<N>
 Required sections:
 
 1. **Conflicts** — one entry per conflict, with sub-fields:
-   - `raised_by: <subtask-id|orchestrator>`
+   - `raised_by: <subtask-id>`
    - `revival_signal: <alternative name from 03-technical-plan §Alternatives considered, or `none`>`
    - **Broken assumption**
    - **Evidence**
    - **Recommendation** (optional)
 2. **Recommended re-slicing** — `none` · `partial` · `full` — what the
    implementer believes the technical-plan revision will need.
-
-The orchestrator-raised path (`raised_by: orchestrator`) is reserved for a
-future iteration; in the current contract only workers raise conflicts. The
-frontmatter and per-conflict `raised_by` field are defined now for
-forward-compatibility.
 
 Subtask files raising a conflict carry an optional `## Plan conflict` section
 mirroring the per-conflict shape above (minus `raised_by`, which is implied
@@ -364,7 +369,7 @@ Each loop combines:
 - **Living state** — goal, constraints, definition of done, task
   understanding, existing code and findings, agreed big plan, current route,
   current focus, current bar, parts, part alignment, evidence digest,
-  relevant artifacts, handoff cues, memory candidates, and final outcome
+  relevant artifacts, handoff cues, and final outcome
 - **Evidence history** — bar history, route shifts, decisions, starting point,
   and cycle log
 
