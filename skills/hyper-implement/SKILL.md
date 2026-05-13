@@ -65,14 +65,18 @@ reading or writing `.hyper/` paths. The data model is in
    above), return `awaiting-input`.
 10. When all subtasks are `done`, return `phase-complete`.
 
-## Feature orchestration rules
+## Rules
 
-- When a load-bearing orchestration choice is settled (a
-  conflict-driven re-slicing recommendation, a worker-blocker
+- When a load-bearing orchestration choice is settled at any scope
+  (a conflict-driven re-slicing recommendation, a worker-blocker
   escalation that changes the slicing assumptions, a remediation that
-  expands scope beyond `checks.md` findings), append a `## Decisions`
+  expands scope beyond `checks.md` findings, a quick-scope opt-out
+  from a documented `checks.md` remediation), append a `## Decisions`
   entry to `dashboard.md` per `../hyper/reference/dashboard.md`
   §Decisions log contract, authoring as `implement`.
+
+## Feature orchestration rules
+
 - Do not edit implementation files yourself for feature-scope work unless you
   are performing a verify remediation that is too small to dispatch safely.
 - Treat `writes` as a hard ownership boundary.

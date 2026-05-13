@@ -148,7 +148,8 @@ if needed.
 ## After the phase returns
 
 Apply the verdict mapping in `reference/gates.md` §Verdict vocabulary and the
-redirect mapping in `reference/gates.md` §For `redirect`.
+redirect mapping in `reference/gates.md` §Phase transition table (the
+redirect rows live inside that section).
 
 On `redirect target: technical-plan` from `implement`, do not delete
 `plan-conflict.md`; it is the input to the next technical-plan dispatch.
@@ -170,7 +171,8 @@ When a transition sets `phase: done`, archive the task folder per
 ### Verify checkpoint
 
 The gate contract owns when `implement -> verify` and `verify -> docs` stop for
-a checkpoint prompt. Render the prompt per `reference/gates.md` and stop —
-the `pass` branch is a fixed string and the `needs-changes` branch is a
-remediation-aware prompt rendered at runtime. The next user reply re-dispatches
-the task into the chosen next step.
+a checkpoint prompt. Render the prompt per `reference/gates.md` and stop. For
+`verify -> docs`, the `pass` branch is a fixed string and the `needs-changes`
+branch is a remediation-aware prompt rendered at runtime; for
+`implement -> verify`, the prompt is a single fixed string. The next user
+reply re-dispatches the task into the chosen next step.

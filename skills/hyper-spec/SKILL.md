@@ -48,6 +48,12 @@ reading or writing `.hyper/` paths. The data model is in
   unless the user already constrained them.
 - User stories are optional inline content inside `02-spec.md`; never create a
   separate user-stories artifact.
+- When a load-bearing spec-level choice is settled (a non-goal that
+  changes accepted outcomes, an opt-out from a usually-required
+  acceptance signal, or a constraint that closes off a downstream
+  approach), append a `## Decisions` entry to `dashboard.md` per
+  `../hyper/reference/dashboard.md` §Decisions log contract, authoring
+  as `spec`.
 
 ## Return contract
 
