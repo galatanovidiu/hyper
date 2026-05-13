@@ -67,6 +67,12 @@ reading or writing `.hyper/` paths. The data model is in
 
 ## Feature orchestration rules
 
+- When a load-bearing orchestration choice is settled (a
+  conflict-driven re-slicing recommendation, a worker-blocker
+  escalation that changes the slicing assumptions, a remediation that
+  expands scope beyond `checks.md` findings), append a `## Decisions`
+  entry to `dashboard.md` per `../hyper/reference/dashboard.md`
+  §Decisions log contract, authoring as `implement`.
 - Do not edit implementation files yourself for feature-scope work unless you
   are performing a verify remediation that is too small to dispatch safely.
 - Treat `writes` as a hard ownership boundary.

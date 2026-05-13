@@ -147,3 +147,12 @@ Allowed authors:
 
 Only load-bearing choices belong here. Routine approvals and ordinary phase
 progression are not decisions.
+
+Phase skills append a Decisions entry whenever they settle a load-bearing
+choice — approach picked, opt-out chosen, fallback selected, conflict
+resolved by re-slicing, blocked-overall ruling, and similar non-routine
+calls. The append happens at the moment the choice is settled, not later.
+The orchestrator does not regenerate `## Decisions`; the append-only log
+is preserved through every dashboard regeneration (see Failure handling
+above). The user may also append manually at any time, authoring as
+`user`.

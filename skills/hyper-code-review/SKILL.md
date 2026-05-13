@@ -36,7 +36,10 @@ Used when the user directly asks for a review.
 
 1. Inspect the requested diff, branch, PR, or staged changes.
 2. Create a `scope: code-review` task only when the user wants the review
-   tracked under `.hyper/`.
+   tracked under `.hyper/`. New tracked tasks start with `phase: review`,
+   `scope: code-review`, `awaiting: null`; the `review -> done` transition
+   happens at step 4 below per the `code-review` flow in
+   `../hyper/reference/data-model.md`.
 3. Return findings first, ordered by severity, with file and line references.
 4. If tracked, write `checks.md`, set `phase: done`, and archive the folder.
 

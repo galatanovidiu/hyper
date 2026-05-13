@@ -31,6 +31,11 @@ reading or writing `.hyper/` paths.
 
 ## Rules
 
+- When a load-bearing docs choice is settled (a deliberate
+  non-update of a usually-affected surface, or a divergence from
+  established docs convention), append a `## Decisions` entry to
+  `dashboard.md` per `../hyper/reference/dashboard.md` §Decisions log
+  contract, authoring as `docs`.
 - Do not change behavior in docs phase.
 - Do not edit Hyper task artifacts other than `checks.md`.
 - If docs reveal a real product or implementation problem, stop and return

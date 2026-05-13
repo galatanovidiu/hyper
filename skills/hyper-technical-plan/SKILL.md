@@ -120,6 +120,10 @@ reading or writing `.hyper/` paths. The data model is in
 
 ## Rules
 
+- When the chosen approach is settled (or when a conflict-revision
+  re-opens an alternative), append a `## Decisions` entry to
+  `dashboard.md` per `../hyper/reference/dashboard.md` §Decisions log
+  contract, authoring as `technical-plan`.
 - `quick` tasks still get a real technical plan, but keep it short and local.
 - `feature` tasks should compare plausible approaches and recommend one.
 - `bugfix` tasks do not pass through `spec`.

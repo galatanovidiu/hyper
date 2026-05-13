@@ -45,6 +45,12 @@ reading or writing `.hyper/` paths. The data model is in
    codebase or public docs, answer it that way instead of asking.
 7. Return `awaiting-approval`.
 
+## Rules
+
+- When the recommendation is settled, append a `## Decisions` entry
+  to `dashboard.md` per `../hyper/reference/dashboard.md` §Decisions
+  log contract, authoring as `research`.
+
 ## Return contract
 
 - `awaiting-input` — unresolved research question remains

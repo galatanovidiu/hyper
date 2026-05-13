@@ -58,3 +58,12 @@ reading or writing `.hyper/` paths. The data model is in
   the block is recorded in `checks.md` for the user to resolve
 - `phase-complete` — verification is complete
 - `redirect target: implement` — remediation requires code changes
+
+## Rules
+
+- When a load-bearing verify ruling is settled (an `Overall: blocked`
+  decision tied to a specific upstream gap, or a `needs-changes`
+  verdict whose remediation expands scope beyond the change under
+  review), append a `## Decisions` entry to `dashboard.md` per
+  `../hyper/reference/dashboard.md` §Decisions log contract, authoring
+  as `verify`.

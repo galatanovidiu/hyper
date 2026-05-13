@@ -72,6 +72,14 @@ When returning `awaiting-approval`, tell the user exactly what to review:
 `I captured this as scope: <scope>, bugfix: <true|false>. Please review
 01-intake.md. Reply continue, or tell me what to change.`
 
+## Rules
+
+- When classification settles a non-obvious call (scope vs scope, or
+  `bugfix: true|false` against a hybrid request), append a
+  `## Decisions` entry to `dashboard.md` per
+  `../hyper/reference/dashboard.md` §Decisions log contract, authoring
+  as `intake`.
+
 ## Return contract
 
 - `awaiting-input` — a classification or success-criteria question remains

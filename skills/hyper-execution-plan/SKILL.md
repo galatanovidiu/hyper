@@ -62,6 +62,11 @@ reading or writing `.hyper/` paths. The data model is in
   artifacts.
 - Keep `04-execution-plan.md` tool-neutral. Do not name a specific harness or
   sub-agent API in the plan.
+- When a load-bearing slicing or ownership choice is settled (parallel
+  vs serial decomposition, test/impl pairing strategy, conflict-driven
+  re-slicing), append a `## Decisions` entry to `dashboard.md` per
+  `../hyper/reference/dashboard.md` §Decisions log contract, authoring
+  as `execution-plan`.
 
 ## Return contract
 
