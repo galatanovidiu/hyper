@@ -176,5 +176,7 @@ _No verify runs yet._
 Close summary: Not finished yet.
 Verify link: None yet.
 <!-- Legal values: None yet. | Verify N | n/a -->
-Close-without-verify reason (only when Verify link: n/a): n/a
-Unfinished items (only when Verify link: n/a): n/a
+<!-- When Verify link: n/a, add:
+Close-without-verify reason: <reason>
+Unfinished items: <what still matters>
+-->
