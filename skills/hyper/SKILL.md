@@ -104,7 +104,12 @@ For active tasks with no open gate:
 
 ## Create task
 
-1. Determine the next task id by scanning both `tasks/` and `archive/`.
+1. Determine the next task id by scanning folder names in `tasks/ ∪ archive/`. For each
+   folder, extract the task number using either pattern:
+   - `T(\d+)-.*` — unenrolled task (group 1 is the task number)
+   - `E\d+T(\d+)-.*` — epic-enrolled task (group 1 is the task number, not the epic number)
+
+   Take the highest number found and add 1.
 2. Derive a short title and kebab-case slug.
 3. Draft the task body from the user's request, carrying a `## Why` section
    when the request already includes a clear motivation worth preserving.
@@ -113,9 +118,16 @@ For active tasks with no open gate:
    - `scope: unknown`
    - `bugfix: false`
    - `awaiting: null`
+4a. (Conditional — only when both conditions hold) If `.hyper/epics.md` exists and the
+    user's request includes `--epic E<N>` or equivalent phrasing assigning this new task
+    to an epic at creation time: write `epic: E<N>` to the new `task.md` frontmatter, and
+    name the folder `E<N>T<M>-<slug>` instead of `T<M>-<slug>`. Update the `epics.md`
+    Tasks column to include the new task id. When neither condition holds, task creation
+    is identical to the standard flow.
 5. Seed `dashboard.md` from `templates/dashboard.md`, filling `## Goal` from
    the drafted task body.
 6. Announce: `Created T<N> — <title>. Starting intake phase.`
+   If `.hyper/repo.md` exists, also emit: `"Tip: Run \`hyper-sync pull\` first to get the latest team state before creating tasks."`
 
 ## Dispatch phase
 
@@ -172,6 +184,7 @@ Skip dashboard generation for `scope: code-review`.
 
 When a transition sets `phase: done`, archive the task folder per
 `reference/archive.md` before announcing completion.
+If `.hyper/repo.md` exists, emit: `"Task archived. Run \`hyper-sync push\` to share with your team."`
 
 ### Verify checkpoint
 
