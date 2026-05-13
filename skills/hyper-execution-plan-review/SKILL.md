@@ -50,4 +50,9 @@ Write `05-execution-plan-review.md` from
 - `blocked` — an upstream answer, spec change, or technical-plan change is
   required
 
-Return the verdict to `hyper-execution-plan`.
+## Return contract
+
+This skill is invoked by `hyper-execution-plan`, not by `hyper` directly. It
+returns the verdict above directly to `hyper-execution-plan`, which folds it
+into its own return contract to `hyper`. The verdict is also written verbatim
+to `05-execution-plan-review.md` so the next dispatch can read it on disk.

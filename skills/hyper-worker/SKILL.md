@@ -68,3 +68,19 @@ reading or writing `.hyper/` paths. Read
 - Do not work around a broken plan assumption silently. The plan-conflict
   channel exists so the design phase can revise; bypassing it loses the
   design escalation signal.
+
+## Return contract
+
+A worker never returns a phase-level verdict to `hyper`; it mutates exactly
+one subtask file and exits. `hyper-implement` reads the subtask's final state
+and rolls it up into the phase verdict per its own return contract.
+
+The subtask file's terminal state on a worker exit is one of:
+
+- `status: done`, `awaiting: null` — slice implemented; `## Completion`
+  written with file-grouped notes and check results
+- `status: in-progress`, `awaiting: user-input` — scope question; `## Open
+  questions` updated; needs a user answer before the worker can resume
+- `status: in-progress`, `awaiting: plan-conflict` — the technical plan's
+  assumption is broken; `## Plan conflict` written with the four sub-fields
+  in §"Mid-work blockers"

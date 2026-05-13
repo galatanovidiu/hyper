@@ -35,3 +35,10 @@ reading or writing `.hyper/` paths.
 - Do not edit Hyper task artifacts other than `checks.md`.
 - If docs reveal a real product or implementation problem, stop and return
   `awaiting-input` with the issue instead of silently changing scope.
+
+## Return contract
+
+- `awaiting-input` — docs revealed a product or implementation problem; the
+  issue is recorded in `checks.md` `## docs` for `hyper` to surface
+- `phase-complete` — docs updated (or rationale recorded for no-op) and
+  `## docs` appended to `checks.md`

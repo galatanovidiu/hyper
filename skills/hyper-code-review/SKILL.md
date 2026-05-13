@@ -56,3 +56,23 @@ Used when the user directly asks for a review.
 - `blocked` — review cannot be completed with current information
 
 Do not bury findings under a summary. Findings are the primary output.
+
+## Return contract
+
+The return contract differs by mode.
+
+**Embedded mode (invoked by `hyper-verify`).** Return a review block for
+`checks.md` carrying one of the three verdicts above. The block is appended
+to `checks.md` `## review`. No phase-level verdict is returned to `hyper`;
+`hyper-verify` aggregates the review verdict into its own return contract.
+
+**Standalone mode (invoked directly by the user or by `hyper` for a
+`scope: code-review` task).** This skill owns terminal `phase: done` and the
+archive move directly per `../hyper/reference/gates.md` ownership split — it
+does not return a phase verdict to `hyper`. After writing `checks.md` and any
+review notes:
+
+- if the task is tracked under `.hyper/`: set `task.md` `phase: done`, clear
+  `awaiting`, and archive the task folder per `../hyper/reference/archive.md`
+- if the review is untracked (no `.hyper/` task): return findings inline to
+  the user with no state mutation
