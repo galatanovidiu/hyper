@@ -28,7 +28,7 @@ Minimum viable frontmatter:
 id: T<N>
 title: <title>
 phase: <current phase or safest earlier phase>
-scope: <quick|feature|research|unknown>
+scope: <quick|feature|research|code-review|unknown>
 created: <YYYY-MM-DDTHH:MM:SS>
 bugfix: false
 awaiting: null
