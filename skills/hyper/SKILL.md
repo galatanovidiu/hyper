@@ -151,7 +151,9 @@ Apply the verdict mapping in `reference/gates.md` §Verdict vocabulary and the
 redirect mapping in `reference/gates.md` §Phase transition table (the
 redirect rows live inside that section).
 
-On `redirect target: technical-plan` from `implement`, do not delete
+The `implement -> technical-plan` redirect is the only transition that
+retains its trigger artifact across the dispatch boundary: on
+`redirect target: technical-plan` from `implement`, do not delete
 `plan-conflict.md`; it is the input to the next technical-plan dispatch.
 `hyper-implement` deletes it on the subsequent re-entry per its re-entry
 behavior.
