@@ -149,8 +149,11 @@ For blocked implement results from plan conflicts:
 - `hyper-implement` detects blocked subtasks and returns `awaiting-input`
 - `hyper` sets `task.md` `awaiting: user-input`
 - on the user's reply, `hyper` re-dispatches `hyper-implement`
-- the orchestrator records the answer, clears the subtask's `awaiting`, and
-  resumes dispatch
+- `hyper-implement` records the user's answer in the subtask's `## Open
+  questions` and re-dispatches `hyper-worker`
+- the worker clears its own `awaiting` on resumption per its return contract;
+  `hyper-implement` does not write subtask `awaiting` outside the
+  `## Invalidated subtasks` reset path (see ownership split above)
 
 For plan-conflict subtasks:
 

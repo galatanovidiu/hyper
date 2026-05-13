@@ -128,3 +128,7 @@ reading or writing `.hyper/` paths. The data model is in
 - `awaiting-approval` — `03-technical-plan.md` is ready for approval
 - `phase-complete` — approved plan is ready for execution planning or
   implementation, depending on scope
+- `redirect target: implement` — conflict-triggered revision marks
+  `Re-slicing not required`; the orchestrator skips a no-op
+  execution-plan approval and re-enters `implement` directly (see step
+  2g above)

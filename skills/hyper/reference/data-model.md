@@ -260,6 +260,11 @@ role: none
 ## Done when
 <One or more testable criteria.>
 
+## Open questions
+<Optional worker blocker. Delete this section when there are none. See
+`hyper-worker/SKILL.md` §"Mid-work blockers" for when a worker writes
+here.>
+
 ## Completion
 <Worker writes this before setting `status: done`.>
 ```

@@ -44,10 +44,17 @@ reading or writing `.hyper/` paths. The data model is in
    - bugfix: check acceptance proof and unchanged behavior in
      `03-technical-plan.md`
 6. Write `checks.md` from `templates/checks.md`.
-7. If findings require code changes, return `redirect target: implement`.
-8. Otherwise return `phase-complete`.
+7. Map the result to a verdict:
+   - if findings require code changes, return `redirect target: implement`
+   - if `Overall: blocked` and remediation is not a code change (test
+     infra broken, missing credentials, external dependency unavailable),
+     record the block in `checks.md` and return `awaiting-input` so the
+     user can resolve the block before verify runs again
+   - otherwise return `phase-complete`
 
 ## Return contract
 
+- `awaiting-input` — `Overall: blocked` with no code-change remediation;
+  the block is recorded in `checks.md` for the user to resolve
 - `phase-complete` — verification is complete
-- `redirect target: implement` — remediation is required before completion
+- `redirect target: implement` — remediation requires code changes
