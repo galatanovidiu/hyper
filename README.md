@@ -185,7 +185,7 @@ User-facing skill names:
 | --- | --- |
 | `/hyper <request>` | Start structured work. |
 | `/hyper T<N>` | Resume a task. |
-| `/hyper-task` | List, create, defer, cancel, or inspect tasks. |
+| `/hyper-task` | List, create, defer, cancel, or inspect tasks; manage epics. |
 | `/hyper-backlog` | Add, list, promote, or drop future ideas. |
 | `/hyper-handoff` | Write a handoff when conversation context would be lost. |
 | `/hyper-retro` | Record lessons after a task or session. |
@@ -220,3 +220,46 @@ Hyper stays intentionally small:
 - Approval gates happen after the artifacts that set direction.
 - Verification is part of the workflow, not an optional afterthought.
 - Large work gets structure; tiny work should stay tiny.
+
+## Workflow Flow
+
+```mermaid
+flowchart TD
+    subgraph feature ["feature / bugfix"]
+        direction LR
+        I1["intake"] -->|"approve"| S1["spec"]
+        S1 -->|"approve"| TP1["technical-plan"]
+        TP1 -->|"approve"| EP1["execution-plan"]
+        EP1 -->|"approve"| IM1["implement"]
+        IM1 --> V1["verify"]
+        V1 -->|"pass"| D1["docs"]
+        V1 -->|"blocked"| EP1
+        IM1 -->|"conflict"| TP1
+        D1 -->|"done"| DN1["done"]
+    end
+
+    subgraph quick ["quick / quick bugfix"]
+        direction LR
+        I2["intake"] -->|"approve"| TP2["technical-plan"]
+        TP2 -->|"approve"| IM2["implement"]
+        IM2 --> V2["verify"]
+        V2 -->|"pass"| DN2["done"]
+        V2 -->|"blocked"| IM2
+        IM2 -->|"conflict"| TP2
+    end
+
+    subgraph research ["research"]
+        direction LR
+        I3["intake"] -->|"approve"| R3["research"]
+        R3 -->|"done"| DN3["done"]
+    end
+
+    subgraph review ["code-review"]
+        direction LR
+        RV["review"] -->|"done"| DN4["done"]
+    end
+```
+
+See [schema.md](schema.md) for the full state model and file layout.
+
+![Hyper workflow diagram](hyper-workflow.png)
