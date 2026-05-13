@@ -57,7 +57,7 @@ Missing data emits `_not yet written_` for `Goal`, `Plan`, and `Progress`, and
 
 ### `## Plan`
 
-- `phase: intake` or `awaiting` before `02-spec.md` exists:
+- `phase: intake`, or `phase: spec` before `02-spec.md` exists:
   - source: `01-intake.md`
   - rule: summarize objective, classification, constraints, and success signal
 - `phase: spec` or `technical-plan` before `04-execution-plan.md` exists on
@@ -98,7 +98,7 @@ Missing data emits `_not yet written_` for `Goal`, `Plan`, and `Progress`, and
 ### `## Status`
 
 - Source: `task.md` frontmatter
-- Rule: `**Phase:** <phase> · **Awaiting:** <awaiting or none>`
+- Rule: `**Phase:** <phase> · **Awaiting:** <awaiting or "none">`
 
 ### `## Decisions`
 
