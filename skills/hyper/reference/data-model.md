@@ -10,7 +10,7 @@ worktree. Plain markdown. No database, no CLI, no hidden state.
 ```text
 .hyper/
   tasks/
-    T20-add-backlog-archive/
+    T3-plain-task/
       task.md
       dashboard.md
       01-intake.md
@@ -19,12 +19,16 @@ worktree. Plain markdown. No database, no CLI, no hidden state.
       04-execution-plan.md
       05-execution-plan-review.md
       research.md
-      T20.1-first-slice.md
-      T20.2-second-slice.md
+      T3.1-first-slice.md
+      T3.2-second-slice.md
       checks.md
       plan-conflict.md
       handoff.md
       retro.md
+    E1T4-auth-login/
+      task.md
+      dashboard.md
+      ...
   archive/
     T1-add-login-page/
       task.md
@@ -32,6 +36,8 @@ worktree. Plain markdown. No database, no CLI, no hidden state.
   memory.md
   backlog.md
   retro.md
+  epics.md
+  repo.md
   recipes/
   loops/
     L1-fix-flaky-build/
@@ -39,13 +45,12 @@ worktree. Plain markdown. No database, no CLI, no hidden state.
       cycle3-build-log.txt
 ```
 
-- Task folders are named `T<N>-<kebab-slug>`.
+- Task folders are named `T<N>-<kebab-slug>`, or `E<N>T<M>-<kebab-slug>` when the task is enrolled in an epic.
 - Artifact filenames are fixed. A skill that writes `03-technical-plan.md`
   always writes to that path.
 - When a task becomes terminal, the folder is moved from `.hyper/tasks/` to
   `.hyper/archive/`.
-- Task ids are allocated by scanning `tasks/ ∪ archive/` for the highest
-  `T<N>` and adding 1. Ids are never reused.
+- Task ids are allocated by scanning `tasks/ ∪ archive/` for the highest task number. Extract the number from `T(\d+)-.*` (unenrolled) or `E\d+T(\d+)-.*` (enrolled). Ids are never reused.
 
 ## `task.md`
 
@@ -79,6 +84,7 @@ motivation, constraint, or triggering incident would help a future reader.
 | `created` | `YYYY-MM-DDTHH:MM:SS` | Task creation timestamp. |
 | `bugfix` | `true` · `false` | Set during `intake`. Routes the task into the evidence-first technical-planning lane. |
 | `awaiting` | `null` · `user-approval` · `user-input` | Top-level gate label. Owned by `hyper`. |
+| `epic` | absent · `E<N>` | Optional. Written only when the task is enrolled in an epic. Absent (not null) means no epic. |
 | `cancelled_at` | `YYYY-MM-DDTHH:MM:SS` | Present only when `phase: cancelled`. |
 | `cancelled_reason` | short string | Present only when `phase: cancelled`. |
 
@@ -102,11 +108,53 @@ at task creation and after every phase return. It reads from the primary
 artifacts and preserves an append-only `## Decisions` section. The full
 algorithm lives in `reference/dashboard.md`.
 
+## `epics.md`
+
+Written by `hyper-task epic create`. Created only in projects that use epics. Its presence activates the epics layer; when absent, no epic behavior exists anywhere.
+
+```markdown
+# Epic Index
+
+| ID | Title | Status | Tasks |
+|----|-------|--------|-------|
+| E1 | User Authentication | active | T3, T5 |
+| E2 | Dashboard Rebuild | planned | |
+```
+
+Fields:
+
+| Column | Values | Meaning |
+|--------|--------|---------|
+| `ID` | `E1`, `E2`, ... | Sequential integer. Allocated by `hyper-task epic create`. |
+| `Title` | short string | Human-readable epic name. |
+| `Status` | `planned` · `active` · `done` · `cancelled` | Set manually. Never auto-derived from task states. |
+| `Tasks` | comma-separated task IDs | Convenience summary. `task.md` `epic:` field is the authoritative source of membership. `hyper-task epic list` recomputes this column from frontmatter on every run. |
+
+## `repo.md`
+
+Written by `hyper-sync init`. Its presence activates team sync; when absent, no sync behavior exists anywhere.
+
+```markdown
+---
+remote: git@github.com:team/hyper-state.git
+branch: myapp
+---
+```
+
+Fields:
+
+| Field | Meaning |
+|-------|---------|
+| `remote` | Git remote URL for the shared `.hyper/` state repository. |
+| `branch` | Project branch name in the shared repo. One branch per project; all projects share one repo. |
+
+No body. The file has only frontmatter.
+
 ## Internal vs user-facing skills
 
-Users invoke nine Hyper skills directly: `hyper`, `hyper-task`,
+Users invoke ten Hyper skills directly: `hyper`, `hyper-task`,
 `hyper-backlog`, `hyper-handoff`, `hyper-retro`, `hyper-code-review`,
-`hyper-recipe`, `hyper-iterate`, and `hyper-team`.
+`hyper-recipe`, `hyper-iterate`, `hyper-team`, and `hyper-sync`.
 
 Internal skills are:
 

@@ -143,7 +143,9 @@ Approval gates happen where direction matters:
       retro.md
   archive/
   backlog.md
+  epics.md
   memory.md
+  repo.md
   rules.md
   recipes/
   loops/
@@ -177,6 +179,7 @@ User-facing skill names:
 - `hyper-recipe`
 - `hyper-iterate`
 - `hyper-team`
+- `hyper-sync`
 
 | Command | Use it for |
 | --- | --- |
@@ -190,6 +193,7 @@ User-facing skill names:
 | `/hyper-recipe` | Manage reusable project-local procedures in `.hyper/recipes/`. |
 | `/hyper-iterate` | Run an adaptive OODA-style loop in `.hyper/loops/` for goal-led work that should course-correct while it executes. It begins with understanding, code scan, findings, and an agreed plan, then moves part by part through the same approval gate. Long loops may use bounded delegated slices while one parent-owned loop stays authoritative. |
 | `/hyper-team` | Ask another AI agent CLI for a second opinion. |
+| `/hyper-sync` | Sync `.hyper/` with the shared team repo. Pull before starting a task, push after completing one. |
 
 Internal skills such as `hyper-intake`, `hyper-spec`,
 `hyper-technical-plan`, `hyper-execution-plan`,
