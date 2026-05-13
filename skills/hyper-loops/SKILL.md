@@ -74,14 +74,14 @@ Done loops are not reopened. If the user wants to keep going from a done loop, c
 3. Create `loop.md` from the template. Fill `id`, `title`, `status`, `created`, and `updated` immediately from the allocated loop metadata, replace the H1 with the allocated loop id and title, and write a one-time starting snapshot in `## Starting point`. For anything still unknown, keep the placeholder already shipped for that section in `templates/loop.md`; do not invent new placeholder strings.
 4. Initial bar: the next approval gate. Default to "clear alignment by approving the loop plan and current part plan" if not stated.
 5. Write that bar into `## Current bar`, and replace the initial `## Bar history` placeholder with the same timestamped bar.
-6. Initial parts: 2–5 meaningful slices when the work decomposes naturally, or use the template's single-part fallback.
+6. Initial parts: 2–5 meaningful slices when the work decomposes naturally, or use the single-part fallback `P1 — Whole goal — doing`.
 7. Exactly one initial part is current (`doing`). Any remaining initial parts start `todo`.
 8. For every part written under `## Parts`, clone the matching `P<N>` block under `## Part alignment`, and make each cloned `### P<N> — ...` heading mirror the part number and title from its corresponding part entry.
 9. Announce: `Created L<N> — <title>. Starting adaptive loop.`
 
 **On resume:** read `loop.md` in layers; do not reread the whole file by default.
 
-- **Hot** (always): the pre-cycle alignment surface defined in `templates/loop.md`, plus `## Evidence digest` and `## Handoff cues`, including `Dirty or unvalidated state`.
+- **Hot** (always): the pre-cycle alignment surface listed under the Phase 2 alignment gate below, plus `## Evidence digest` and `## Handoff cues`, including `Dirty or unvalidated state`.
 - **Warm** (when the next move needs more): `## Starting point`, the decision log, the route-shift log, the bar-history log, `## Relevant artifacts`, the last 1–3 cycles, the latest verify entry, and `## Outcome`.
 - **Cold** (on demand only): older cycles, raw artifact files.
 
@@ -115,21 +115,36 @@ Only ask what changes the loop: goal, destination, hard constraints, non-negotia
 
 **Pressure-test the loop plan.** Before asking for approval, invoke the pressure-test capability from the registry above to walk the loop plan decision tree with the user. Fold answers into `## Loop plan` and `## Decisions`. This is mandatory; "continue without it" is **not** a valid choice when no suitable pressure-test skill is installed. Offer the user only: install one, swap to a substitute pressure-test skill for this loop, or stop.
 
-When the loop plan is non-trivial, also suggest invoking the cross-model-review capability from the registry above to get an external model critique of the loop plan before approval. Suggested, not required. If no installed skill matches that capability, set `External review` to the template's no-skill value and continue without blocking alignment. Otherwise resolve `External review` with the matching legal value from `templates/loop.md` for the actual branch taken. Fold the result into `## Loop plan` or `## Decisions`. If the external review changes the loop plan, re-run the pressure test on the changed plan before approval.
+When the loop plan is non-trivial, also suggest invoking the cross-model-review capability from the registry above to get an external model critique of the loop plan before approval. Suggested, not required. If no installed skill matches that capability, set `External review` to `n/a — no cross-model-review skill installed` and continue without blocking alignment. Otherwise set `External review` to the matching value for the branch taken: `completed by a cross-model-review skill` or `skipped by user`. Fold the result into `## Loop plan` or `## Decisions`. If the external review changes the loop plan, re-run the pressure test on the changed plan before approval.
 
-A loop plan is **non-trivial** when any of the following holds: it touches more than one part, it introduces a new external dependency, it changes a public contract, or it makes a decision the user cannot easily reverse. If none of these hold, set `External review` to the template's trivial-plan value.
+A loop plan is **non-trivial** when any of the following holds: it touches more than one part, it introduces a new external dependency, it changes a public contract, or it makes a decision the user cannot easily reverse. If none of these hold, set `External review` to `n/a — trivial loop plan`.
 
-**Post and ask.** Once the loop plan is filled and pressure-tested (and re-tested if external review changed it), write the initial `## Current route` from the agreed route hypothesis and the initial `## Current focus` from the active part plus next concrete move. Then post a concise loop-plan summary in chat — goal and destination, approach, parts, key decisions, open risks. Then ask explicitly for approval. Do not set `Approved by user` unless the user replies with an explicit approval. Update the plan-status field exactly as defined in `templates/loop.md`. The plan only exists in the agent's head until the user has seen it rendered.
+**Post and ask.** Once the loop plan is filled and pressure-tested (and re-tested if external review changed it), write the initial `## Current route` from the agreed route hypothesis and the initial `## Current focus` from the active part plus next concrete move. Then post a concise loop-plan summary in chat — goal and destination, approach, parts, key decisions, open risks. Then ask explicitly for approval. Do not set `Approved by user` unless the user replies with an explicit approval. Plan status uses `awaiting approval | approved | needs rework`. The plan only exists in the agent's head until the user has seen it rendered.
 
-**Alignment gate.** Before the first cycle, `loop.md` must show the pre-cycle alignment surface from `templates/loop.md` filled, with the current-part entry and current-part block completed exactly as that template defines them.
+**Alignment gate.** Before the first cycle, `loop.md` must show the pre-cycle alignment surface filled: `## Goal`, `## Why`, `## Constraints`, `## Non-negotiables`, `## Definition of done`, `## Task understanding`, `## Existing code and findings`, `## Loop plan`, `## Current route`, `## Current focus`, `## Current bar`, the current `doing` entry under `## Parts`, and the current part block under `## Part alignment`.
 
-"Filled" means no shipped placeholder text from `templates/loop.md` and no unreplaced angle-bracket template prompts (`<...>`) remain in live artifact content. Instructional HTML comments are exempt.
+"Filled" means none of the shipped placeholder strings (`Not stated yet.`, `Not filled yet.`, `- None stated.`, `Not agreed yet.`, `Not yet.`) and no unreplaced angle-bracket template prompts (`<...>`) remain in the alignment surface. Instructional HTML comments are exempt.
 
-The gate is cleared when, and only when: that pre-cycle alignment surface is filled, the loop plan records a completed pressure test, external-review handling is resolved, user approval is timestamped, and the current part block is filled and approved exactly per `templates/loop.md`. No cycle starts before this.
+The gate is cleared when, and only when: the pre-cycle alignment surface is filled, `Pressure-tested at` is a timestamp, `External review` is resolved (any value other than `Not yet.`), `Status: approved`, `Approved by user` is a timestamp, and the current part block satisfies the same four conditions. No cycle starts before this.
 
-**On `needs rework`.** Set the loop-plan status to the template's rework value and reset `Approved by user` to the template's not-approved value. Return to step 5 (discuss the loop plan) for the disputed area. Update the loop-plan block with the user's feedback, append the reason and decision to `## Decisions`, rerun the pressure test on the branches the rework touched, refresh the loop-plan metadata, and re-post the plan summary. If the rework changes a contract or dependency, re-run the non-triviality check before resolving external-review handling again. Switch the status back to the template's approved value only after a fresh explicit approval.
+**On `needs rework`:**
 
-**Per-part alignment.** Reuse the loop-level alignment flow for each part, except separate external-review bookkeeping does not carry over because the part block has no `External review` field. Write the part-level restatement into `#### Understanding` and the part-level scan/findings into `#### Existing code and findings`. The only extra rules are: use the exact part block shape from `templates/loop.md`; update the part-plan status field exactly as defined there; before work on `P<N>` starts, that part block must be filled with no shipped placeholders, the pressure-test handling must be resolved, and user approval must be timestamped; run the part pressure test only when the part introduces a new external dependency, a new data shape, a new user-visible surface, or any decision not resolved in the loop-level pressure test. Otherwise use the template's loop-covered value for that field. If the part needs rework, set its status to the template's rework value, reset `Approved by user` to the template's not-approved value, and only switch back to the approved value after a fresh explicit approval.
+1. Set loop-plan `Status: needs rework` and reset `Approved by user: Not yet.`.
+2. Return to step 5 (discuss the loop plan) for the disputed area.
+3. Update the loop-plan block with the user's feedback. Append the reason and decision to `## Decisions`.
+4. Rerun the pressure test on the branches the rework touched.
+5. If the rework changes a contract or dependency, re-run the non-triviality check and resolve `External review` again.
+6. Refresh the loop-plan metadata and re-post the plan summary.
+7. Switch `Status` back to `approved` only after a fresh explicit approval.
+
+**Per-part alignment.** Reuse the loop-level alignment flow for each part, with these adjustments:
+
+1. Write the part-level restatement into `#### Understanding` and the part-level scan and findings into `#### Existing code and findings`.
+2. Part blocks have no `External review` field; that bookkeeping does not carry over.
+3. Run the part pressure test only when the part introduces a new external dependency, a new data shape, a new user-visible surface, or any decision not resolved by the loop-level pressure test. Otherwise set `Part pressure test: covered by loop pressure test <timestamp of loop pressure test>`.
+4. Part-plan `Status` uses the same values as loop-plan status (`awaiting approval | approved | needs rework`).
+5. Before work on `P<N>` starts, that part block must be filled with no shipped placeholders, pressure-test handling resolved, and `Approved by user` set to a timestamp.
+6. On rework: set `Status: needs rework`, reset `Approved by user: Not yet.`, and only switch back to `approved` after a fresh explicit approval.
 
 ## Phase 3 — Cycle
 
@@ -143,16 +158,19 @@ For each cycle:
 
 1. Read or run only enough to see the next useful move.
 2. Record what matters now and what you expected before the move.
-3. Choose the supported intent from `templates/loop.md`.
-   - Additional rules: `implement` requires the current part to be approved.
-   - `reroute` also updates `## Current route` and `## Route shifts`.
-   - `reframe` also updates `## Goal` and `## Why`, then re-runs the Phase 2 alignment gate before any further work.
-   - `stop` keeps the loop in the template's active state when pausing or blocked. A close handoff uses the pair `Intent: stop` + `Next: close`.
+3. Choose one Intent: `probe | implement | validate | split | reroute | reframe | stop`.
+   - `probe` — answer a design or reality question before commitment.
+   - `implement` — production change on an approved part. Requires the current part `Status: approved`.
+   - `validate` — check current work or route without closing.
+   - `split` — create new parts and re-enter alignment.
+   - `reroute` — same goal, different route. Also update `## Current route` and append to `## Route shifts`.
+   - `reframe` — goal changed. Also update `## Goal` and `## Why`, then re-run the Phase 2 alignment gate before any further work.
+   - `stop` — pause, block, or close. The loop stays `status: active` when pausing or blocked. A close handoff uses the pair `Intent: stop` + `Next: close`.
 4. Take the smallest meaningful move that advances that intent.
 5. Capture the exact result. If raw output is large, save it inside the loop folder, keep the decisive excerpt in the cycle, and link the file from `## Relevant artifacts`.
 6. Record what the evidence changed about the prior belief, the route, the parts, or the risks. Then explicitly ask: is the goal still the right goal? If no, the next intent must be `reframe`, not `reroute`.
 7. Refresh the living state. `## Current focus` holds the active part and the next concrete move. Update it every cycle, and whenever the active part or immediate next move changes.
-8. Set `Next` using the legal values and meanings in `templates/loop.md`, based on the immediate next move.
+8. Set `Next` based on the immediate next move: `continue | back up | split | validate | pause | close`. Meanings: `continue` — another cycle on the current route; `back up` — return to an earlier phase or assumption; `split` — create new parts; `validate` — next cycle uses the `validate` intent; `pause` — stop with the loop still `status: active`; `close` — hand off into Phase 4.
 9. Keep `## Parts` and `## Part alignment` in sync. Exactly one part is `doing` at a time. When a part finishes, mark it `done`; when a later part becomes current, move that part to `doing` and keep unopened parts `todo`.
 10. If the next move opens a new part, set `Next` to `split`, stop, and refresh `## Part alignment` first. If the next move revises an existing part plan, set `Next` to `back up`, stop, and refresh `## Part alignment` first. Re-enter Phase 3 only after the user approves that part plan.
 11. Refresh handoff cues. Leave the next atomic move, the current risk, and `Dirty or unvalidated state` visible in `## Handoff cues`.
@@ -162,28 +180,45 @@ For each cycle:
 
 If the bar or route changes, update the living value **and** append a one-line entry to `## Bar history` or `## Route shifts` with timestamp and reason. Use `## Decisions` only for load-bearing choices.
 
-Part statuses use the legal values documented in `templates/loop.md`.
+Part statuses: `todo | doing | done`.
 
 ## Phase 4 — Verify and Close
 
-Phase 4 starts when Phase 3 ends with the closing handoff pair `Intent: stop` + `Next: close` — because the destination is reached or because the user explicitly wants to close the loop. A paused or blocked loop stays in the template's active state and does not enter Phase 4. It runs a single hard gate: the verify gate. The loop cannot close into the template's done state without a passing entry in `## Verified outcomes`, unless the user explicitly chooses to close without verify.
+Phase 4 starts when Phase 3 ends with the closing handoff pair `Intent: stop` + `Next: close` — because the destination is reached or because the user explicitly wants to close the loop. A paused or blocked loop stays `status: active` and does not enter Phase 4. Phase 4 runs a single hard gate: the verify gate. The loop cannot flip to `status: done` without a passing entry in `## Verified outcomes`, unless the user explicitly chooses to close without verify.
 
 **Run all four checks:**
 
 1. **Tests.** Re-run the project's test suite. Capture the exact command, exit code, and a decisive excerpt. Link the full log under `## Relevant artifacts` if large.
-2. **Code review.** Invoke the code-review capability from the registry above on the loop's full diff. Record the verdict and top findings using `templates/loop.md`.
-3. **Docs.** If the loop changed user-facing surface (CLI, UI, API, public functions, behavior advertised to users), invoke the docs capability from the registry above. Otherwise record the no-user-facing-change path using `templates/loop.md`.
-4. **Definition of done.** Walk every line in `## Definition of done`. Record each line's status using `templates/loop.md`, backed by concrete evidence (file:line, test name, screenshot, etc.).
+2. **Code review.** Invoke the code-review capability from the registry above on the loop's full diff. Record the verdict (`pass | needs-changes | blocked`) and top findings.
+3. **Docs.** If the loop changed user-facing surface (CLI, UI, API, public functions, behavior advertised to users), invoke the docs capability from the registry above. Otherwise record `n/a — no user-facing surface change`.
+4. **Definition of done.** Walk every line in `## Definition of done`. Record each line as `met | not met | n/a`, backed by concrete evidence (file:line, test name, screenshot, etc.).
 
 Missing-skill handling matches Phase 2: if required code review is missing, or required docs support is missing when the loop changed user-facing surface, "continue without it" is **not** a valid choice. Offer install, swap for this loop, or stop.
 
-**Record verification** using the canonical `## Verified outcomes` shape in `templates/loop.md`. On the first real verify entry, replace `_No verify runs yet._`. Whenever verification runs, set `Verify link` to the template legal value `Verify N` for the latest verify entry. Leave `Close summary` as a close-only summary until the loop actually closes.
+**Record verification** using the `## Verified outcomes` entry shape in `templates/loop.md`. The overall verify `Result` is `pass | partial | fail`. On the first real verify entry, replace `_No verify runs yet._`. Whenever verification runs, set `Verify link` in `## Outcome` to `Verify N` for the latest verify entry. Leave `Close summary: Not finished yet.` until the loop actually closes.
 
-**On a passing verify result** — set frontmatter `status` to the template's done value. Record the verified close in the template's outcome fields. Put the achieved result and any material tradeoffs into `Close summary`, and set `Verify link` to the template legal value for the latest verify entry. Post a short closing summary in chat (result, what was verified, handoffs the next session needs). Stop.
+**On `Result: pass`:**
 
-**On any other verify result** — leave frontmatter `status` in the template's active value. Run a remediation cycle (return to Phase 3) that fixes the specific failures named in this verify entry, then re-enter the verify gate. Do not edit `## Definition of done` to make a failure go away unless the user explicitly approves changing the scope.
+1. Set frontmatter `status: done`.
+2. Put the achieved result and any material tradeoffs into `Close summary`.
+3. Set `Verify link: Verify N` for the passing entry.
+4. Post a short closing summary in chat (result, what was verified, handoffs the next session needs).
+5. Stop.
 
-**On user-explicit close without verify** — the user can close the loop before the verify gate passes ("I'm dropping this", "good enough", "abandon this loop"). When this happens: set frontmatter `status` to the template's done value, replace `Close summary` with a real close summary, set `Verify link` to the template's close-without-verify value, and add the close-without-verify-only lines with the reason and every unfinished item that still matters. Skip the verify gate. This is a deliberate user choice, not a verify-gate pass.
+**On `Result: partial` or `Result: fail`:**
+
+1. Leave frontmatter `status: active`.
+2. Return to Phase 3 and run a remediation cycle that fixes the specific failures named in this verify entry.
+3. Re-enter the verify gate.
+4. Do not edit `## Definition of done` to make a failure go away unless the user explicitly approves changing the scope.
+
+**On user-explicit close without verify** — the user can close the loop before the verify gate passes ("I'm dropping this", "good enough", "abandon this loop"):
+
+1. Set frontmatter `status: done`.
+2. Write a real `Close summary`.
+3. Set `Verify link: n/a`.
+4. Add the close-without-verify-only lines from `templates/loop.md`: `Close-without-verify reason: <reason>` and `Unfinished items: <what still matters>`.
+5. Skip the verify gate. This is a deliberate user choice, not a verify-gate pass.
 
 ## Delegation to Sub-Agents
 
@@ -207,3 +242,20 @@ When sub-agents are available, the parent may delegate a bounded slice within a 
 - One writer at a time for implementation on the same code path. Two children racing on the same files produces incoherent diffs.
 - Each delegation has a clear input, output, and stop condition. "Look at the codebase and figure things out" is too open; "find every call site of `Foo.bar` and report each as file:line with context" is bounded.
 
+## Operating rules
+
+- Read `.hyper/rules.md` once at loop start when it exists. Treat it as normative for the session.
+- Resolve capability bindings at loop start. Required missing capabilities block; suggested missing capabilities do not. Never silently skip a required call.
+- No implementation before the loop plan is `approved`.
+- No part implementation before that part's plan is `approved`.
+- One cycle, one coherent move. Run cycles one at a time unless the user asks for a batch.
+- Smallest meaningful move, not necessarily the smallest possible probe.
+- Record evidence verbatim where practical. Do not paraphrase away the signal.
+- Append to chronological logs (`## Bar history`, `## Route shifts`, `## Decisions`, `## Cycles`, `## Verified outcomes`); never rewrite them.
+- Overwrite the living-state sections in place as reality changes.
+- Refresh `## Handoff cues` whenever the next atomic move or current risk changes.
+- Exactly one part is `doing` at a time.
+- When the user pivots mid-loop ("actually, I'm thinking about X", "what if we tried Y"), treat it as a goal-reframe signal until proven otherwise. Stop the current cycle, surface the pivot, and re-run the alignment gate if the goal shifted. Do not silently absorb the pivot as a part-plan tweak.
+- No `status: done` without a passing verify entry, unless the user explicitly closes scope without verify.
+- Do not reopen done loops. If continued work is needed, create a new loop and reference the closed one in `## Starting point`.
+- Legal values inlined throughout this skill mirror `templates/loop.md`. If either changes, update the other.
