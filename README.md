@@ -48,6 +48,14 @@ mkdir -p ~/.claude/skills
 ln -s ~/hyper7/skills/* ~/.claude/skills/
 ```
 
+**Deploy to all agents at once** (Claude Code, Codex, and `~/.agents`):
+
+```bash
+bash ~/hyper7e/hyper7E/scripts/deploy.sh
+```
+
+This removes any existing `hyper` / `hyper-*` symlinks from each agent directory and re-links all skill folders from the repo. Run it whenever you pull new skills or switch repos — new skills are picked up automatically.
+
 Other agents can point at `skills/hyper/SKILL.md` or
 `skills/hyper-iterate/SKILL.md` and use the matching workflow.
 
