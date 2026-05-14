@@ -32,11 +32,19 @@ reading or writing `.hyper/` paths. The data model is in
 3. For `scope: quick`, implement directly from `03-technical-plan.md`, run the
    relevant checks, summarize the work, and return `phase-complete`.
 4. For `scope: feature`, read `04-execution-plan.md` and all subtask files.
-5. Dispatch every ready `status: todo` subtask whose dependencies are done.
+5. If this dispatch is a re-entry on a user reply (the previous return was
+   `awaiting-input` and `task.md` `awaiting` was just cleared by `hyper`),
+   route the reply to the subtask that produced the open question:
+   record the answer under the subtask's `## Open questions` per
+   `../hyper/reference/gates.md` §Question serialization, then re-dispatch
+   `hyper-worker` against that subtask. The worker clears its own `awaiting`
+   on resumption per its own Flow. Continue to step 6 only after this
+   routing completes.
+6. Dispatch every ready `status: todo` subtask whose dependencies are done.
    Use parallel workers only when their `writes` sets are disjoint.
-6. Each worker must invoke the `hyper-worker` skill and receive exactly one
+7. Each worker must invoke the `hyper-worker` skill and receive exactly one
    subtask file as its authoritative slice.
-7. Scan ready and in-progress subtasks for `awaiting: plan-conflict`. If any
+8. Scan ready and in-progress subtasks for `awaiting: plan-conflict`. If any
    are found:
 
    a. Read each conflicted subtask's `## Plan conflict` section.
@@ -53,9 +61,19 @@ reading or writing `.hyper/` paths. The data model is in
    plan conflicts first; the user-input subtasks remain blocked and will
    resume after the technical-plan revision.
 
-8. If any subtask blocks on user input (and no plan conflict was rolled up
+9. If any subtask blocks on user input (and no plan conflict was rolled up
    above), return `awaiting-input`.
-9. When all subtasks are `done`, return `phase-complete`.
+10. When all subtasks are `done`, return `phase-complete`.
+
+## Rules
+
+- When a load-bearing orchestration choice is settled at any scope
+  (a conflict-driven re-slicing recommendation, a worker-blocker
+  escalation that changes the slicing assumptions, a remediation that
+  expands scope beyond `checks.md` findings, a quick-scope opt-out
+  from a documented `checks.md` remediation), append a `## Decisions`
+  entry to `dashboard.md` per `../hyper/reference/dashboard.md`
+  §Decisions log contract, authoring as `implement`.
 
 ## Feature orchestration rules
 

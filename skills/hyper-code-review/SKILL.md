@@ -36,7 +36,10 @@ Used when the user directly asks for a review.
 
 1. Inspect the requested diff, branch, PR, or staged changes.
 2. Create a `scope: code-review` task only when the user wants the review
-   tracked under `.hyper/`.
+   tracked under `.hyper/`. New tracked tasks start with `phase: review`,
+   `scope: code-review`, `awaiting: null`; the `review -> done` transition
+   happens at step 4 below per the `code-review` flow in
+   `../hyper/reference/data-model.md`.
 3. Return findings first, ordered by severity, with file and line references.
 4. If tracked, write `checks.md`, set `phase: done`, and archive the folder.
 
@@ -56,3 +59,23 @@ Used when the user directly asks for a review.
 - `blocked` — review cannot be completed with current information
 
 Do not bury findings under a summary. Findings are the primary output.
+
+## Return contract
+
+The return contract differs by mode.
+
+**Embedded mode (invoked by `hyper-verify`).** Return a review block for
+`checks.md` carrying one of the three verdicts above. The block is appended
+to `checks.md` `## review`. No phase-level verdict is returned to `hyper`;
+`hyper-verify` aggregates the review verdict into its own return contract.
+
+**Standalone mode (invoked directly by the user or by `hyper` for a
+`scope: code-review` task).** This skill owns terminal `phase: done` and the
+archive move directly per `../hyper/reference/gates.md` ownership split — it
+does not return a phase verdict to `hyper`. After writing `checks.md` and any
+review notes:
+
+- if the task is tracked under `.hyper/`: set `task.md` `phase: done`, clear
+  `awaiting`, and archive the task folder per `../hyper/reference/archive.md`
+- if the review is untracked (no `.hyper/` task): return findings inline to
+  the user with no state mutation

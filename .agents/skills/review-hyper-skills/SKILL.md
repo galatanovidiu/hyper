@@ -25,7 +25,7 @@ Name the mode out loud before touching any file. Each mode owns a distinct scope
 
 ### Mode 1 — contract-drift
 
-**Scope.** Shipped skills under `skills/` only. Judge agreement between a skill's `SKILL.md`, its `reference/*.md`, and its `templates/*`.
+**Scope.** Shipped skills under `skills/` only. Judge agreement between a target skill's `SKILL.md`, its `reference/*.md`, and its `templates/*` when present.
 
 **Authorities.**
 
@@ -36,9 +36,11 @@ Name the mode out loud before touching any file. Each mode owns a distinct scope
 
 `README.md` and `AGENTS.md` are not authorities in this mode.
 
-**Tiebreak rule.** When `templates/` and `SKILL.md` disagree, `templates/` is authoritative for section and layout shape; `reference/` owns filenames, enums, and shared mechanics. `SKILL.md` prose must yield to both.
+**Tiebreak rule.** When `templates/` and `SKILL.md` disagree, `templates/` is authoritative for **section names**, the **required field set and field order**, and **enum values** — those must match exactly. Prose around them may vary; equivalent wording at the line level is not drift if those three anchors agree. `reference/` owns filenames, enums, and shared mechanics. `SKILL.md` prose must yield to both. If the target skill ships no `templates/`, `reference/` is the sole authority and `SKILL.md` prose yields to it alone.
 
-**State-not-change rule.** Current state on disk, not diffs, commits, or PRs. If the user hands you a branch, PR, or commit range, redirect them to a diff-review skill rather than silently pivoting.
+**State-not-change rule.** In Mode 1, current state on disk, not diffs, commits, or PRs. If the user hands you a branch, PR, or commit range for Mode 1 work, redirect them to a diff-review skill rather than silently pivoting. Mode 2 has its own Local-diff audit sub-mode (see below) that does work against the local working-tree diff — that sub-mode is the documented exception to this rule and is not silent pivoting.
+
+**Cross-dispatch non-determinism.** Two fresh sub-agent dispatches of this skill against the same tree can surface different findings — the audit reads files deterministically but what a fresh sub-agent decides is notable depends on its framing. Treat one pass as a sample, not a verdict. When two independent passes on the same tree disagree, treat the **union of `load-bearing` findings as canonical**, the **union of `drift` findings as advisory**, and **discard `nit`-only disagreements**.
 
 ### Mode 2 — maintainer-drift
 
@@ -75,6 +77,7 @@ State:
 - the mode (one of the three above)
 - the target files
 - the evaluation axis
+- the **severity floor** — one of `all` (default), `drift+load-bearing` (recommended for action-time passes), or `load-bearing` (for triage)
 
 Good axes:
 
@@ -85,6 +88,8 @@ Good axes:
 - "inventory drift between `README.md` and `skills/`"
 
 If the user drifts mid-pass, restate the locked axis out loud. Do not silently widen. If the new angle is worth pursuing, finish this pass first and queue the next.
+
+The severity floor is opt-in tuning, not a silent default flip. Pick the floor by the caller's intent: a first-time audit or broad sweep uses `all`; an action-time pass where the caller will fix what is returned uses `drift+load-bearing`; a triage pass against a large surface uses `load-bearing`. The floor changes the audit's later steps (see Step 2 and Step 4) and the verdict semantics (a CLEAN under `drift+load-bearing` is a **partial CLEAN** — the audit deliberately did not look for nits and the verdict labels itself as such).
 
 ### 2. Gather evidence
 
@@ -104,12 +109,16 @@ For maintainer-drift work, hotspot patterns include:
 - references to README / AGENTS / data-model skill lists
 - artifact names, verdict vocabularies, and auto-fix wording
 
+When the severity floor (Step 1) is `drift+load-bearing` or `load-bearing`, short-circuit nit-class evidence-gathering: skip wording-uniformity grep, byte-for-byte comparison of equivalent prose, structural-conformance scans across peer skills, and other patterns that only produce `nit`-class findings. Evidence-gathering for findings at or above the floor proceeds in full. The cost saving is real: nit-class grep across the suite often dominates a pass's read budget.
+
 ### 3. Evaluate against invariants
 
 Two different axis sets apply, picked by mode:
 
 - **Mode 1 (`contract-drift`) and shipped-skill findings in Mode 3** — use the canonical authoring invariants at [reference/authoring-invariants.md](reference/authoring-invariants.md). These govern the `skills/**` tree; `AGENTS.md` cites the same file so authoring-time and review-time judgments stay aligned.
 - **Mode 2 (`maintainer-drift`) and repo-surface findings in Mode 3** — use the focus list in Mode 2's own description above (non-operational provenance prose, stale inventories, portability violations, dead or duplicated instruction surface). These govern `AGENTS.md`, `README.md`, `.Codex/skills/**`, and repo-local documentation — not the shipped skills.
+
+Structural uniformity across skills (e.g., "7 phase skills carry section X, 4 don't") is **not a finding** unless (a) the missing surface is documented as required in `reference/`, or (b) uniformity is the explicit locked axis at Step 1. Otherwise it is a peer-comparison observation, not contract drift.
 
 A finding needs a smallest safe fix, not just a complaint.
 
@@ -123,6 +132,8 @@ Findings first. Every finding must carry:
 - **route** — direct edit, new Hyper task, or backlog item
 
 Cap at **3–8 findings**. Beyond that, signal dilutes — fold nits into one aggregate line or drop them. If no findings survive, say so explicitly and note any coverage limits.
+
+Apply the severity floor (Step 1) before the cap: drop every finding below the floor, then cap the remainder. A CLEAN verdict under a floor higher than `all` is a **partial CLEAN** — label it explicitly: `CLEAN under floor: drift+load-bearing — nit-class findings deliberately not surfaced`. This keeps callers honest about what the audit did and did not look for.
 
 Phrase findings as descriptions of the current file, not as descriptions of a change. In `suite-evaluation` mode, end with the required **top 3 fixes** distillation.
 

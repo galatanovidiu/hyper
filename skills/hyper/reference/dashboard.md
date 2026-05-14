@@ -57,7 +57,7 @@ Missing data emits `_not yet written_` for `Goal`, `Plan`, and `Progress`, and
 
 ### `## Plan`
 
-- `phase: intake` or `awaiting` before `02-spec.md` exists:
+- `phase: intake`, or `phase: spec` before `02-spec.md` exists:
   - source: `01-intake.md`
   - rule: summarize objective, classification, constraints, and success signal
 - `phase: spec` or `technical-plan` before `04-execution-plan.md` exists on
@@ -98,6 +98,7 @@ Missing data emits `_not yet written_` for `Goal`, `Plan`, and `Progress`, and
 ### `## Status`
 
 - Source: `task.md` frontmatter
+
 - Rule: `**Phase:** <phase> · **Awaiting:** <awaiting or none>`. When `task.md` has an `epic:` field present, append `· **Epic:** <value>` to the line. When `epic:` is absent, the line is unchanged.
 
 ### `## Decisions`
@@ -147,3 +148,12 @@ Allowed authors:
 
 Only load-bearing choices belong here. Routine approvals and ordinary phase
 progression are not decisions.
+
+Phase skills append a Decisions entry whenever they settle a load-bearing
+choice — approach picked, opt-out chosen, fallback selected, conflict
+resolved by re-slicing, blocked-overall ruling, and similar non-routine
+calls. The append happens at the moment the choice is settled, not later.
+The orchestrator does not regenerate `## Decisions`; the append-only log
+is preserved through every dashboard regeneration (see Failure handling
+above). The user may also append manually at any time, authoring as
+`user`.

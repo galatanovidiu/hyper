@@ -40,9 +40,16 @@ reading or writing `.hyper/` paths. The data model is in
       continue to step 3.
 
    b. **Conflict-triggered re-entry** — `plan-conflict.md` is present in the
-      task folder. Continue to step 2.
+      task folder. Sub-branch by whether the revision has already been
+      written:
+      - If `03-technical-plan.md` already contains a `## Invalidated
+        subtasks` section (the revision was written on a prior dispatch;
+        this dispatch is the post-approval re-dispatch — `hyper` always
+        clears `awaiting` before re-dispatching a phase skill), jump to
+        step 2g.
+      - Otherwise (revision not yet written), continue to step 2.
 
-2. **Conflict-triggered re-entry path:**
+2. **Conflict-triggered re-entry path (writes the revision):**
 
    a. Read `plan-conflict.md` end to end. Each `## Conflicts` entry names a
       `revival_signal` (or `none`) and the broken assumption with evidence.
@@ -113,6 +120,10 @@ reading or writing `.hyper/` paths. The data model is in
 
 ## Rules
 
+- When the chosen approach is settled (or when a conflict-revision
+  re-opens an alternative), append a `## Decisions` entry to
+  `dashboard.md` per `../hyper/reference/dashboard.md` §Decisions log
+  contract, authoring as `technical-plan`.
 - `quick` tasks still get a real technical plan, but keep it short and local.
 - `feature` tasks should compare plausible approaches and recommend one.
 - `bugfix` tasks do not pass through `spec`.
@@ -128,3 +139,7 @@ reading or writing `.hyper/` paths. The data model is in
 - `awaiting-approval` — `03-technical-plan.md` is ready for approval
 - `phase-complete` — approved plan is ready for execution planning or
   implementation, depending on scope
+- `redirect target: implement` — conflict-triggered revision marks
+  `Re-slicing not required`; the orchestrator skips a no-op
+  execution-plan approval and re-enters `implement` directly (see step
+  2g above)
