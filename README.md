@@ -254,6 +254,7 @@ User-facing skill names:
 - `hyper-code-review`
 - `hyper-recipe`
 - `hyper-team`
+- `hyper-short-story`
 
 | Command                   | Use it for                                                              |
 | ------------------------- | ----------------------------------------------------------------------- |
@@ -268,6 +269,7 @@ User-facing skill names:
 | `/hyper-code-review`      | Review an arbitrary diff, branch, PR, or staged change.                 |
 | `/hyper-recipe`           | Manage reusable project-local procedures in `.hyper/recipes/`.          |
 | `/hyper-team`             | Ask another AI agent CLI for a second opinion.                          |
+| `/hyper-short-story`      | Rewrite the previous response as a short, plain-language narrative.     |
 
 Internal skills such as `hyper-intake`, `hyper-spec`, `hyper-technical-plan`,
 `hyper-execution-plan`, `hyper-execution-plan-review`, `hyper-research`,

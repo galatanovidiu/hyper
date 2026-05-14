@@ -104,9 +104,9 @@ algorithm lives in `reference/dashboard.md`.
 
 ## Internal vs user-facing skills
 
-Users invoke nine Hyper skills directly: `hyper`, `hyper-task`,
+Users invoke ten Hyper skills directly: `hyper`, `hyper-task`,
 `hyper-backlog`, `hyper-handoff`, `hyper-retro`, `hyper-code-review`,
-`hyper-recipe`, `hyper-iterate`, and `hyper-team`.
+`hyper-recipe`, `hyper-iterate`, `hyper-team`, and `hyper-short-story`.
 
 Internal skills are:
 
