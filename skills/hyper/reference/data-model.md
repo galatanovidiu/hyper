@@ -25,6 +25,11 @@ worktree. Plain markdown. No database, no CLI, no hidden state.
       plan-conflict.md
       handoff.md
       retro.md
+    T5-proj-123-add-login/    ← Jira-imported task (key embedded in folder name)
+      task.md
+      jira.md                 ← completion comment, written before archive (Jira tasks only)
+      dashboard.md
+      ...
     E1T4-auth-login/
       task.md
       dashboard.md
@@ -38,6 +43,7 @@ worktree. Plain markdown. No database, no CLI, no hidden state.
   retro.md
   epics.md
   repo.md
+  jira.md                     ← Jira config (absent if Jira integration not used)
   recipes/
   loops/
     L1-fix-flaky-build/
@@ -45,7 +51,7 @@ worktree. Plain markdown. No database, no CLI, no hidden state.
       cycle3-build-log.txt
 ```
 
-- Task folders are named `T<N>-<kebab-slug>`, or `E<N>T<M>-<kebab-slug>` when the task is enrolled in an epic.
+- Task folders are named `T<N>-<kebab-slug>`, or `E<N>T<M>-<kebab-slug>` when enrolled in an epic. Tasks imported from Jira embed the Jira key in the slug: `T<N>-<jira-key-lowercased>-<slug>` (e.g. `T5-proj-123-add-login`).
 - Artifact filenames are fixed. A skill that writes `03-technical-plan.md`
   always writes to that path.
 - When a task becomes terminal, the folder is moved from `.hyper/tasks/` to
@@ -85,6 +91,8 @@ motivation, constraint, or triggering incident would help a future reader.
 | `bugfix` | `true` · `false` | Set during `intake`. Routes the task into the evidence-first technical-planning lane. |
 | `awaiting` | `null` · `user-approval` · `user-input` | Top-level gate label. Owned by `hyper`. |
 | `epic` | absent · `E<N>` | Optional. Written only when the task is enrolled in an epic. Absent (not null) means no epic. |
+| `jira_key` | absent · `PROJ-123` | Optional. Absent on non-Jira tasks (never null). Jira issue key for tasks imported via `hyper-jira`. |
+| `jira_synced_at` | absent · `YYYY-MM-DDTHH:MM:SS` | Optional. Timestamp of last Jira data fetch. Updated on import and each resume sync. Absent on non-Jira tasks. |
 | `cancelled_at` | `YYYY-MM-DDTHH:MM:SS` | Present only when `phase: cancelled`. |
 | `cancelled_reason` | short string | Present only when `phase: cancelled`. |
 
@@ -130,6 +138,20 @@ Fields:
 | `Status` | `planned` · `active` · `done` · `cancelled` | Set manually. Never auto-derived from task states. |
 | `Tasks` | comma-separated task IDs | Convenience summary. `task.md` `epic:` field is the authoritative source of membership. `hyper-task epic list` recomputes this column from frontmatter on every run. |
 
+The `Source` column is optional. When a Hyper epic is created from a Jira epic
+import, `hyper-jira` writes the Jira epic key (e.g. `PROJ-42`) into this column.
+Natively created epics leave `Source` empty. Existing `epics.md` tables without
+a `Source` column continue to work; the column is added only when the first
+Jira-sourced epic is written.
+
+Table with `Source` column:
+```
+| ID | Title | Status | Source | Tasks |
+|----|-------|--------|--------|-------|
+| E1 | Auth  | active | PROJ-42 | T5 |
+| E2 | Dash  | planned | | T6 |
+```
+
 ## `repo.md`
 
 Written by `hyper-sync init`. Its presence activates team sync; when absent, no sync behavior exists anywhere.
@@ -150,11 +172,69 @@ Fields:
 
 No body. The file has only frontmatter.
 
+## `.hyper/jira.md`
+
+Written by `hyper-jira init`. Its presence activates Jira integration across
+`hyper` and `hyper-jira`; when absent, all Jira-aware behavior is a no-op.
+
+```markdown
+---
+base_url: https://yourorg.atlassian.net
+default_project: PROJ
+done_transition: QA Test
+mode: mcp
+---
+```
+
+Fields:
+
+| Field | Values | Meaning |
+|-------|--------|---------|
+| `base_url` | URL string | Jira base URL. Cloud: `https://yourorg.atlassian.net`. Docker/local: `http://localhost:8080`. |
+| `default_project` | string | Default project key when no prefix is given in a Jira issue key. |
+| `done_transition` | string | Jira workflow transition name invoked on task archive (default: `QA Test`). |
+| `mode` | `mcp` · `docker` | Connection mode. `mcp` = agent-installed Jira MCP server (default). `docker` = direct REST API calls to `docker_url`. |
+| `docker_url` | URL string | REST API base for docker mode, e.g. `http://localhost:8090`. Absent when `mode: mcp`. |
+
+**Credentials are never stored in this file.** In `mcp` mode, credentials live
+in the agent's MCP server configuration. In `docker` mode, credentials are read
+from environment variables `JIRA_USER` and `JIRA_TOKEN` set per-developer.
+`jira.md` is credential-free and safe to commit to a shared team repo.
+
+## `jira.md` (task folder)
+
+Written by `hyper` just before archiving a task that has `jira_key` set in
+`task.md`. Contains a structured completion summary posted to Jira as a comment.
+Not to be confused with `.hyper/jira.md` (the project-level config file).
+
+```markdown
+---
+jira_key: PROJ-123
+written_at: 2026-05-14T10:30:00
+---
+
+## What was done
+
+<2–4 sentence plain-English summary of the deliverable.>
+
+## Key decisions
+
+- <Decision and brief reason>
+
+## Notes for QA
+
+<Optional tester-facing notes.>
+```
+
+Required sections: **What was done**, **Key decisions**, **Notes for QA**
+(optional). Developer reviews and confirms before `hyper` posts it as a Jira
+comment.
+
 ## Internal vs user-facing skills
 
-Users invoke ten Hyper skills directly: `hyper`, `hyper-task`,
+Users invoke eleven Hyper skills directly: `hyper`, `hyper-task`,
 `hyper-backlog`, `hyper-handoff`, `hyper-retro`, `hyper-code-review`,
-`hyper-recipe`, `hyper-iterate`, `hyper-team`, and `hyper-sync`.
+`hyper-recipe`, `hyper-iterate`, `hyper-team`, `hyper-sync`, and `hyper-jira`.
 
 Internal skills are:
 

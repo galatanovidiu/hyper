@@ -31,6 +31,7 @@ const USER_FACING_HYPER = new Set([
   "hyper-code-review",
   "hyper-recipe",
   "hyper-iterate",
+  "hyper-jira",
   "hyper-team",
   "hyper-sync",
 ]);
@@ -211,7 +212,7 @@ function validateReadmeAndDataModel() {
     ensureContains(README, `\`${skill}\``);
   }
 
-  ensureContains(DATA_MODEL, "Users invoke ten Hyper skills directly");
+  ensureContains(DATA_MODEL, "Users invoke eleven Hyper skills directly");
   ensureContains(DATA_MODEL, "`hyper-iterate`");
   ensureContains(
     DATA_MODEL,

@@ -98,9 +98,27 @@ For active tasks with no open gate:
 
 1. Use durable signals only: older `created`, or `handoff.md` present.
 2. Re-read `task.md`, the current phase artifact, and `handoff.md` if present.
-3. If the task still looks live, continue to **Dispatch phase**.
+3. If the task still looks live, run the Jira resume sync below (if applicable),
+   then continue to **Dispatch phase**.
 4. If it may be stale or obsolete, stop and ask the user whether to resume,
    defer, or cancel it.
+
+**Jira resume sync** (conditional — only when `task.md` has a `jira_key` field
+and `.hyper/jira.md` exists):
+
+Read `mode` from `.hyper/jira.md`. Use the agent's Jira MCP tools if
+`mode: mcp`; use direct HTTP REST calls to `docker_url` with env vars
+`JIRA_USER`/`JIRA_TOKEN` if `mode: docker`.
+
+1. Re-fetch the Jira issue description and acceptance criteria using `jira_key`.
+2. Compare the fetched description with the task body saved in `task.md`. If
+   substantive differences exist, show a brief diff and ask the developer
+   whether to update `task.md` before continuing. If confirmed, update the body;
+   otherwise continue with the saved version.
+3. Fetch all comments on the Jira issue. Show any comments with a `created`
+   timestamp newer than `jira_synced_at` in `task.md`, labeled "New since last
+   sync". If no new comments exist, skip silently.
+4. Update `jira_synced_at` in `task.md` to the current timestamp.
 
 ## Create task
 
@@ -182,8 +200,32 @@ Skip dashboard generation for `scope: code-review`.
 
 ### Archive on terminal
 
-When a transition sets `phase: done`, archive the task folder per
-`reference/archive.md` before announcing completion.
+When a transition sets `phase: done`:
+
+**Jira archive steps** (conditional — only when `task.md` has a `jira_key`
+field and `.hyper/jira.md` exists):
+
+Read `mode` from `.hyper/jira.md`. Use the agent's Jira MCP tools if
+`mode: mcp`; use direct HTTP REST calls to `docker_url` with env vars
+`JIRA_USER`/`JIRA_TOKEN` if `mode: docker`.
+
+1. Generate a `jira.md` completion comment in the task folder:
+   - Frontmatter: `jira_key: <value>`, `written_at: <now>`.
+   - `## What was done`: 2–4 sentence summary drawn from `task.md` title, the
+     task body goal paragraph, and the overall arc of the phase work.
+   - `## Key decisions`: bullet list from the `## Decisions` section of
+     `dashboard.md`. Include only rows with a date (non-empty rows).
+   - `## Notes for QA`: include only if `checks.md` contains QA-relevant notes.
+2. Show the generated `jira.md` to the developer. Ask:
+   `"Post this comment to <jira_key>? [y/N]"`
+3. If confirmed: post the `jira.md` body (not the frontmatter) as a Jira
+   comment. If declined: skip the post; still proceed with the transition.
+4. Transition the Jira issue status to the value of `done_transition` from
+   `.hyper/jira.md` (default `"QA Test"`). If the transition fails, report the
+   error and continue — do not abort archiving.
+
+Then archive the task folder per `reference/archive.md` before announcing
+completion.
 If `.hyper/repo.md` exists, emit: `"Task archived. Run \`hyper-sync push\` to share with your team."`
 
 ### Verify checkpoint
