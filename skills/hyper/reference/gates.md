@@ -54,7 +54,11 @@ Every phase dispatch ends with exactly one verdict:
 | `verify` | `quick` | `done` | no |
 | `verify` | `feature` | `docs` | yes |
 | `docs` | `feature` | `done` | no |
-| `review` | `code-review` | `done` | no |
+
+The standalone `scope: code-review` path is not in this table: per the
+ownership split above, `hyper-code-review` owns terminal `phase: done` and the
+archive move directly, so `hyper` never applies a transition for that scope.
+See `hyper-code-review/SKILL.md` §Return contract.
 
 For `verify -> docs`, use:
 
@@ -104,7 +108,10 @@ When a gate is open, treat these as substantive replies:
 When the open gate is `user-input`:
 
 - Ask one question per message.
-- Recommend one answer when the question has multiple plausible answers.
+- When the question has two or more variants, mark exactly one as
+  `[RECOMMENDED — <one-line reason>]`. The reason cites concrete signal (file,
+  finding, prior decision, constraint from the spec). If no variant is
+  defensibly better, say so and ask the user to pick — do not invent a reason.
 - Record the answer in the artifact under the question.
 - If more unanswered questions remain, return `awaiting-input` again.
 - Once all are answered, rename `Open questions` to `Resolved questions` or
@@ -126,6 +133,12 @@ Their contract is:
 - return `awaiting-approval`
 - on approval, re-dispatch and return `phase-complete`
 
+When asking for approval, state the recommended action and a one-line reason
+in the form `[RECOMMENDED — <reason>]`. The reason cites concrete signal from
+the artifact (a tradeoff resolved, a constraint honored, a risk dropped). If
+the artifact presents alternatives, mark exactly one of them recommended by
+the same rule in "Question serialization" above.
+
 ## Remediation gates
 
 For blocked verify results:
@@ -145,8 +158,11 @@ For blocked implement results from plan conflicts:
 - `hyper-implement` detects blocked subtasks and returns `awaiting-input`
 - `hyper` sets `task.md` `awaiting: user-input`
 - on the user's reply, `hyper` re-dispatches `hyper-implement`
-- the orchestrator records the answer, clears the subtask's `awaiting`, and
-  resumes dispatch
+- `hyper-implement` records the user's answer in the subtask's `## Open
+  questions` and re-dispatches `hyper-worker`
+- the worker clears its own `awaiting` on resumption per its Flow step 2;
+  `hyper-implement` does not write subtask `awaiting` outside the
+  `## Invalidated subtasks` reset path (see ownership split above)
 
 For plan-conflict subtasks:
 

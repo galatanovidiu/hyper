@@ -1,6 +1,6 @@
 # Hyper — Worker Guardrails
 
-This file is the shared dispatch-time rule set for every sub-agent Hyper launches (worker, reviewer, validation, and peer review). Consumer skills read it at session start and treat its contents as normative for the dispatch. Dispatcher skills mention it in their dispatch prompt so the reference is visible in the dispatch record before the sub-agent loads its own skill file.
+This file is the shared dispatch-time rule set for orchestrator and worker sub-agents — today, `hyper-implement` (orchestrator) and `hyper-worker` (worker). Consumer skills read it at session start and treat its contents as normative for the dispatch. Dispatcher skills mention it in their dispatch prompt so the reference is visible in the dispatch record before the sub-agent loads its own skill file.
 
 Four rules, **G1** through **G4**. Each states the rule, why it exists, and the safe alternative for the "I think I need to violate this" case.
 
@@ -26,7 +26,7 @@ Four rules, **G1** through **G4**. Each states the rule, why it exists, and the 
 
 **Why.** Mutating git state to turn a failing run green hides the real failure from the reviewer and the verify phase, and silently discards work the orchestrator expected to be present on disk.
 
-**Safe alternative.** If tests fail because of the change, fix the change. If they fail for reasons unrelated to the change, escalate to `.hyper/backlog.md` per the pre-existing-problem flow the consumer skill already documents. If a git mutation still looks genuinely needed, stop and surface a blocker via the consumer skill's mid-work-blocker flow (for the worker path, `../../hyper-worker/SKILL.md` §"Mid-work blockers") rather than mutating state and hoping.
+**Safe alternative.** If tests fail because of the change, fix the change. If they fail for reasons unrelated to the change (the failure reproduces on `main` or pre-dates this subtask), append a one-line entry to `.hyper/backlog.md` describing the failing test and the observed failure mode, then continue the slice if it does not depend on the broken behavior. If a git mutation still looks genuinely needed, stop and surface a blocker via the consumer skill's mid-work-blocker flow (for the worker path, `../../hyper-worker/SKILL.md` §"Mid-work blockers") rather than mutating state and hoping.
 
 ## G4 — Current file lines for citations
 

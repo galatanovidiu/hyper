@@ -177,16 +177,13 @@ if needed.
 
 ## After the phase returns
 
-Apply `reference/gates.md`:
+Apply the verdict mapping in `reference/gates.md` §Verdict vocabulary and the
+redirect mapping in `reference/gates.md` §Phase transition table (the
+redirect rows live inside that section).
 
-- `awaiting-approval` -> set `awaiting: user-approval`, stop
-- `awaiting-input` -> set `awaiting: user-input`, stop
-- `phase-complete` -> clear `awaiting`, apply the transition table
-- `redirect target: <phase>` -> set that phase and re-enter dispatch. For
-  `verify -> implement` and `implement -> technical-plan`, also set
-  `awaiting: user-input`.
-
-On `redirect target: technical-plan` from `implement`, do not delete
+The `implement -> technical-plan` redirect is the only transition that
+retains its trigger artifact across the dispatch boundary: on
+`redirect target: technical-plan` from `implement`, do not delete
 `plan-conflict.md`; it is the input to the next technical-plan dispatch.
 `hyper-implement` deletes it on the subsequent re-entry per its re-entry
 behavior.
@@ -231,5 +228,8 @@ If `.hyper/repo.md` exists, emit: `"Task archived. Run \`hyper-sync push\` to sh
 ### Verify checkpoint
 
 The gate contract owns when `implement -> verify` and `verify -> docs` stop for
-a checkpoint prompt. Surface the prompt verbatim and stop. The next user reply
-re-dispatches the task into the chosen next step.
+a checkpoint prompt. Render the prompt per `reference/gates.md` and stop. For
+`verify -> docs`, the `pass` branch is a fixed string and the `needs-changes`
+branch is a remediation-aware prompt rendered at runtime; for
+`implement -> verify`, the prompt is a single fixed string. The next user
+reply re-dispatches the task into the chosen next step.

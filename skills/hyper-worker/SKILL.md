@@ -23,9 +23,18 @@ reading or writing `.hyper/` paths. Read
 ## Flow
 
 1. Re-read the assigned subtask file.
-2. Set its `status: in-progress`.
-3. Work only inside the declared `writes` boundary.
-4. Mid-work blockers — choose the channel by the kind of block:
+2. If the subtask is a resumption (`status: in-progress` with
+   `awaiting: user-input` or `awaiting: plan-conflict`) and `## Open
+   questions` now carries a fresh answer from the orchestrator (or the
+   plan conflict has been resolved upstream), clear the subtask's
+   `awaiting` to `null` before continuing. This is the worker's own
+   `awaiting` field on its subtask file — the worker is the only writer
+   of subtask `status` and `awaiting` outside the `## Invalidated
+   subtasks` reset path.
+3. If the subtask is a fresh dispatch (`status: todo`), set its
+   `status: in-progress`.
+4. Work only inside the declared `writes` boundary.
+5. Mid-work blockers — choose the channel by the kind of block:
 
    a. **Scope question** (need a file outside `writes`, need a tooling
       decision, need clarification on the subtask itself). Stop, add or update
@@ -44,15 +53,14 @@ reading or writing `.hyper/` paths. Read
       - **Evidence** — exact observation, file:line reference, or command output that contradicts the assumption.
       - **Recommendation** (optional) — what the worker thinks should happen.
 
-5. Implement the slice.
-6. Run the smallest meaningful tests or checks for the slice.
-7. Write `## Completion` with file-grouped notes and check results.
-8. Set `status: done` and `awaiting: null`.
+6. Implement the slice.
+7. Run the smallest meaningful tests or checks for the slice.
+8. Write `## Completion` with file-grouped notes and check results.
+9. Set `status: done` and `awaiting: null`.
 
 ## Rules
 
 - Do not change sibling subtask files.
-- Do not change `task.md` phase or awaiting fields.
 - Do not widen `writes`; block and ask instead.
 - For `role: test`, write tests and record a red baseline.
 - For `role: impl`, confirm the sibling test baseline now passes without
@@ -68,3 +76,19 @@ reading or writing `.hyper/` paths. Read
 - Do not work around a broken plan assumption silently. The plan-conflict
   channel exists so the design phase can revise; bypassing it loses the
   design escalation signal.
+
+## Return contract
+
+A worker never returns a phase-level verdict to `hyper`; it mutates exactly
+one subtask file and exits. `hyper-implement` reads the subtask's final state
+and rolls it up into the phase verdict per its own return contract.
+
+The subtask file's terminal state on a worker exit is one of:
+
+- `status: done`, `awaiting: null` — slice implemented; `## Completion`
+  written with file-grouped notes and check results
+- `status: in-progress`, `awaiting: user-input` — scope question; `## Open
+  questions` updated; needs a user answer before the worker can resume
+- `status: in-progress`, `awaiting: plan-conflict` — the technical plan's
+  assumption is broken; `## Plan conflict` written with the four sub-fields
+  in §"Mid-work blockers"

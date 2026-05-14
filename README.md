@@ -2,37 +2,30 @@
 
 Hyper is a lightweight workflow for AI coding agents.
 
-It gives the agent a durable process for work that should not live inside one
-long prompt:
+It ships two workflows for work that should not live inside one long prompt:
 
-```text
-intake -> spec -> technical-plan -> execution-plan -> implement -> verify -> docs -> done
-```
+- **`hyper`** — **phased**:
+  `intake -> spec -> technical-plan -> execution-plan -> implement -> verify -> docs -> done`.
+  Approval gates at the points where direction matters.
+- **`hyper-iterate`** — **adaptive**:
+  `observe -> orient -> decide -> act`, repeated. One agreed plan up front,
+  then bounded cycles that course-correct on real evidence.
 
-Hyper is delivered as [Agent Skills](https://agentskills.io): plain markdown
+Both are delivered as [Agent Skills](https://agentskills.io): plain markdown
 files an agent can load. There is no CLI, plugin, server, database, or hidden
 state. Workflow state lives in `.hyper/` inside your project.
 
-You normally start with one skill: **`hyper`**.
+## When To Use Which
 
-## When To Use Hyper
+| Use **`hyper`** when                                       | Use **`hyper-iterate`** when                                          |
+| ---------------------------------------------------------- | --------------------------------------------------------------------- |
+| Destination and route are both stable up front             | Destination known, but the route must evolve through evidence         |
+| Phased gates fit (spec, plan, build, verify)               | Goal still forming and needs probing before commitment                |
+| Work does not need mid-flight re-routing                   | Reality is likely to reshape the plan once work starts                |
+| You want every artifact (spec, plan, subtasks) on disk     | You want one persistent log of cycles, decisions, and route shifts    |
+| Examples: feature, refactor, non-trivial bugfix            | Examples: investigation, prototype, tune-up, multi-session R&D        |
 
-Use Hyper when the cost of losing context is higher than the cost of a little
-structure:
-
-- features and large refactors
-- non-trivial bug fixes
-- investigations where you want findings recorded
-- work touching auth, payments, migrations, deletes, or security boundaries
-- anything you may pause, resume, or hand to another agent
-
-Skip Hyper for tiny, obvious edits.
-
-For tracked adaptive work where the destination is known or can be stated but
-the route should evolve through live feedback instead of a full phase workflow,
-use `hyper-iterate`. It starts with an interview-style alignment pass: state
-your understanding, scan the codebase, report what already exists, agree the
-big plan, then implement part by part with approval gates.
+Skip both for tiny, obvious edits.
 
 ## Install
 
@@ -55,12 +48,59 @@ mkdir -p ~/.claude/skills
 ln -s ~/hyper7/skills/* ~/.claude/skills/
 ```
 
-Other agents can point at `skills/hyper/SKILL.md` and use Hyper for structured
-development work.
+Other agents can point at `skills/hyper/SKILL.md` or
+`skills/hyper-iterate/SKILL.md` and use the matching workflow.
 
-## Basic Use
+## Companion Skills
 
-Start a task with `/hyper`:
+Hyper depends on a few external skills hosted at
+[mattpocock/skills](https://github.com/mattpocock/skills). The most important
+one for `hyper-iterate` is `grill-me`, which pressure-tests the loop plan and
+each part plan before approval. Install those skills alongside Hyper if you
+intend to use the adaptive workflow.
+
+## Workflow 1 — `hyper` (phased)
+
+Use `hyper` when the cost of losing context is higher than the cost of a
+little structure:
+
+- features and large refactors
+- non-trivial bug fixes
+- investigations where you want findings recorded
+- work touching auth, payments, migrations, deletes, or security boundaries
+- anything you may pause, resume, or hand to another agent
+
+### Lanes
+
+Tracked lanes:
+
+- `feature`: `intake -> spec -> technical-plan -> execution-plan -> implement -> verify -> docs -> done`
+- `quick`: `intake -> technical-plan -> implement -> verify -> done`
+- `research`: `intake -> research -> done`
+- `code-review`: `review -> done`
+
+`bugfix: true` is orthogonal:
+
+- feature bugfix: `intake -> technical-plan -> execution-plan -> implement -> verify -> docs -> done`
+- quick bugfix: `intake -> technical-plan -> implement -> verify -> done`
+
+### Phases
+
+| Phase             | Purpose                                                                                       | Main artifact                                       |
+| ----------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| `intake`          | Capture and confirm the request, classify scope, detect bugfix intent.                        | `01-intake.md`                                      |
+| `spec`            | Define what will change before technical design starts.                                       | `02-spec.md`                                        |
+| `technical-plan`  | Decide how the change should be built in this codebase.                                       | `03-technical-plan.md`                              |
+| `execution-plan`  | Turn the approved plan into worker-safe execution slices.                                     | `04-execution-plan.md` and subtask files            |
+| `implement`       | Execute the approved slices.                                                                  | code changes and subtask completion records         |
+| `verify`          | Run tests, review the diff, check accepted outcomes against real behavior.                    | `checks.md`                                         |
+| `docs`            | Update human-facing docs when the change needs it.                                            | docs changes and a docs section in `checks.md`      |
+| `research`        | Investigate a question and produce a recommendation with no code changes.                     | `research.md`                                       |
+
+Approval gates happen after `intake`, `spec`, `technical-plan`,
+`execution-plan`, and `research`.
+
+### Example
 
 ```text
 You: /hyper Add a login page with email and password, and keep the session after reload.
@@ -75,72 +115,122 @@ You: approve
 Agent: Implements, verifies, updates docs, and archives the finished task.
 ```
 
-To resume later:
+Resume later:
 
 ```text
 /hyper T3
 ```
 
-To resume adaptive work later:
+### What it writes
+
+```text
+.hyper/tasks/T1-add-login-page/
+  task.md
+  dashboard.md
+  01-intake.md
+  02-spec.md
+  03-technical-plan.md
+  04-execution-plan.md
+  05-execution-plan-review.md
+  T1.1-add-login-tests.md
+  T1.2-implement-login.md
+  checks.md
+  plan-conflict.md
+  handoff.md
+  retro.md
+```
+
+Most useful files:
+
+- `task.md`: current phase and task metadata
+- `dashboard.md`: computed human-readable task summary
+- `01-intake.md` … `04-execution-plan.md`: the approved phase artifacts
+- `checks.md`: test, review, QA, and docs results
+- `plan-conflict.md`: written when implementation surfaces a design conflict
+  and the task redirects back to `technical-plan`; carries the broken
+  assumption, evidence, and revival signal so the design phase can revise
+  against a concrete trigger
+
+## Workflow 2 — `hyper-iterate` (adaptive)
+
+Use `hyper-iterate` when the destination is known well enough to start but
+the route must evolve through contact with reality, or when the goal itself
+is still forming and needs probing before commitment:
+
+- iterative work where each move feeds the next decision
+- prototypes and throwaway probes before committing to a route
+- multi-session investigations that need context to survive interrupts
+- a big goal that should be split into adaptive parts, not a rigid plan
+- anything where reality is likely to reshape the plan mid-flight
+
+### Phases
+
+| Phase                | Purpose                                                                                                                                              |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Load and Route`     | Resume the right loop or create a new one. Re-check project rules and capability bindings.                                                           |
+| `Align`              | An interview-style alignment pass: restate the request, scan the codebase, agree the **loop plan** and current **part plan**, then pressure-test before approval. |
+| `Cycle`              | One coherent observe → orient → decide → act move at a time. Each cycle picks an intent and an evidence-backed next step.                            |
+| `Verify and Close`   | Run tests, code review, docs check, and definition-of-done check. The loop flips to `done` only on a passing verify entry.                           |
+
+Cycle intents: `probe`, `implement`, `validate`, `reroute`, `reframe`, `stop`.
+
+Approval gates happen after the loop plan and after every new part plan. When
+evidence says the goal itself has moved, the loop pivots to `reframe` and the
+alignment gate runs again.
+
+### Example
+
+```text
+You: /hyper-iterate Investigate slow report generation and try a fix.
+Agent: Created L3 — slow-report-investigation. Starting adaptive loop.
+Agent: Loop plan — probe DB query plans first, then test caching vs. denormalization. Approve?
+You: approve
+Agent: Cycle 1 (probe). Captured slow EXPLAIN output. Learning: missing index on report_runs(user_id, created_at).
+Agent: Cycle 2 (implement). Added the index. Evidence: 3.4s -> 180ms on hot path.
+Agent: Cycle 3 (validate). Confirmed across three sample tenants. Next: close.
+Agent: Verify pass. Closed L3.
+```
+
+Resume later:
 
 ```text
 /hyper-iterate L3
 ```
 
-## Workflow Lanes
+### What it writes
 
-Tracked lanes:
+```text
+.hyper/loops/L3-slow-report-investigation/
+  loop.md
+  cycle1-explain-output.txt
+  verify1-2026-05-14.txt
+```
 
-- `feature`: `intake -> spec -> technical-plan -> execution-plan -> implement -> verify -> docs -> done`
-- `quick`: `intake -> technical-plan -> implement -> verify -> done`
-- `research`: `intake -> research -> done`
-- `code-review`: `review -> done`
+`loop.md` is the canonical state file. It carries goal, why, constraints,
+definition of done, loop plan, current route, current focus, current bar,
+parts, part alignment, evidence digest, cycles (append-only), verify entries
+(append-only), and outcome. Optional evidence files (logs, diffs, screenshots)
+live next to it and are referenced from `## Relevant artifacts`.
 
-`bugfix: true` is orthogonal:
+### Terminology
 
-- feature bugfix: `intake -> technical-plan -> execution-plan -> implement -> verify -> docs -> done`
-- quick bugfix: `intake -> technical-plan -> implement -> verify -> done`
+- **Loop** — the whole tracked unit of work, persisted in `.hyper/loops/L<N>-<slug>/`.
+- **Loop plan** — the agreed top-level approach for the loop.
+- **Part** — one bounded scope inside the loop. Numbered `P<N>`, append-only.
+- **Part plan** — the agreed approach for one part.
+- **Cycle** — one coherent observe-orient-decide-act move. Numbered `Cycle N`, append-only.
+- **Verify entry** — one record of running the verify gate. Numbered `Verify N`, append-only.
 
-## What The Phases Mean
+## What `.hyper/` Looks Like
 
-| Phase | Purpose | Main artifact |
-| --- | --- | --- |
-| `intake` | Capture and confirm the request, classify scope, and detect bugfix intent. | `01-intake.md` |
-| `spec` | Define what will change before technical design starts. | `02-spec.md` |
-| `technical-plan` | Decide how the change should be built in this codebase. | `03-technical-plan.md` |
-| `execution-plan` | Turn the approved plan into worker-safe execution slices. | `04-execution-plan.md` and subtask files |
-| `implement` | Execute the approved slices. | code changes and subtask completion records |
-| `verify` | Run tests, review the diff, and check accepted outcomes against real behavior. | `checks.md` |
-| `docs` | Update human-facing docs when the change needs it. | docs changes and a docs section in `checks.md` |
-| `research` | Investigate a question and produce a recommendation with no code changes. | `research.md` |
-
-Approval gates happen where direction matters:
-
-- after `intake`
-- after `spec`
-- after `technical-plan`
-- after `execution-plan`
-- after `research`
-
-## What Hyper Writes
+Both workflows share one project-local state directory:
 
 ```text
 .hyper/
-  tasks/
-    T1-add-login-page/
-      task.md
-      dashboard.md
-      01-intake.md
-      02-spec.md
-      03-technical-plan.md
-      04-execution-plan.md
-      05-execution-plan-review.md
-      T1.1-add-login-tests.md
-      T1.2-implement-login.md
-      checks.md
-      plan-conflict.md
-      handoff.md
-      retro.md
+  tasks/         # hyper (phased) work
+    T1-add-login-page/...
+  loops/         # hyper-iterate (adaptive) work
+    L3-slow-report-investigation/...
   archive/
   backlog.md
   epics.md
@@ -149,29 +239,17 @@ Approval gates happen where direction matters:
   repo.md
   rules.md
   recipes/
-  loops/
 ```
 
-The most useful files are:
-
-- `task.md`: current phase and task metadata
-- `dashboard.md`: computed human-readable task summary
-- `01-intake.md`: intake summary and success signal
-- `02-spec.md`: approved statement of what will change
-- `03-technical-plan.md`: approved technical shape
-- `04-execution-plan.md`: worker-facing execution overview
-- `checks.md`: test, review, QA, and docs results
-- `plan-conflict.md`: written when implementation surfaces a design conflict and the task redirects back to `technical-plan`; carries the broken assumption, evidence, and revival signal so the design phase can revise against a concrete trigger
-- `.hyper/loops/`: adaptive work logs for `hyper-iterate` that keep task understanding, codebase findings, the agreed big plan, part-level plans, route, evidence digest, relevant artifacts, decisions, and handoff cues; long loops can still use bounded delegated slices when the host supports sub-agents
-
-Add `.hyper/` to `.gitignore` unless you intentionally want to share task
-history.
+Add `.hyper/` to `.gitignore` unless you intentionally want to share task and
+loop history.
 
 ## Useful Commands
 
 User-facing skill names:
 
 - `hyper`
+- `hyper-iterate`
 - `hyper-task`
 - `hyper-backlog`
 - `hyper-handoff`
@@ -182,6 +260,7 @@ User-facing skill names:
 - `hyper-jira`
 - `hyper-team`
 - `hyper-sync`
+
 
 | Command | Use it for |
 | --- | --- |
@@ -406,8 +485,8 @@ If you are editing this repo rather than using Hyper in another project:
 - `AGENTS.md` contains the rules for contributors and agents editing Hyper.
 - [`docs/maintaining-hyper.md`](docs/maintaining-hyper.md) describes the
   maintenance checks and fragile contracts to watch.
-- `node scripts/validate-hyper.mjs` runs a lightweight structural validation of
-  the skill suite.
+- `node scripts/validate-hyper.mjs` runs a lightweight structural validation
+  of the skill suite.
 
 ## Design Choices
 
@@ -417,6 +496,8 @@ Hyper stays intentionally small:
 - The agent reads and writes those files directly.
 - Approval gates happen after the artifacts that set direction.
 - Verification is part of the workflow, not an optional afterthought.
+- Two workflow shapes for two shapes of work — phased when direction is clear
+  up front, adaptive when it has to evolve.
 - Large work gets structure; tiny work should stay tiny.
 
 ## Workflow Flow

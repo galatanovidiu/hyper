@@ -317,6 +317,14 @@ Bugfix structure:
 
 The `repro_status` enum is `deterministic`, `intermittent`, or `no-repro`.
 
+`## Invalidated subtasks` is a section appended by `hyper-technical-plan` on
+the conflict-triggered re-entry path only (the `implement -> technical-plan`
+redirect). It lists subtask ids whose previously-`done` state is invalidated
+by the revised plan; `hyper-implement` reads it on re-entry and resets those
+subtasks. The section is absent on the initial pass and present on every
+conflict-triggered re-entry, with `None.` as the body when the revision
+invalidates no prior `done` subtask.
+
 Feature-scope tasks approve `03-technical-plan.md` before moving to
 `04-execution-plan.md`. Quick tasks approve it before moving to `implement`.
 
@@ -372,15 +380,23 @@ role: none
 # T1.3 — Wire login endpoint
 
 ## What
-<Specific change.>
+
+<Specific change this worker owns.>
 
 ## Why
-<Which 04-execution-plan goal or acceptance outcome this supports.>
+
+<Which accepted outcome or execution-plan goal this supports.>
 
 ## Done when
-<One or more testable criteria.>
+
+- <Testable completion criterion.>
+
+## Open questions
+
+- <Optional worker blocker. Delete this section if there are none.>
 
 ## Completion
+
 <Worker writes this before setting `status: done`.>
 ```
 
@@ -403,11 +419,11 @@ Written by `hyper-execution-plan-review` during the `execution-plan` phase.
 
 Required sections:
 
-1. **Verdict** — `pass`, `needs-changes`, or `blocked`
-2. **Findings**
-3. **Coverage**
-4. **Ownership**
-5. **Required changes**
+1. `**Verdict:** <pass|needs-changes|blocked>`
+2. `## Findings`
+3. `## Coverage`
+4. `## Ownership`
+5. `## Required changes`
 
 The review is not a separate task phase. It validates `04-execution-plan.md`
 and subtask files before the user approves implementation.
@@ -422,7 +438,8 @@ Required sections:
 2. `## tests`
 3. `## review`
 4. `## qa`
-5. `## docs` (feature tasks after docs phase)
+5. `## docs` — section is seeded by `hyper-verify` and filled by `hyper-docs`
+   on feature tasks; remains a stub on quick scope.
 
 ## `plan-conflict.md`
 
@@ -442,18 +459,13 @@ task: T<N>
 Required sections:
 
 1. **Conflicts** — one entry per conflict, with sub-fields:
-   - `raised_by: <subtask-id|orchestrator>`
+   - `raised_by: <subtask-id>`
    - `revival_signal: <alternative name from 03-technical-plan §Alternatives considered, or `none`>`
    - **Broken assumption**
    - **Evidence**
    - **Recommendation** (optional)
 2. **Recommended re-slicing** — `none` · `partial` · `full` — what the
    implementer believes the technical-plan revision will need.
-
-The orchestrator-raised path (`raised_by: orchestrator`) is reserved for a
-future iteration; in the current contract only workers raise conflicts. The
-frontmatter and per-conflict `raised_by` field are defined now for
-forward-compatibility.
 
 Subtask files raising a conflict carry an optional `## Plan conflict` section
 mirroring the per-conflict shape above (minus `raised_by`, which is implied
@@ -492,7 +504,7 @@ Each loop combines:
 - **Living state** — goal, constraints, definition of done, task
   understanding, existing code and findings, agreed big plan, current route,
   current focus, current bar, parts, part alignment, evidence digest,
-  relevant artifacts, handoff cues, memory candidates, and final outcome
+  relevant artifacts, handoff cues, and final outcome
 - **Evidence history** — bar history, route shifts, decisions, starting point,
   and cycle log
 
@@ -505,7 +517,7 @@ For long loops, the intended read order is layered:
    recent cycles
 3. cold state — older cycles and large linked artifacts only when needed
 
-`hyper-iterate` now has a hard approval gate before implementation:
+`hyper-iterate` has a hard approval gate before implementation:
 
 - the loop starts with an interview-style alignment pass
 - `loop.md` is created immediately
