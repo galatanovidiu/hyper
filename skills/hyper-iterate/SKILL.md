@@ -240,6 +240,23 @@ For each cycle:
 13. Refresh handoff cues whenever the next atomic move or current risk changes.
 14. On the first real cycle entry, replace `_No cycles yet._`. Then append the cycle entry and refresh frontmatter `updated`.
 
+**Zoom-out checkpoints.** A loop can drift even when each cycle looks productive. The pull to finish the next cycle is strong; the point of zoom-out is precisely that pull is strong even when the route is wrong. Pause and surface the bigger picture whenever any of these triggers fires:
+
+- Three cycles have completed inside the current part since the last checkpoint (cadence — catches slow drift).
+- The cycle just written has `Route impact` not equal to `no change`.
+- Two consecutive cycles ended `Next: back up`.
+- The next planned move is `Next: split` — opening a new part deserves a pause before adding scope.
+- A user message hints at pivot: hedging language, "what about", "wait", "I'm not sure", or naming a different goal in passing.
+
+At a checkpoint, the agent must:
+
+1. Stop further cycle work.
+2. Post a chat message using the Chat output shape, with the body containing: where the loop is now, what was believed when the current part started, what the evidence has actually shown since, and three possible next directions (continue on the current route, reroute, reframe).
+3. Ask the user which direction to take, marking one as `[RECOMMENDED — <one-line reason>]` per the Phase 2 question rule.
+4. Record the user's answer in `## Decisions` with a timestamp before resuming cycle work. If the answer is `reroute`, also append to `## Route shifts`. If `reframe`, follow the Phase 3 reframe path in step 3 of the cycle list.
+
+Checkpoints are not optional. "The next cycle is almost done" is not a reason to skip one.
+
 **TDD as a suggested implementation mode.** When an `implement` cycle's work is testable behavior (not pure refactoring, pure tooling, or pure prose), suggest the TDD capability from the registry above to drive the slice red-green-refactor. Suggested, not required — the user can decline. When used, the failing test becomes the cycle's `Evidence`, the passing implementation becomes the next cycle's `Action` and `Evidence`, and the refactor (if any) becomes a third cycle. When the work is testable but no TDD skill matches the capability, proceed with manual test-first authoring and record in the cycle's `Orient`: `No TDD capability installed; tests authored manually.`
 
 If the bar or route changes, update the living value **and** append a one-line entry to `## Bar history` or `## Route shifts` with timestamp and reason. Use `## Decisions` only for load-bearing choices.
@@ -315,6 +332,27 @@ When sub-agents are available, the parent may delegate a bounded slice within a 
 - Each delegation has a clear input, output, and stop condition. "Look at the codebase and figure things out" is too open; "find every call site of `Foo.bar` and report each as file:line with context" is bounded.
 - If a child returns nothing useful (empty, off-topic, or below the stop condition), record the cycle's `Evidence` as `Delegation returned no usable output: <one-line reason>`, set `Next: validate` or `Next: back up`, and decide whether to redelegate with tighter inputs or take the move directly.
 
+## Chat output shape
+
+Every chat reply the agent posts during a loop opens with this five-line block, then the detail below. The block is the headline a project-owner reader gets at a glance; file paths, diffs, and tool output belong beneath it for anyone who wants to dig.
+
+```
+**Done:** <one line — concrete action and outcome>
+**Why:** <one line — how this advances the loop's goal, not just the cycle's intent>
+**Where we are:** <part + phase + status: running | paused | awaiting approval | blocked | done>
+**Risk or surprise:** <one line, or `none`>
+**Needs from you:** <decision | approval | info | nothing — continuing>
+```
+
+Rules:
+
+- One line per field. No bullet lists inside the block.
+- If a field has nothing to report, state that explicitly (`none`, `nothing — continuing`). Do not omit the line.
+- `Why` links to the loop goal, not the cycle intent. "Probing whether option A holds" is the cycle intent. "Option A is the cheapest path to the destination, so the loop hinges on it" is the loop-goal why.
+- `Where we are` cites the active part id and the phase, e.g. `P2 — Phase 3, mid-cycle 4` or `P1 — Phase 2 alignment, awaiting plan approval`.
+- `Needs from you` is the only field that may resolve to `nothing — continuing`. If anything else is true — a decision is open, an approval is pending, a zoom-out checkpoint is firing — name it.
+- The block applies to every chat message during a loop: cycle reports, approval asks, zoom-out checkpoint asks, route-shift surfacing, verify summary, close summary. The only exception is the bare creation announcement at Phase 1 step 9, which keeps its existing one-line form.
+
 ## Operating rules
 
 Cross-cutting invariants. Phase-specific behavior lives in the phase sections above; this list is the short reference.
@@ -324,6 +362,7 @@ Cross-cutting invariants. Phase-specific behavior lives in the phase sections ab
 - **Multi-section transition rule.** Some transitions in this skill say "single atomic write" or "same write" when they touch two sections of `loop.md` (e.g., flipping a part `aligning → doing` updates both `## Part alignment` and `## Parts`). The safety the rule guarantees is: the file never crosses a session boundary or a user interrupt in a half-flipped state. Implementation: complete both writes within a single agent turn. Either use Write to rewrite the whole file in one call, or use two consecutive Edit calls in the same turn — the file may be transiently inconsistent between those two tool calls, but it must never be left inconsistent when the turn ends or the agent yields control. Do not split a multi-section transition across turns.
 - **Single-current-part invariant.** Exactly one part is `aligning` or `doing` while the loop is between Phase 2 alignment and Phase 4 close. The other parts are `todo` or `done`. The invariant may transiently hold "all parts done" only between the moment a part flips to `done` and the next atomic write that either (a) flips a `todo` to `aligning` or (b) writes `Next: close`. Two parts in `aligning` simultaneously is never allowed; multi-part planning happens sequentially.
 - When the user pivots mid-loop ("actually, I'm thinking about X", "what if we tried Y"), treat it as a goal-reframe signal until proven otherwise. Stop the current cycle, surface the pivot, and re-run the alignment gate if the goal shifted. Do not silently absorb the pivot as a part-plan tweak.
+- **User-claim verification.** When the user states something is broken, wrong, missing, or different from what the agent believes, test the claim before disagreeing. Run the command, read the file, inspect the state. If the test result contradicts the user, do not dismiss. Report: the exact command run, the files read with paths and line ranges, what the agent observed. Then ask: "Is the test you wanted me to do different from what I did?" Never tell the user their claim is wrong without showing the test work and inviting correction. This rule overrides any anchoring from a prior pressure-test or grilling pass — surviving a grilling does not make a plan or belief immune to evidence the user can see now.
 - Done loops are never reopened. If continued work is needed, create a new loop and reference the closed one in `## Starting point`.
 - No `status: done` without a passing verify entry, unless the user explicitly closes scope without verify.
 - Legal values inlined throughout this skill mirror `templates/loop.md`. If either changes, update the other.
