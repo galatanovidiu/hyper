@@ -117,7 +117,6 @@ Resolve each capability call in this order: exact preferred skill name, then any
 | code-review | conditional (verify, if code changes) | `hyper-code-review` | reviews code changes and returns a verdict with findings |
 | docs | conditional (verify, if user-facing surface changed) | `hyper-docs` | updates user-facing documentation for the changed surface |
 | cross-model-review | suggested | `hyper-team` | gets critique from another model |
-| TDD | suggested | `tdd` | drives red-green-refactor for a behavior slice |
 
 Required values: `required` (block at loop start if missing) · `conditional (<phase>, if <trigger>)` (evaluated only at that phase) · `suggested` (never blocks).
 
@@ -210,7 +209,7 @@ For each cycle:
    - `reframe` — goal changed. Also update `## Goal` and `## Why`, set `Next: reframe`, and re-run the Phase 2 alignment gate before any further cycle. On reframe re-entry to Phase 2, always reset the loop plan: set `Status: needs rework`, reset `Approved by user: Not yet.`, and reset `Pressure-tested at: Not yet.` (the prior pressure test was against the old goal). Reset every part whose `## Parts` status is `aligning` or `doing` and whose part-plan `Status` is `approved`: set part-plan `Status: needs rework`, reset `Approved by user: Not yet.`, and reset `Part pressure test: Not yet.`. Parts whose `## Parts` status is `done` are left as-is by default (their completed work stays recorded). If the new goal invalidates a `done` part's completed work, the user can explicitly request that part be reopened — that follows the verify-remediation path (`done → doing` transition) and must be recorded in `## Decisions`. If the agent judges that a still-active part's scope still fits the new goal, the re-approval can be brief, but it must happen — the prior approval was against the old goal and cannot be inherited.
    - `stop` — pause, block, or close. The loop stays `status: active` when pausing or blocked. A close handoff uses the pair `Intent: stop` + `Next: close`.
 4. Take the smallest meaningful move that advances that intent — smallest meaningful, not smallest possible.
-5. Capture the exact result. If raw output is large, save it inside the loop folder, keep the decisive excerpt in the cycle, and link the file from `## Relevant artifacts`. Record evidence verbatim where practical; do not paraphrase away the signal. For non-TDD `implement` cycles, capture Evidence as the diff range as `file:line-line` plus one of: a passing existing test that covers the change, a manual verification command and its output, or a screenshot/log; and state the rationale for not using TDD in `Orient`.
+5. Capture the exact result. If raw output is large, save it inside the loop folder, keep the decisive excerpt in the cycle, and link the file from `## Relevant artifacts`. Record evidence verbatim where practical; do not paraphrase away the signal. For `implement` cycles, capture Evidence as the diff range as `file:line-line` plus one of: a passing existing test that covers the change, a manual verification command and its output, or a screenshot/log.
 6. Record what the evidence changed about the prior belief, the route, the parts, or the risks. Then explicitly ask: is the goal still the right goal? If no, the next intent must be `reframe`, not `reroute`.
 7. Refresh the living state. `## Current focus` holds the active part and the next concrete move. Update it every cycle, and whenever the active part or immediate next move changes.
 8. Set `Next` based on the immediate next move: `continue | back up | split | validate | pause | close | reframe`. Meanings:
@@ -256,8 +255,6 @@ At a checkpoint, the agent must:
 4. Record the user's answer in `## Decisions` with a timestamp before resuming cycle work. If the answer is `reroute`, also append to `## Route shifts`. If `reframe`, follow the Phase 3 reframe path in step 3 of the cycle list.
 
 Checkpoints are not optional. "The next cycle is almost done" is not a reason to skip one.
-
-**TDD as a suggested implementation mode.** When an `implement` cycle's work is testable behavior (not pure refactoring, pure tooling, or pure prose), suggest the TDD capability from the registry above to drive the slice red-green-refactor. Suggested, not required — the user can decline. When used, the failing test becomes the cycle's `Evidence`, the passing implementation becomes the next cycle's `Action` and `Evidence`, and the refactor (if any) becomes a third cycle. When the work is testable but no TDD skill matches the capability, proceed with manual test-first authoring and record in the cycle's `Orient`: `No TDD capability installed; tests authored manually.`
 
 If the bar or route changes, update the living value **and** append a one-line entry to `## Bar history` or `## Route shifts` with timestamp and reason. Use `## Decisions` only for load-bearing choices.
 
@@ -331,6 +328,27 @@ When sub-agents are available, the parent may delegate a bounded slice within a 
 - One writer at a time for implementation on the same code path. Two children racing on the same files produces incoherent diffs.
 - Each delegation has a clear input, output, and stop condition. "Look at the codebase and figure things out" is too open; "find every call site of `Foo.bar` and report each as file:line with context" is bounded.
 - If a child returns nothing useful (empty, off-topic, or below the stop condition), record the cycle's `Evidence` as `Delegation returned no usable output: <one-line reason>`, set `Next: validate` or `Next: back up`, and decide whether to redelegate with tighter inputs or take the move directly.
+
+**Implement-cycle dispatch contract.**
+
+Every `Intent: implement` cycle that writes or edits code is dispatched to a sub-agent, with one carveout: a trivial single-edit move (one or two lines, no behavior change — typo, comment fix, single-symbol rename inside already-approved scope) may be made by the parent directly and recorded as the cycle's `Action`. If the runtime has no sub-agent capability, the parent writes code directly; the Evidence requirement on cycle step 5 still holds.
+
+The parent retains read access throughout the cycle: running commands, reading files, and verifying user claims (per the user-claim verification rule in Operating rules) stay with the parent and do not require dispatch.
+
+Input the parent gives the child:
+
+- Slice description — the move to make, derived from the current part plan and the cycle's intended `Action`.
+- Writes boundary — the files or paths the child may modify, scoped to the current part.
+- Evidence required — diff range plus one of: passing test, manual command + output, or screenshot/log (matches cycle step 5).
+- Read-only context — files the child may read but not modify, plus relevant excerpts from the current part block.
+
+Return the child gives the parent:
+
+- Diff summary — file-grouped notes on what changed.
+- Evidence — captured in one of the forms above.
+- Blocker, if any — one of: `scope question` (the slice needs a file outside the writes boundary or a clarification) or `route conflict` (the slice cannot succeed because the route assumption is broken). Empty if the slice landed cleanly.
+
+The parent writes the cycle entry from the child's return; the child never reads or writes `loop.md`. On a returned `scope question`, the parent resolves the question (asks the user or widens the writes boundary deliberately) before re-dispatching. On a returned `route conflict`, the next cycle's `Intent` is `reroute` if the goal still holds, or `reframe` if it does not.
 
 ## Chat output shape
 
