@@ -49,7 +49,7 @@ Read the user's request and pick exactly one operation: `init`, `import`,
 
 ## init
 
-`hyper-jira init <base_url> --project <key> [--mode <mcp|docker>] [--docker-url <url>] [--done-transition <name>]`
+`hyper-jira init <base_url> --project <key> [--mode <mcp|docker>] [--docker-url <url>] [--done-transition <name>] [--auto-branch] [--branch-from <branch>] [--auto-commit]`
 
 1. If `--mode docker` is specified and `--docker-url` is not provided, print:
    `"--docker-url is required when using --mode docker."` and stop.
@@ -59,6 +59,9 @@ Read the user's request and pick exactly one operation: `init`, `import`,
    - `done_transition` from `--done-transition` (default: `QA Test`)
    - `mode` from `--mode` (default: `mcp`)
    - `docker_url` from `--docker-url` (include this field only when mode is `docker`)
+   - `auto_branch: true` only when `--auto-branch` flag is present (omit field otherwise)
+   - `branch_from` from `--branch-from` only when `--auto-branch` is present (default: `dev`)
+   - `auto_commit: true` only when `--auto-commit` flag is present (omit field otherwise)
 3. Report: `Jira integration initialized. mode: <mode>. base_url: <url>. Project: <key>.`
 
 No credentials are written to `.hyper/jira.md`. The file is safe to commit.
@@ -129,10 +132,30 @@ Triggered when the user provides a Jira issue key matching pattern
     `## Goal` from the task body.
 12. If an epic was enrolled, update the `epics.md` Tasks column to include the
     new task id.
-13. Transition the Jira issue status to `"In Progress"` (mode-appropriate call).
+13. (Conditional — only when `auto_branch: true` in `.hyper/jira.md`)
+    a. Read `branch_from` from `.hyper/jira.md` (default: `dev`).
+    b. Compose branch name: `<JIRA-KEY>-<slug>` using the uppercase Jira key
+       and the same slug computed in step 8.
+    c. Run `git status --porcelain`. If output is non-empty (dirty working tree),
+       prompt the developer:
+       ```
+       Working tree has uncommitted changes. Choose:
+         1. Stash  — stash changes, create branch, pop stash
+         2. Commit — commit current changes first, then create branch
+         3. Skip   — import without creating a branch
+       ```
+       - **Stash:** `git stash && git checkout <branch_from> && git checkout -b <branch> && git stash pop`
+       - **Commit:** ask `"Commit message? [default: WIP before <JIRA-KEY>]"`;
+         then `git add -A && git commit -m "<msg>" && git checkout <branch_from> && git checkout -b <branch>`
+       - **Skip:** proceed to step 14 without branching.
+    d. If tree is clean: `git checkout <branch_from> && git checkout -b <branch>`
+    e. If `branch_from` does not exist or any git command fails, print:
+       `"Branch creation failed: <error>. Continuing import without branch."`
+       and proceed to step 14.
+14. Transition the Jira issue status to `"In Progress"` (mode-appropriate call).
     If the transition fails, report the error and continue — do not abort task
     creation.
-14. Report:
+15. Report:
     `Created T<N> — <title> (from <JIRA-KEY>). Jira status set to In Progress.
     Continue with: hyper T<N>`
 
