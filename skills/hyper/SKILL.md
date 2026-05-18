@@ -226,7 +226,9 @@ Read `mode` from `.hyper/jira.md`. Use the agent's Jira MCP tools if
       - Blank line
       - Lines 3–5: the `## What was done` body from the `jira.md` generated in
         step 1, trimmed to 1–3 lines.
-   b. `git add -A && git commit -m "<message>"`
+   b. `git add -A -- ':(exclude).hyper' && git commit -m "<message>"`
+      The `:(exclude).hyper` pathspec ensures `.hyper/` state files are never
+      staged into the project repo commit, regardless of `.gitignore` settings.
    c. If the commit fails (nothing to commit, not a git repo, etc.), print:
       `"Auto-commit skipped: <reason>."` and continue — do not abort archiving.
 
