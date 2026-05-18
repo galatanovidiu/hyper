@@ -232,6 +232,7 @@ comment.
 
 ## Internal vs user-facing skills
 
+
 Users invoke twelve Hyper skills directly: `hyper`, `hyper-task`,
 `hyper-backlog`, `hyper-handoff`, `hyper-retro`, `hyper-code-review`,
 `hyper-recipe`, `hyper-iterate`, `hyper-team`, `hyper-sync`, `hyper-jira`, and `hyper-short-story`.
