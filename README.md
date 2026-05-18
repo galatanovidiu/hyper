@@ -267,6 +267,7 @@ User-facing skill names:
 - `hyper-iterate`
 - `hyper-jira`
 - `hyper-team`
+- `hyper-short-story`
 - `hyper-sync`
 
 
@@ -274,6 +275,8 @@ User-facing skill names:
 | --- | --- |
 | `/hyper <request>` | Start structured work. |
 | `/hyper T<N>` | Resume a task. |
+| `/hyper-iterate <goal>`   | Start adaptive work.                                                    |
+| `/hyper-iterate L<N>`     | Resume a loop.                                                          |
 | `/hyper-task` | List, create, defer, cancel, or inspect tasks; manage epics. |
 | `/hyper-backlog` | Add, list, promote, or drop future ideas. |
 | `/hyper-handoff` | Write a handoff when conversation context would be lost. |
@@ -284,6 +287,7 @@ User-facing skill names:
 | `/hyper-jira` | Import a Jira issue by key, manage Jira status transitions, and post completion comments back to Jira. |
 | `/hyper-team` | Ask another AI agent CLI for a second opinion. |
 | `/hyper-sync` | Sync `.hyper/` with the shared team repo. Pull before starting a task, push after completing one. |
+| `/hyper-short-story`      | Rewrite the previous response as a short, plain-language narrative.     |
 
 Internal skills such as `hyper-intake`, `hyper-spec`,
 `hyper-technical-plan`, `hyper-execution-plan`,

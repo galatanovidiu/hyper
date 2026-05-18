@@ -33,6 +33,7 @@ const USER_FACING_HYPER = new Set([
   "hyper-iterate",
   "hyper-jira",
   "hyper-team",
+  "hyper-short-story",
   "hyper-sync",
 ]);
 
@@ -211,6 +212,9 @@ function validateReadmeAndDataModel() {
     ensureContains(README, `\`${skill}\``);
   }
 
+  ensureContains(README, "Workflow 1 — `hyper` (phased)");
+  ensureContains(README, "Workflow 2 — `hyper-iterate` (adaptive)");
+
   ensureContains(DATA_MODEL, "Users invoke eleven Hyper skills directly");
   ensureContains(DATA_MODEL, "`hyper-iterate`");
   ensureContains(
@@ -232,7 +236,7 @@ function validateHyperIterate() {
     "## Definition of done",
     "## Task understanding",
     "## Existing code and findings",
-    "## Agreed big plan",
+    "## Loop plan",
     "## Current route",
     "## Current focus",
     "## Current bar",
@@ -266,28 +270,27 @@ function validateHyperIterate() {
 
   ensureContains(HYPER_ITERATE_TEMPLATE, "Status: awaiting approval");
   ensureContains(HYPER_ITERATE_TEMPLATE, "Approved by user: Not yet.");
-  ensureContains(HYPER_ITERATE_TEMPLATE, "### P1 — <first meaningful slice>");
+  ensureContains(HYPER_ITERATE_TEMPLATE, "### P1 — Whole goal");
   ensureContains(HYPER_ITERATE_TEMPLATE, "#### Understanding");
   ensureContains(HYPER_ITERATE_TEMPLATE, "#### Existing code and findings");
-  ensureContains(HYPER_ITERATE_TEMPLATE, "#### Plan");
-  ensureContains(HYPER_ITERATE_TEMPLATE, "**Intent:** <probe | implement | validate | split | reroute | stop>");
+  ensureContains(HYPER_ITERATE_TEMPLATE, "#### Part plan");
+  ensureContains(HYPER_ITERATE_TEMPLATE, "**Intent:** <probe | implement | validate | reroute | reframe | stop>");
   ensureContains(HYPER_ITERATE_TEMPLATE, "**Prior belief:** <What I expected before this cycle.");
   ensureContains(HYPER_ITERATE_TEMPLATE, "**Route impact:** <How this changes the route or parts.");
-  ensureContains(HYPER_ITERATE_TEMPLATE, "- P1 — <first meaningful slice> — doing");
-  ensureContains(HYPER_ITERATE_TEMPLATE, "- Next atomic move: <what to do first on resume>");
-  ensureContains(HYPER_ITERATE_TEMPLATE, "- Dirty or unvalidated state: <none | what has changed but is not yet validated>");
+  ensureContains(HYPER_ITERATE_TEMPLATE, "- P1 — Whole goal — aligning");
+  ensureContains(HYPER_ITERATE_TEMPLATE, "- Next atomic move: Not filled yet.");
+  ensureContains(HYPER_ITERATE_TEMPLATE, "- Dirty or unvalidated state: none");
 
-  ensureContains(HYPER_ITERATE_SKILL, "## Alignment gate");
-  ensureContains(HYPER_ITERATE_SKILL, "## Resume");
-  ensureContains(HYPER_ITERATE_SKILL, "**Hot** (always read first):");
+  ensureContains(HYPER_ITERATE_SKILL, "**Alignment gate.**");
+  ensureContains(HYPER_ITERATE_SKILL, "**On resume:**");
+  ensureContains(HYPER_ITERATE_SKILL, "**Hot** (always):");
   ensureContains(HYPER_ITERATE_SKILL, "**Warm** (when the next move needs more):");
-  ensureContains(HYPER_ITERATE_SKILL, "**Cold** (only on demand):");
+  ensureContains(HYPER_ITERATE_SKILL, "**Cold** (on demand only):");
   ensureContains(HYPER_ITERATE_SKILL, ".hyper/loops/L<N>-<slug>/");
-  ensureContains(HYPER_ITERATE_SKILL, "This is a hard gate. Do not implement anything before the big plan is agreed and recorded in `loop.md`.");
-  ensureContains(HYPER_ITERATE_SKILL, "No part implementation before that part's approval.");
+  ensureContains(HYPER_ITERATE_SKILL, "No cycle starts before both gates are cleared.");
+  ensureContains(HYPER_ITERATE_SKILL, "Before work on `P<N>` starts, the part block must meet the current-part-block gate above");
   ensureContains(HYPER_ITERATE_SKILL, "## Delegation");
-  ensureContains(HYPER_ITERATE_SKILL, "Part statuses: `todo | doing | done | blocked | dropped`.");
-  ensureContains(HYPER_ITERATE_SKILL, "Do not create `01-intake.md`, `02-spec.md`, `03-technical-plan.md`, `04-execution-plan.md`, or task folders from this skill.");
+  ensureContains(HYPER_ITERATE_SKILL, "Part statuses: `todo | aligning | doing | done`.");
 
   ensureContains(README, "/hyper-iterate L3");
   ensureContains(README, "interview-style alignment pass");

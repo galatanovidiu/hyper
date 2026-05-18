@@ -108,6 +108,7 @@ check:
 - `hyper-retro`
 - `hyper-recipe`
 - `hyper-iterate`
+- `hyper-short-story`
 
 ## Repairing example drift
 
