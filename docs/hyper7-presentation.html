@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hyper7 — Structured AI Development Workflow</title>
+<style>
+  :root {
+    --bg: #0D0D0D;
+    --surface: #161616;
+    --card: #1E1E1E;
+    --violet: #6C63FF;
+    --teal: #00D4AA;
+    --orange: #FF6B35;
+    --text: #F5F5F5;
+    --muted: #A0A0A0;
+    --code-bg: #111827;
+    --code-text: #E2E8F0;
+    --border: #2A2A2A;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .deck {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 80px;
+    background: var(--surface);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .slide.active {
+    display: flex;
+    opacity: 1;
+  }
+
+  /* NAV */
+  .nav {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    z-index: 100;
+    background: rgba(22,22,22,0.9);
+    border: 1px solid var(--border);
+    border-radius: 40px;
+    padding: 10px 24px;
+    backdrop-filter: blur(12px);
+  }
+
+  .nav button {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+  }
+
+  .nav button:hover { color: var(--text); background: var(--card); }
+
+  .slide-counter {
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    min-width: 50px;
+    text-align: center;
+  }
+
+  /* PROGRESS BAR */
+  .progress {
+    position: fixed;
+    top: 0; left: 0;
+    height: 3px;
+    background: var(--violet);
+    transition: width 0.3s ease;
+    z-index: 100;
+  }
+
+  /* COMMON */
+  .chip {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: var(--violet);
+    color: #fff;
+    margin-bottom: 24px;
+    align-self: flex-start;
+  }
+  .chip.teal { background: var(--teal); color: var(--bg); }
+  .chip.orange { background: var(--orange); }
+
+  h1 { font-size: 64px; font-weight: 900; line-height: 1.05; }
+  h2 { font-size: 42px; font-weight: 700; line-height: 1.1; margin-bottom: 32px; }
+  h3 { font-size: 22px; font-weight: 600; margin-bottom: 12px; color: var(--teal); }
+  p, li { font-size: 18px; line-height: 1.65; color: var(--text); }
+  ul { list-style: none; }
+  ul li { padding: 6px 0; padding-left: 20px; position: relative; }
+  ul li::before { content: '→'; position: absolute; left: 0; color: var(--violet); }
+  .muted { color: var(--muted); }
+
+  pre, code {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  pre {
+    background: var(--code-bg);
+    color: var(--code-text);
+    border-radius: 10px;
+    padding: 24px 28px;
+    border-left: 3px solid var(--violet);
+    overflow-x: auto;
+    width: 100%;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px 32px;
+  }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; width: 100%; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; width: 100%; }
+
+  .tag {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 6px;
+    margin: 3px;
+    background: var(--card);
+    border: 1px solid var(--border);
+  }
+
+  /* PHASE PILL */
+  .phase-pill {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 5px 14px;
+    border-radius: 20px;
+    background: var(--violet);
+    color: #fff;
+    margin: 3px;
+  }
+  .phase-pill.teal { background: var(--teal); color: var(--bg); }
+  .phase-pill.orange { background: var(--orange); }
+  .phase-pill.gray { background: var(--card); color: var(--muted); border: 1px solid var(--border); }
+
+  /* GATE ICON */
+  .gate {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--teal);
+    color: var(--bg);
+    font-size: 12px;
+    font-weight: 900;
+    margin: 0 4px;
+    vertical-align: middle;
+    flex-shrink: 0;
+  }
+
+  .arrow { color: var(--muted); margin: 0 6px; font-size: 14px; }
+
+  /* LANE ROW */
+  .lane {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .lane:last-child { border-bottom: none; }
+  .lane-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    min-width: 120px;
+  }
+
+  /* TABLE */
+  table { width: 100%; border-collapse: collapse; font-size: 16px; }
+  th { text-align: left; padding: 10px 16px; color: var(--muted); font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+  td { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
+  td code { background: var(--code-bg); padding: 2px 8px; border-radius: 4px; font-size: 13px; color: var(--teal); }
+
+  /* ACCENT BAR */
+  .accent-bar { width: 5px; border-radius: 3px; background: var(--violet); flex-shrink: 0; }
+
+  /* QUOTE */
+  .quote {
+    font-size: 32px;
+    font-style: italic;
+    font-weight: 300;
+    line-height: 1.5;
+    text-align: center;
+    color: var(--text);
+    max-width: 900px;
+  }
+
+  /* STEP NUMBER */
+  .step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--violet);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-right: 16px;
+  }
+
+  .step-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    font-size: 17px;
+  }
+
+  /* OODA */
+  .ooda-ring {
+    display: flex;
+    gap: 0;
+    align-items: center;
+  }
+  .ooda-node {
+    background: var(--card);
+    border: 2px solid var(--violet);
+    border-radius: 50%;
+    width: 100px; height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .ooda-arrow { color: var(--violet); font-size: 22px; margin: 0 6px; }
+
+  /* HIGHLIGHT BOX */
+  .highlight-box {
+    background: rgba(108, 99, 255, 0.1);
+    border: 1px solid rgba(108, 99, 255, 0.4);
+    border-radius: 10px;
+    padding: 20px 28px;
+    margin-top: 24px;
+    font-size: 17px;
+  }
+
+  /* TITLE SLIDE GLOW */
+  .title-glow {
+    position: absolute;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(108,99,255,0.18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* KEYBOARD HINT */
+  .kbd-hint {
+    position: fixed;
+    top: 18px;
+    right: 24px;
+    font-size: 11px;
+    color: var(--border);
+    z-index: 100;
+    letter-spacing: 0.5px;
+  }
+
+  /* SCROLL inside slide */
+  .slide-scroll {
+    overflow-y: auto;
+    width: 100%;
+    max-height: calc(100vh - 160px);
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<div class="kbd-hint">← → arrow keys to navigate</div>
+
+<div class="deck" id="deck">
+
+  <!-- SLIDE 1: TITLE -->
+  <div class="slide active" id="s1">
+    <div class="title-glow"></div>
+    <div style="text-align:center; position:relative; z-index:1;">
+      <div style="font-size:11px; letter-spacing:3px; text-transform:uppercase; color:var(--violet); margin-bottom:24px; font-weight:700;">GameLounge · Engineering</div>
+      <h1 style="font-size:96px; background: linear-gradient(135deg, #fff 40%, #6C63FF); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:20px;">Hyper7</h1>
+      <div style="font-size:28px; color:var(--muted); font-weight:300;">Structured AI Development Workflow</div>
+      <div style="margin-top:48px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+        <span class="tag">No CLI</span>
+        <span class="tag">No Server</span>
+        <span class="tag">No Database</span>
+        <span class="tag">Markdown-first</span>
+        <span class="tag">Portable</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 2: PROBLEM 1 -->
+  <div class="slide" id="s2">
+    <div class="chip orange">THE PROBLEM 1/3</div>
+    <div style="display:flex; gap:60px; width:100%; align-items:flex-start;">
+      <div style="flex:1;">
+        <h2>AI Agents Lose Thread</h2>
+        <ul>
+          <li>Long conversations → forgotten decisions</li>
+          <li>Agent contradicts itself mid-implementation</li>
+          <li>No memory of why an approach was chosen</li>
+          <li>Repeats analysis that was already done</li>
+        </ul>
+        <div class="highlight-box" style="margin-top:32px; border-color: rgba(255,107,53,0.4); background: rgba(255,107,53,0.08);">
+          This is not a bug — it's a fundamental property of context-window-based models.
+        </div>
+      </div>
+      <div style="flex:1; display:flex; flex-direction:column; gap:12px;">
+        <div style="font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:8px;">Conversation timeline</div>
+        <div class="card" style="border-color: var(--teal);">💬 "Add login page" — <span style="color:var(--teal);">clear intent</span></div>
+        <div class="card">💬 "Should use JWT" — still on track</div>
+        <div class="card" style="border-color:var(--border);">💬 "Let me design the DB schema…" — <span style="color:var(--muted);">diverging</span></div>
+        <div class="card" style="border-color:var(--orange);">💬 "Actually let's use sessions, not JWT" — <span style="color:var(--orange);">contradicts earlier decision</span></div>
+        <div class="card" style="border-color:var(--orange); background: rgba(255,107,53,0.08);">💬 "I'll add a custom OAuth system" — <span style="color:var(--orange);">scope explosion</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: PROBLEM 2 -->
+  <div class="slide" id="s3">
+    <div class="chip orange">THE PROBLEM 2/3</div>
+    <h2>Agents Build First, Ask Never</h2>
+    <div class="grid-2">
+      <div class="card" style="border-color:var(--orange);">
+        <div style="font-size:13px; font-weight:700; color:var(--orange); letter-spacing:1px; margin-bottom:16px;">WITHOUT GATES</div>
+        <ul>
+          <li>Executes immediately on any request</li>
+          <li>Makes architecture choices unilaterally</li>
+          <li>Builds the right feature the wrong way</li>
+          <li>Expensive to reverse after hours of generation</li>
+        </ul>
+      </div>
+      <div class="card" style="border-color:var(--teal);">
+        <div style="font-size:13px; font-weight:700; color:var(--teal); letter-spacing:1px; margin-bottom:16px;">WITH HYPER GATES</div>
+        <ul>
+          <li>Proposes a plan before touching code</li>
+          <li>Waits for developer approval</li>
+          <li>Advances only with explicit consent</li>
+          <li>Reversal costs: edit the artifact, re-approve</li>
+        </ul>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:32px;">
+      The agent should be doing the thinking. The developer should be doing the deciding.
+    </div>
+  </div>
+
+  <!-- SLIDE 4: PROBLEM 3 -->
+  <div class="slide" id="s4">
+    <div class="chip orange">THE PROBLEM 3/3</div>
+    <h2>Reasoning Disappears</h2>
+    <div class="grid-3">
+      <div class="card">
+        <div style="font-size:32px; margin-bottom:12px;">🗂</div>
+        <h3>No record of decisions</h3>
+        <p>Why did we choose this architecture? The conversation log is unsearchable and disappears with the session.</p>
+      </div>
+      <div class="card">
+        <div style="font-size:32px; margin-bottom:12px;">👥</div>
+        <h3>No onboarding path</h3>
+        <p>New team members have no way to understand decisions behind the code. Review becomes guesswork.</p>
+      </div>
+      <div class="card">
+        <div style="font-size:32px; margin-bottom:12px;">🔍</div>
+        <h3>No audit trail</h3>
+        <p>What was the plan before we pivoted? What tests did the AI run? No accountability without records.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: WHAT IS HYPER -->
+  <div class="slide" id="s5">
+    <div class="chip">WHAT IS HYPER?</div>
+    <h2>Workflow as Markdown</h2>
+    <div class="grid-3" style="margin-bottom:28px;">
+      <div class="card">
+        <div style="font-size:28px; margin-bottom:12px;">📋</div>
+        <h3>Phased</h3>
+        <p>Work broken into named stages: intake → spec → plan → implement → verify</p>
+      </div>
+      <div class="card">
+        <div style="font-size:28px; margin-bottom:12px;">🛡️</div>
+        <h3>Gated</h3>
+        <p>Agent pauses after direction-setting phases. Waits for developer sign-off before advancing.</p>
+      </div>
+      <div class="card">
+        <div style="font-size:28px; margin-bottom:12px;">📁</div>
+        <h3>Persistent</h3>
+        <p>All state lives as plain <code>.md</code> files in <code>.hyper/</code> — readable, editable, diffable, portable.</p>
+      </div>
+    </div>
+    <div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center;">
+      <span class="tag">Works with Claude Code</span>
+      <span class="tag">Works with Codex</span>
+      <span class="tag">Works with any Agent Skills–compatible agent</span>
+      <span class="tag">No CLI</span>
+      <span class="tag">No server</span>
+      <span class="tag">No database</span>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: CORE PROMISE -->
+  <div class="slide" id="s6">
+    <div style="text-align:center; max-width:900px;">
+      <div class="chip" style="align-self:center; margin:0 auto 40px;">CORE PROMISE</div>
+      <div class="quote" style="margin-bottom:48px;">"The agent proposes.<br>The developer approves.<br>Work advances only with consent."</div>
+      <div style="display:flex; gap:40px; justify-content:center; align-items:center;">
+        <div style="text-align:center;">
+          <div style="font-size:36px;">🤖</div>
+          <div style="font-size:13px; color:var(--muted); margin-top:8px;">Agent proposes</div>
+        </div>
+        <div style="font-size:28px; color:var(--violet);">→</div>
+        <div style="text-align:center;">
+          <div style="font-size:36px;">📄</div>
+          <div style="font-size:13px; color:var(--muted); margin-top:8px;">Artifact written</div>
+        </div>
+        <div style="font-size:28px; color:var(--violet);">→</div>
+        <div style="text-align:center;">
+          <div style="font-size:36px;">✅</div>
+          <div style="font-size:13px; color:var(--muted); margin-top:8px;">Developer approves</div>
+        </div>
+        <div style="font-size:28px; color:var(--violet);">→</div>
+        <div style="text-align:center;">
+          <div style="font-size:36px;">🚀</div>
+          <div style="font-size:13px; color:var(--muted); margin-top:8px;">Work advances</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: TWO WORKFLOWS -->
+  <div class="slide" id="s7">
+    <div class="chip">TWO WORKFLOWS</div>
+    <h2>Right Tool for Each Shape of Work</h2>
+    <div class="grid-2">
+      <div class="card" style="border-color:var(--violet);">
+        <div style="font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--violet); margin-bottom:8px;">PHASED</div>
+        <div style="font-size:28px; font-weight:800; margin-bottom:4px;">hyper</div>
+        <div style="color:var(--muted); margin-bottom:16px; font-size:15px;">For stable direction up front</div>
+        <pre style="font-size:13px; padding:12px 16px;">/hyper Add a login page</pre>
+        <ul style="margin-top:16px;">
+          <li>Linear phase sequence with approval gates</li>
+          <li>Worker subtask orchestration</li>
+          <li>Redirect on conflict or blocked</li>
+        </ul>
+      </div>
+      <div class="card" style="border-color:var(--teal);">
+        <div style="font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--teal); margin-bottom:8px;">ADAPTIVE</div>
+        <div style="font-size:28px; font-weight:800; margin-bottom:4px;">hyper-iterate</div>
+        <div style="color:var(--muted); margin-bottom:16px; font-size:15px;">For evolving direction</div>
+        <pre style="font-size:13px; padding:12px 16px;">/hyper-iterate Investigate slow reports</pre>
+        <ul style="margin-top:16px;">
+          <li>OODA loop: Observe → Orient → Decide → Act</li>
+          <li>Intent-typed cycles (probe, implement, reroute…)</li>
+          <li>Append-only loop log — fully auditable</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: LANES -->
+  <div class="slide" id="s8">
+    <div class="chip">HYPER WORKFLOW</div>
+    <h2>Four Lanes — Right Phases for Each Job</h2>
+    <div style="width:100%;">
+      <div class="lane">
+        <div class="lane-label">Feature</div>
+        <span class="phase-pill">intake</span><span class="gate">✓</span>
+        <span class="phase-pill">spec</span><span class="gate">✓</span>
+        <span class="phase-pill">technical-plan</span><span class="gate">✓</span>
+        <span class="phase-pill">execution-plan</span><span class="gate">✓</span>
+        <span class="phase-pill">implement</span>
+        <span class="phase-pill">verify</span>
+        <span class="phase-pill">docs</span>
+        <span class="phase-pill teal">DONE</span>
+      </div>
+      <div class="lane">
+        <div class="lane-label">Feature Bugfix</div>
+        <span class="phase-pill">intake</span><span class="gate">✓</span>
+        <span class="phase-pill">technical-plan</span><span class="gate">✓</span>
+        <span class="phase-pill">execution-plan</span><span class="gate">✓</span>
+        <span class="phase-pill">implement</span>
+        <span class="phase-pill">verify</span>
+        <span class="phase-pill">docs</span>
+        <span class="phase-pill teal">DONE</span>
+      </div>
+      <div class="lane">
+        <div class="lane-label">Quick</div>
+        <span class="phase-pill">intake</span><span class="gate">✓</span>
+        <span class="phase-pill">technical-plan</span><span class="gate">✓</span>
+        <span class="phase-pill">implement</span>
+        <span class="phase-pill">verify</span>
+        <span class="phase-pill teal">DONE</span>
+      </div>
+      <div class="lane">
+        <div class="lane-label">Research</div>
+        <span class="phase-pill">intake</span><span class="gate">✓</span>
+        <span class="phase-pill">research</span>
+        <span class="phase-pill teal">DONE</span>
+      </div>
+    </div>
+    <div style="margin-top:24px; display:flex; align-items:center; gap:12px; color:var(--muted); font-size:14px;">
+      <span class="gate">✓</span> = approval gate (agent stops, waits for "approve")
+      &nbsp;&nbsp;&nbsp;
+      Bugfix variants skip spec — scope is already known
+    </div>
+  </div>
+
+  <!-- SLIDE 9: APPROVAL GATE -->
+  <div class="slide" id="s9">
+    <div class="chip teal">APPROVAL GATE</div>
+    <h2>What It Looks Like in Practice</h2>
+    <div style="max-width:780px; width:100%;">
+      <div style="display:flex; gap:16px; margin-bottom:16px; align-items:flex-start;">
+        <div style="width:36px; height:36px; border-radius:50%; background:var(--violet); display:flex;align-items:center;justify-content:center;flex-shrink:0; font-size:16px;">🤖</div>
+        <div class="card" style="flex:1; border-color:var(--violet);">
+          <div style="font-size:12px; color:var(--violet); font-weight:700; margin-bottom:8px; letter-spacing:1px;">AGENT</div>
+          Wrote <code>01-intake.md</code>. Adding dark mode toggle to Settings page. Scope: <strong>quick</strong>. Success: toggle visible, preference persists after reload.
+          <br><br>
+          <strong>Review the framing. Type <span style="color:var(--teal);">approve</span> to continue.</strong>
+        </div>
+      </div>
+      <div style="display:flex; gap:16px; margin-bottom:16px; align-items:flex-start; justify-content:flex-end;">
+        <div class="card" style="flex:1; max-width:400px; border-color:var(--teal);">
+          <div style="font-size:12px; color:var(--teal); font-weight:700; margin-bottom:8px; letter-spacing:1px;">DEVELOPER</div>
+          approve
+        </div>
+        <div style="width:36px; height:36px; border-radius:50%; background:var(--teal); display:flex;align-items:center;justify-content:center;flex-shrink:0; font-size:16px; color:var(--bg);">👤</div>
+      </div>
+      <div style="display:flex; gap:16px; align-items:flex-start;">
+        <div style="width:36px; height:36px; border-radius:50%; background:var(--violet); display:flex;align-items:center;justify-content:center;flex-shrink:0; font-size:16px;">🤖</div>
+        <div class="card" style="flex:1; border-color:var(--violet);">
+          <div style="font-size:12px; color:var(--violet); font-weight:700; margin-bottom:8px; letter-spacing:1px;">AGENT</div>
+          Advancing to <strong>technical-plan</strong>…
+        </div>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:28px; max-width:780px; width:100%;">
+      💡 You can edit the artifact before approving — it's just a markdown file.
+    </div>
+  </div>
+
+  <!-- SLIDE 10: TASK FOLDER -->
+  <div class="slide" id="s10">
+    <div class="chip">STATE MODEL</div>
+    <h2>Every Decision Is a File</h2>
+    <div class="grid-2">
+      <pre>.hyper/tasks/T3-dark-mode-toggle/
+├── task.md              ← phase, scope, status
+├── 01-intake.md         ← what was requested
+├── 02-spec.md           ← what will change
+├── 03-technical-plan.md ← architecture decisions
+├── 04-execution-plan.md ← subtask breakdown
+├── checks.md            ← test results and verdict
+└── dashboard.md         ← human-readable summary</pre>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div class="card">
+          <div style="font-size:11px; color:var(--violet); font-weight:700; letter-spacing:1px; margin-bottom:6px;">CANONICAL STATE</div>
+          <code>task.md</code> frontmatter — phase, scope, bugfix, awaiting. This is the single source of truth.
+        </div>
+        <div class="card">
+          <div style="font-size:11px; color:var(--teal); font-weight:700; letter-spacing:1px; margin-bottom:6px;">GOES INTO GIT</div>
+          Phase artifacts are tracked files. Code review now includes the plan that produced the code.
+        </div>
+        <div class="card">
+          <div style="font-size:11px; color:var(--muted); font-weight:700; letter-spacing:1px; margin-bottom:6px;">EDITABLE BY HAND</div>
+          Correct a mistake by editing the file. No database migrations. No API calls.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 11: REDIRECTS -->
+  <div class="slide" id="s11">
+    <div class="chip orange">REDIRECT SEMANTICS</div>
+    <h2>Handling Surprises Without Losing Work</h2>
+    <div class="grid-2">
+      <div class="card" style="border-color:var(--orange);">
+        <div style="font-size:11px; font-weight:700; color:var(--orange); letter-spacing:1px; margin-bottom:16px;">CONFLICT — during implement</div>
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:16px;">
+          <span class="phase-pill">implement</span>
+          <span style="color:var(--orange);">→ assumption broken →</span>
+          <span class="phase-pill orange">plan-conflict.md</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <span style="color:var(--orange);">Redirects to</span>
+          <span class="phase-pill">technical-plan</span>
+          <span style="color:var(--muted);">to replan</span>
+        </div>
+        <div style="margin-top:16px; font-size:14px; color:var(--muted);">No code is lost. Prior work is preserved.</div>
+      </div>
+      <div class="card" style="border-color:var(--orange);">
+        <div style="font-size:11px; font-weight:700; color:var(--orange); letter-spacing:1px; margin-bottom:16px;">BLOCKED — during verify</div>
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:16px;">
+          <span class="phase-pill">verify</span>
+          <span style="color:var(--orange);">→ tests fail →</span>
+          <span class="phase-pill orange">checks.md verdict: blocked</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <span style="color:var(--orange);">Redirects to</span>
+          <span class="phase-pill">execution-plan</span>
+          <span style="color:var(--muted);">for remediation</span>
+        </div>
+        <div style="margin-top:16px; font-size:14px; color:var(--muted);">checks.md shows exactly what failed and why.</div>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:28px;">
+      No silent failures. No overridden assumptions. Every redirect is explicit and traced.
+    </div>
+  </div>
+
+  <!-- SLIDE 12: WORKERS -->
+  <div class="slide" id="s12">
+    <div class="chip">WORKER ORCHESTRATION</div>
+    <h2>Feature Tasks — Parallel Execution</h2>
+    <div style="display:flex; gap:48px; align-items:center; width:100%;">
+      <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:16px;">
+        <div class="card" style="width:100%; text-align:center; border-color:var(--violet);">
+          <div style="font-size:12px; color:var(--violet); font-weight:700; letter-spacing:1px;">hyper-implement</div>
+          Dispatches workers from execution-plan
+        </div>
+        <div style="display:flex; gap:20px; width:100%; justify-content:center;">
+          <div style="width:2px; height:30px; background:var(--violet); margin-left:33%; margin-right:-33%;"></div>
+          <div style="width:2px; height:30px; background:var(--violet);"></div>
+          <div style="width:2px; height:30px; background:var(--violet); margin-right:33%; margin-left:-33%;"></div>
+        </div>
+        <div style="display:flex; gap:16px; width:100%;">
+          <div class="card" style="flex:1; text-align:center; border-color:var(--teal);">
+            <div style="font-size:11px; color:var(--teal); font-weight:700; margin-bottom:8px;">WORKER 1</div>
+            Reads T3.1 only<br>Executes slice<br>Writes completion
+          </div>
+          <div class="card" style="flex:1; text-align:center; border-color:var(--teal);">
+            <div style="font-size:11px; color:var(--teal); font-weight:700; margin-bottom:8px;">WORKER 2</div>
+            Reads T3.2 only<br>Executes slice<br>Writes completion
+          </div>
+          <div class="card" style="flex:1; text-align:center; border-color:var(--teal);">
+            <div style="font-size:11px; color:var(--teal); font-weight:700; margin-bottom:8px;">WORKER 3</div>
+            Reads T3.3 only<br>Executes slice<br>Writes completion
+          </div>
+        </div>
+        <div style="display:flex; gap:20px; width:100%; justify-content:center;">
+          <div style="width:2px; height:30px; background:var(--violet); margin-left:33%; margin-right:-33%;"></div>
+          <div style="width:2px; height:30px; background:var(--violet);"></div>
+          <div style="width:2px; height:30px; background:var(--violet); margin-right:33%; margin-left:-33%;"></div>
+        </div>
+        <div class="card" style="width:100%; text-align:center; border-color:var(--teal);">
+          <div style="font-size:12px; color:var(--teal); font-weight:700; letter-spacing:1px;">verify</div>
+          All slices complete → run checks
+        </div>
+      </div>
+      <div style="flex:1;">
+        <ul style="gap:16px; display:flex; flex-direction:column;">
+          <li>Smaller context per worker — stays focused</li>
+          <li>Workers can run in parallel — faster execution</li>
+          <li>No context bleed between unrelated slices</li>
+          <li>Worker failure is isolated — others continue</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 13: OODA -->
+  <div class="slide" id="s13">
+    <div class="chip teal">ADAPTIVE WORKFLOW</div>
+    <h2>hyper-iterate — OODA Loop</h2>
+    <div class="grid-2">
+      <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px;">
+        <div style="display:flex; align-items:center; gap:0;">
+          <div class="ooda-node">Observe</div>
+          <div class="ooda-arrow">→</div>
+          <div class="ooda-node">Orient</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:0; transform:scaleX(-1);">
+          <div class="ooda-node" style="transform:scaleX(-1);">Decide</div>
+          <div class="ooda-arrow">→</div>
+          <div class="ooda-node" style="transform:scaleX(-1);">Act</div>
+        </div>
+        <div style="font-size:13px; color:var(--muted); text-align:center;">Repeat until goal is met or stopped</div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div style="font-size:11px; color:var(--muted); font-weight:700; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:4px;">Intent types per cycle</div>
+        <div style="display:flex; align-items:center; gap:12px;"><span class="phase-pill">probe</span> <span style="color:var(--muted);">Gather info before committing</span></div>
+        <div style="display:flex; align-items:center; gap:12px;"><span class="phase-pill">implement</span> <span style="color:var(--muted);">Write code toward the goal</span></div>
+        <div style="display:flex; align-items:center; gap:12px;"><span class="phase-pill">validate</span> <span style="color:var(--muted);">Test what was built</span></div>
+        <div style="display:flex; align-items:center; gap:12px;"><span class="phase-pill orange">reroute</span> <span style="color:var(--muted);">Change approach based on evidence</span></div>
+        <div style="display:flex; align-items:center; gap:12px;"><span class="phase-pill orange">reframe</span> <span style="color:var(--muted);">Revise the goal itself</span></div>
+        <div style="display:flex; align-items:center; gap:12px;"><span class="phase-pill gray">stop</span> <span style="color:var(--muted);">Goal is unreachable; close the loop</span></div>
+        <div class="highlight-box" style="margin-top:8px; font-size:14px;">
+          All cycles logged append-only into <code>loop.md</code> — full audit trail
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 14: ARCHITECTURE -->
+  <div class="slide" id="s14">
+    <div class="chip">ARCHITECTURE</div>
+    <h2>Under the Hood</h2>
+    <div class="grid-2">
+      <pre>hyper7E/
+├── skills/
+│   ├── hyper/           ← master orchestrator
+│   ├── hyper-intake/
+│   ├── hyper-spec/
+│   ├── hyper-technical-plan/
+│   ├── hyper-execution-plan/
+│   ├── hyper-implement/   ← dispatches workers
+│   ├── hyper-worker/      ← one subtask
+│   ├── hyper-verify/
+│   ├── hyper-iterate/     ← OODA loop
+│   ├── hyper-jira/        ← Jira integration
+│   ├── hyper-sync/        ← team sync
+│   └── ... (10 more)
+├── scripts/
+│   └── deploy.sh          ← symlinks to all agents
+└── evals/                 ← evaluation harnesses
+
+Per skill:
+skills/hyper-intake/
+├── SKILL.md        ← agent instructions (≤500 lines)
+├── templates/      ← fill-in templates
+└── reference/      ← reference material on demand</pre>
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <div class="card">
+          <div style="font-size:11px; color:var(--violet); font-weight:700; letter-spacing:1px; margin-bottom:8px;">21 SKILLS</div>
+          Each a folder with SKILL.md + optional templates/ and reference/. The agent reads SKILL.md to know what to do.
+        </div>
+        <div class="card">
+          <div style="font-size:11px; color:var(--teal); font-weight:700; letter-spacing:1px; margin-bottom:8px;">MASTER ORCHESTRATOR</div>
+          <code>hyper/SKILL.md</code> reads task state, determines phase, invokes the right phase skill, handles gates and redirects.
+        </div>
+        <div class="card">
+          <div style="font-size:11px; color:var(--muted); font-weight:700; letter-spacing:1px; margin-bottom:8px;">DEPLOY SCRIPT</div>
+          <code>deploy.sh</code> symlinks skill folders to all agent dirs. Edit once → all agents updated instantly.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 15: SKILL LOADING -->
+  <div class="slide" id="s15">
+    <div class="chip">HOW IT WORKS</div>
+    <h2>The Agent IS the Runtime</h2>
+    <div style="max-width:760px; width:100%;">
+      <div class="step-row"><div class="step-num">1</div> User types <code>/hyper Add a login page</code></div>
+      <div class="step-row"><div class="step-num">2</div> Agent loads <code>skills/hyper/SKILL.md</code></div>
+      <div class="step-row"><div class="step-num">3</div> SKILL.md: read <code>.hyper/</code> state → determine current phase → load phase skill</div>
+      <div class="step-row"><div class="step-num">4</div> Phase skill executes, writes artifact, returns verdict</div>
+      <div class="step-row"><div class="step-num">5</div> Master skill reads verdict → gate or advance to next phase</div>
+      <div class="step-row"><div class="step-num">6</div> Loop ↩</div>
+    </div>
+    <div class="highlight-box" style="margin-top:32px; max-width:760px; width:100%;">
+      Skills are instructions, not code. No framework required. The agent's intelligence is the runtime. That's why Hyper is portable.
+    </div>
+  </div>
+
+  <!-- SLIDE 16: COMMANDS -->
+  <div class="slide" id="s16">
+    <div class="chip">USAGE</div>
+    <h2>Day-to-Day Commands</h2>
+    <div class="grid-2">
+      <table>
+        <thead><tr><th>Command</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td><code>/hyper &lt;request&gt;</code></td><td>Start structured work</td></tr>
+          <tr><td><code>/hyper T3</code></td><td>Resume task T3</td></tr>
+          <tr><td><code>/hyper-iterate &lt;goal&gt;</code></td><td>Start adaptive loop</td></tr>
+          <tr><td><code>/hyper-iterate L2</code></td><td>Resume loop L2</td></tr>
+          <tr><td><code>/hyper-task list</code></td><td>See all active tasks</td></tr>
+        </tbody>
+      </table>
+      <table>
+        <thead><tr><th>Command</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td><code>/hyper-backlog &lt;idea&gt;</code></td><td>Add to idea inbox</td></tr>
+          <tr><td><code>/hyper-code-review</code></td><td>Standalone code review</td></tr>
+          <tr><td><code>/hyper-handoff</code></td><td>Write session context</td></tr>
+          <tr><td><code>/hyper-jira PROJ-42</code></td><td>Import Jira issue</td></tr>
+          <tr><td><code>/hyper-sync pull/push</code></td><td>Team state sync</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SLIDE 17: EXTENSIONS -->
+  <div class="slide" id="s17">
+    <div class="chip">EXTENSIONS</div>
+    <h2>Zero Cost When Absent</h2>
+    <div class="grid-3">
+      <div class="card" style="text-align:center;">
+        <div style="font-size:36px; margin-bottom:16px;">🗂</div>
+        <div style="font-size:22px; font-weight:800; margin-bottom:8px;">Epics</div>
+        <div style="font-size:12px; color:var(--violet); margin-bottom:12px; font-family:monospace;">.hyper/epics.md</div>
+        <p style="font-size:15px;">Group related tasks under an epic umbrella. Tasks get prefix E&lt;N&gt;T&lt;M&gt;.</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:36px; margin-bottom:16px;">👥</div>
+        <div style="font-size:22px; font-weight:800; margin-bottom:8px;">Team Sync</div>
+        <div style="font-size:12px; color:var(--violet); margin-bottom:12px; font-family:monospace;">.hyper/repo.md</div>
+        <p style="font-size:15px;">Share .hyper/ across developers via git. Per-project branches.</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:36px; margin-bottom:16px;">🎫</div>
+        <div style="font-size:22px; font-weight:800; margin-bottom:8px;">Jira</div>
+        <div style="font-size:12px; color:var(--violet); margin-bottom:12px; font-family:monospace;">.hyper/jira.md</div>
+        <p style="font-size:15px;">Import issues, sync status, auto-branch, post completion comments.</p>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:28px; text-align:center;">
+      Presence of the config file activates the extension. Absence is a no-op.
+    </div>
+  </div>
+
+  <!-- SLIDE 18: INSTALLATION -->
+  <div class="slide" id="s18">
+    <div class="chip teal">INSTALLATION</div>
+    <h2>Up and Running in 2 Minutes</h2>
+    <div class="grid-2">
+      <pre style="font-size:13px;"># Clone Hyper
+git clone https://github.com/your-org/hyper7 ~/hyper7
+
+# Deploy skills (symlinks to all agents)
+bash ~/hyper7/hyper7E/scripts/deploy.sh
+
+# Validate structure
+node hyper7E/scripts/validate-hyper.mjs
+
+# Start using it — .hyper/ is created automatically
+/hyper Build the user profile page</pre>
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <div class="card">
+          <div style="font-size:11px; color:var(--teal); font-weight:700; letter-spacing:1px; margin-bottom:8px;">SYMLINKS = INSTANT UPDATES</div>
+          Skill folders are symlinked — edit the repo once, all agents see the change immediately. No reinstall.
+        </div>
+        <div class="card">
+          <div style="font-size:11px; color:var(--teal); font-weight:700; letter-spacing:1px; margin-bottom:8px;">AGENTS SUPPORTED</div>
+          Claude Code · Codex · ~/.agents/ · PI
+        </div>
+        <div class="card">
+          <div style="font-size:11px; color:var(--teal); font-weight:700; letter-spacing:1px; margin-bottom:8px;">ZERO CONFIGURATION</div>
+          .hyper/ created on first task. No setup file, no init command.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 19: WHY MARKDOWN -->
+  <div class="slide" id="s19">
+    <div class="chip">DESIGN RATIONALE</div>
+    <h2>Why Text Files — Not a Database?</h2>
+    <div class="grid-2">
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <div style="display:flex; gap:16px; align-items:flex-start;">
+          <div style="font-size:24px;">📖</div>
+          <div><strong>Human-readable without tools</strong><br><span style="color:var(--muted); font-size:15px;">Any dev can open a plan file and understand it</span></div>
+        </div>
+        <div style="display:flex; gap:16px; align-items:flex-start;">
+          <div style="font-size:24px;">🔀</div>
+          <div><strong>Diffable — goes into git naturally</strong><br><span style="color:var(--muted); font-size:15px;">Full audit trail of decisions alongside code</span></div>
+        </div>
+        <div style="display:flex; gap:16px; align-items:flex-start;">
+          <div style="font-size:24px;">🔌</div>
+          <div><strong>Portable across agents</strong><br><span style="color:var(--muted); font-size:15px;">Same .hyper/ works with Claude, Codex, any agent</span></div>
+        </div>
+        <div style="display:flex; gap:16px; align-items:flex-start;">
+          <div style="font-size:24px;">✏️</div>
+          <div><strong>Editable by hand</strong><br><span style="color:var(--muted); font-size:15px;">Fix a mistake by editing task.md directly</span></div>
+        </div>
+        <div style="display:flex; gap:16px; align-items:flex-start;">
+          <div style="font-size:24px;">🔒</div>
+          <div><strong>No lock-in</strong><br><span style="color:var(--muted); font-size:15px;">Stop using Hyper anytime — history stays legible forever</span></div>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; justify-content:center; gap:24px;">
+        <div class="quote" style="font-size:24px;">
+          "The 'primitive' choice is the most robust."
+        </div>
+        <div class="highlight-box">
+          If Hyper itself has a bug, edit <code>task.md</code> by hand to correct the state. A database can't offer that.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 20: DOGFOODING -->
+  <div class="slide" id="s20">
+    <div class="chip">DOGFOODING</div>
+    <h2>Hyper's Own Dev Is Tracked in Hyper</h2>
+    <div class="grid-3" style="margin-bottom:32px;">
+      <div class="card">
+        <div style="font-size:11px; color:var(--violet); font-weight:700; letter-spacing:1px; margin-bottom:8px;">T5 · quick · implement</div>
+        <div style="font-size:18px; font-weight:700; margin-bottom:8px;">Deploy Skills via Symlinks</div>
+        <p style="font-size:14px; color:var(--muted);">Create a deployment script that installs hyper skills into every agent config directory.</p>
+      </div>
+      <div class="card">
+        <div style="font-size:11px; color:var(--orange); font-weight:700; letter-spacing:1px; margin-bottom:8px;">T6 · quick · verify</div>
+        <div style="font-size:18px; font-weight:700; margin-bottom:8px;">Jira Git Integration</div>
+        <p style="font-size:14px; color:var(--muted);">Auto-branch on import, auto-commit on archive, controlled by .hyper/jira.md settings.</p>
+      </div>
+      <div class="card" style="border-color:var(--teal);">
+        <div style="font-size:11px; color:var(--teal); font-weight:700; letter-spacing:1px; margin-bottom:8px;">T1 · research · DONE</div>
+        <div style="font-size:18px; font-weight:700; margin-bottom:8px;">Epics and Team Sync Research</div>
+        <p style="font-size:14px; color:var(--muted);">Investigation into epics and team-sync; produced recommendations adopted into the system.</p>
+      </div>
+    </div>
+    <div class="highlight-box" style="text-align:center;">
+      Self-hosting validates the approach and surfaces edge cases organically.
+    </div>
+  </div>
+
+  <!-- SLIDE 21: SUMMARY -->
+  <div class="slide" id="s21">
+    <div class="chip">SUMMARY</div>
+    <h2>What We Covered</h2>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; width:100%; margin-bottom:28px;">
+      <div class="card" style="border-color:var(--orange);">
+        <div style="font-size:11px; color:var(--orange); font-weight:700; letter-spacing:1.5px; margin-bottom:10px;">WHY</div>
+        Agents lose context, lack approval gates, produce no audit trail
+      </div>
+      <div class="card" style="border-color:var(--violet);">
+        <div style="font-size:11px; color:var(--violet); font-weight:700; letter-spacing:1.5px; margin-bottom:10px;">WHAT</div>
+        Phased + adaptive workflows, 21 skills, all state as markdown
+      </div>
+      <div class="card" style="border-color:var(--teal);">
+        <div style="font-size:11px; color:var(--teal); font-weight:700; letter-spacing:1.5px; margin-bottom:10px;">HOW</div>
+        Skill folders → agent reads SKILL.md → writes artifacts → gates → advances
+      </div>
+      <div class="card" style="border-color:var(--muted);">
+        <div style="font-size:11px; color:var(--muted); font-weight:700; letter-spacing:1.5px; margin-bottom:10px;">USE</div>
+        /hyper, /hyper-iterate, plus 8 supporting commands
+      </div>
+    </div>
+    <div style="text-align:center; padding:20px 40px; background:rgba(108,99,255,0.1); border:1px solid rgba(108,99,255,0.3); border-radius:12px; font-size:19px; max-width:800px;">
+      Give AI agents the structure they need to handle real work — without infrastructure you have to maintain.
+    </div>
+  </div>
+
+  <!-- SLIDE 22: Q&A -->
+  <div class="slide" id="s22">
+    <div style="text-align:center;">
+      <div style="font-size:96px; font-weight:900; background:linear-gradient(135deg, var(--violet), var(--teal)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:32px;">Q&A</div>
+      <div class="grid-2" style="max-width:760px; margin:0 auto; text-align:left;">
+        <div class="card">
+          <div style="font-size:11px; color:var(--violet); font-weight:700; letter-spacing:1px; margin-bottom:8px;">REPO</div>
+          hyper7E/skills/ — 21 skill folders
+        </div>
+        <div class="card">
+          <div style="font-size:11px; color:var(--teal); font-weight:700; letter-spacing:1px; margin-bottom:8px;">DOCS</div>
+          hyper7E/README.md · schema.md
+        </div>
+        <div class="card">
+          <div style="font-size:11px; color:var(--muted); font-weight:700; letter-spacing:1px; margin-bottom:8px;">VALIDATE</div>
+          <code>node hyper7E/scripts/validate-hyper.mjs</code>
+        </div>
+        <div class="card">
+          <div style="font-size:11px; color:var(--muted); font-weight:700; letter-spacing:1px; margin-bottom:8px;">INSTALL</div>
+          <code>bash hyper7E/scripts/deploy.sh</code>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end deck -->
+
+<div class="nav">
+  <button onclick="go(-1)" title="Previous">←</button>
+  <div class="slide-counter" id="counter">1 / 22</div>
+  <button onclick="go(1)" title="Next">→</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  let cur = 0;
+
+  function show(n) {
+    slides[cur].classList.remove('active');
+    cur = Math.max(0, Math.min(n, total - 1));
+    slides[cur].classList.add('active');
+    document.getElementById('counter').textContent = (cur + 1) + ' / ' + total;
+    document.getElementById('progress').style.width = ((cur + 1) / total * 100) + '%';
+    window.location.hash = cur + 1;
+  }
+
+  function go(d) { show(cur + d); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); go(1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); go(-1); }
+    if (e.key === 'Home') show(0);
+    if (e.key === 'End') show(total - 1);
+  });
+
+  // restore from URL hash
+  const hash = parseInt(window.location.hash.slice(1));
+  if (hash >= 1 && hash <= total) { show(hash - 1); }
+  else { show(0); }
+
+  // init progress
+  document.getElementById('progress').style.width = ((cur + 1) / total * 100) + '%';
+</script>
+
+</body>
+</html>
