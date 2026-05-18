@@ -220,6 +220,15 @@ Read `mode` from `.hyper/jira.md`. Use the agent's Jira MCP tools if
 4. Transition the Jira issue status to the value of `done_transition` from
    `.hyper/jira.md` (default `"QA Test"`). If the transition fails, report the
    error and continue — do not abort archiving.
+5. (Conditional — only when `auto_commit: true` in `.hyper/jira.md`)
+   a. Compose the commit message:
+      - Line 1: `<JIRA-KEY>: <task title from task.md>`
+      - Blank line
+      - Lines 3–5: the `## What was done` body from the `jira.md` generated in
+        step 1, trimmed to 1–3 lines.
+   b. `git add -A && git commit -m "<message>"`
+   c. If the commit fails (nothing to commit, not a git repo, etc.), print:
+      `"Auto-commit skipped: <reason>."` and continue — do not abort archiving.
 
 Then archive the task folder per `reference/archive.md` before announcing
 completion.

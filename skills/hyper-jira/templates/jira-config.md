@@ -12,6 +12,10 @@ base_url: <https://yourorg.atlassian.net>
 default_project: <PROJECT-KEY>
 done_transition: QA Test
 mode: mcp
+# Optional git integration — omit or set to false to disable
+# auto_branch: true
+# branch_from: dev
+# auto_commit: true
 ---
 ```
 
@@ -29,6 +33,10 @@ default_project: <PROJECT-KEY>
 done_transition: QA Test
 mode: docker
 docker_url: <http://localhost:8090>
+# Optional git integration — omit or set to false to disable
+# auto_branch: true
+# branch_from: dev
+# auto_commit: true
 ---
 ```
 
