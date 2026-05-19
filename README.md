@@ -512,6 +512,12 @@ Hyper stays intentionally small:
   up front, adaptive when it has to evolve.
 - Large work gets structure; tiny work should stay tiny.
 
+## Hyper presentation
+
+https://adrianf-gamelounge.github.io/hyper7E/
+
+https://adrianf-gamelounge.github.io/hyper7E/hyper7-presentation.html
+
 ## Workflow Flow
 
 ```mermaid
