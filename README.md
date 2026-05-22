@@ -9,7 +9,8 @@ It ships two workflows for work that should not live inside one long prompt:
   Approval gates at the points where direction matters.
 - **`hyper-iterate`** — **adaptive**:
   `observe -> orient -> decide -> act`, repeated. One agreed plan up front,
-  then bounded cycles that course-correct on real evidence.
+  then bounded cycles that course-correct on real evidence. It can run with
+  interactive approval gates or with explicitly delegated YOLO authority.
 
 Both are delivered as [Agent Skills](https://agentskills.io): plain markdown
 files an agent can load. There is no CLI, plugin, server, database, or hidden
@@ -58,6 +59,10 @@ Hyper depends on a few external skills hosted at
 one for `hyper-iterate` is `grill-me`, which pressure-tests the loop plan and
 each part plan before approval. Install those skills alongside Hyper if you
 intend to use the adaptive workflow.
+
+For delegated `hyper-iterate` runs, install a decision-proxy skill such as
+`hyper-team` too. In YOLO mode, Hyper uses specialist agents for bounded
+approval and route decisions instead of interrupting you for every gate.
 
 ## Workflow 1 — `hyper` (phased)
 
@@ -168,15 +173,22 @@ is still forming and needs probing before commitment:
 | Phase                | Purpose                                                                                                                                              |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Load and Route`     | Resume the right loop or create a new one. Re-check project rules and capability bindings.                                                           |
-| `Align`              | An interview-style alignment pass: restate the request, scan the codebase, agree the **loop plan** and current **part plan**, then pressure-test before approval. |
+| `Align`              | An alignment pass: restate the request, scan the codebase, agree the **loop plan** and current **part plan**, then pressure-test before user or delegated approval. |
 | `Cycle`              | One coherent observe → orient → decide → act move at a time. Each cycle picks an intent and an evidence-backed next step.                            |
 | `Verify and Close`   | Run tests, code review, docs check, and definition-of-done check. The loop flips to `done` only on a passing verify entry.                           |
 
 Cycle intents: `probe`, `implement`, `validate`, `reroute`, `reframe`, `stop`.
 
-Approval gates happen after the loop plan and after every new part plan. When
-evidence says the goal itself has moved, the loop pivots to `reframe` and the
-alignment gate runs again.
+Approval gates happen after the loop plan and after every new part plan. By
+default those gates ask you. If you explicitly grant YOLO/delegated authority,
+`hyper-iterate` records that authority in `loop.md` and uses specialist agents
+to decide routine approvals and route choices inside the stated goal.
+
+Delegated authority is bounded. Hyper still stops for you when the goal,
+definition of done, or non-negotiables would change; when destructive actions,
+security/privacy/legal risk, external side effects, or material cost appear;
+when public behavior would change outside the approved goal; when a loop would
+close without verify; or when proxy agents disagree.
 
 ### Example
 
