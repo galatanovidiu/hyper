@@ -76,6 +76,15 @@ These surfaces are the easiest to drift:
    - optional eval hook: `scripts/eval-hooks/validate-iterate-loop.sh`
    - hard gate stays intact: authority -> understanding -> code scan -> findings -> loop plan -> part-level approvals -> cycles
 
+8. **State probe contract**
+   - `skills/hyper/scripts/state.mjs` (the read-only Node ESM probe)
+   - `skills/hyper/reference/state-root.md` (the probe's contract — invocation, output schema, category mapping, errors, env coverage)
+   - `skills/hyper/reference/data-model.md` (the id-allocation references that point at the probe)
+   - the four consumer skills that call the probe at session entry: `skills/hyper/SKILL.md` (uses `<skill-base-dir>/scripts/state.mjs`), `skills/hyper-task/SKILL.md`, `skills/hyper-backlog/SKILL.md`, `skills/hyper-iterate/SKILL.md` (each uses `<skill-base-dir>/../hyper/scripts/state.mjs`)
+   - `scripts/validate-hyper.mjs` (presence + schema smoke assertions for the probe's JSON output)
+   - `.claude/skills/install-hyper/scripts/install.sh` and `.agents/skills/install-hyper/scripts/install.sh` (the `verify_probe_reachable` portability check; both files must remain byte-identical)
+   - keep the probe **read-only**: no writes, no Git mutations, no new external dependencies
+
 ## When adding or renaming a skill
 
 Do all of these together:

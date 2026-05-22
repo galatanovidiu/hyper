@@ -63,6 +63,16 @@ The script prints a header per target, then one line per skill with the action t
 
 For Claude Code specifically: newly installed skills show up without a restart (Claude Code watches `~/.claude/skills/` for changes), but the slash-menu may take a moment to refresh. Verify with `/hyper` autocomplete. Other agents may need a reload — check their docs.
 
+### Portability check
+
+Both `install` and `status` run a probe-reachability check after the per-target output. For every target, the script asserts that `<target>/hyper/scripts/state.mjs` resolves (via the symlink chain) to this repo's `skills/hyper/scripts/state.mjs`, is readable, and can be smoke-called via `node` to emit a JSON object with a non-empty `state_root`. Each target gets one line:
+
+- `    probe   ok` — reachable and the smoke call succeeded.
+- `    probe   skip (target not installed)` — the target directory is not present on this machine.
+- `    probe   fail: <reason>` — anything else (broken symlink, missing `node`, wrong canonical path, malformed JSON, etc.).
+
+During `install`, any `fail` exits the script non-zero so partial installs are visible. During `status`, the check is informational only — failures are printed but do not change the exit code.
+
 ## Rules
 
 - **Symlinks only.** The script never copies files. If a target path already exists but isn't our symlink, the script skips it — it won't overwrite real files.

@@ -13,9 +13,15 @@ Never implement, test, or review yourself. The phase skills own the work.
 
 ## Before anything else
 
-Resolve the Hyper state root per `reference/state-root.md`.
+Call the state probe once at session start:
 
-Ensure `.hyper/` is bootstrapped per `reference/bootstrap.md` before any write.
+    node "<skill-base-dir>/scripts/state.mjs"
+
+`<skill-base-dir>` is the path printed at skill load as "Base directory for this skill". Parse the JSON output; route all subsequent decisions from its fields (`state_root`, `bootstrapped`, `next_task_id`, `active_tasks`, `archived_tasks`, etc.). Do not re-scan folders or re-read individual `task.md` frontmatter for routing.
+
+The probe implements `reference/state-root.md`; that file is now the probe's contract, not a procedure to walk.
+
+Ensure `.hyper/` is bootstrapped per `reference/bootstrap.md` before any write. Use the probe's `bootstrapped` field as the source of truth.
 
 If `.hyper/rules.md` exists, read it once at session start and treat its
 contents as normative project rules for every phase.
@@ -45,7 +51,7 @@ Jump to **Resume by id**.
 
 ### 2. Reply to an open gate
 
-Scan active tasks for `awaiting != null`.
+Read the probe's `active_tasks` and pick entries with `awaiting != null`.
 
 - If exactly one active task has an open gate and the user reply is
   substantive, resume that task and jump to **Dispatch phase**.
@@ -85,7 +91,7 @@ Apply `reference/intake-triage.md`.
 
 Given `T<N>`:
 
-1. Resolve it under `.hyper/tasks/`, then fall back to `.hyper/archive/`.
+1. Look up the id in the probe's `active_tasks` list, then fall back to `archived_tasks`.
 2. If `phase: done`, report completion and stop.
 3. If `phase: cancelled`, report the cancellation reason and stop.
 4. If `phase: deferred`, set `phase: intake`, save, announce the start, and
@@ -104,7 +110,7 @@ For active tasks with no open gate:
 
 ## Create task
 
-1. Determine the next task id by scanning both `tasks/` and `archive/`.
+1. Use `next_task_id` from the probe output.
 2. Derive a short title and kebab-case slug.
 3. Draft the task body from the user's request, carrying a `## Why` section
    when the request already includes a clear motivation worth preserving.

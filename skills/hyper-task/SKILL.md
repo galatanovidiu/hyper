@@ -8,15 +8,19 @@ description: >
 
 Manage task state without running the workflow.
 
-Resolve the Hyper state root per `../hyper/reference/state-root.md` before
-reading or writing `.hyper/` paths. Read `../hyper/reference/data-model.md`
-before changing task state.
+Call the state probe once at session start:
+
+    node "<skill-base-dir>/../hyper/scripts/state.mjs"
+
+`<skill-base-dir>` is the path printed at skill load as "Base directory for this skill". The probe lives in the sibling `hyper` skill folder — `install-hyper` symlinks all Hyper skills side by side, so `../hyper/scripts/state.mjs` resolves from any sibling skill base. Parse the JSON output and route all subsequent decisions (state root, active tasks, next task id) from its fields. Do not re-scan folders or re-read individual `task.md` frontmatter for routing or id allocation.
+
+The probe implements `../hyper/reference/state-root.md`. Read `../hyper/reference/data-model.md` before changing task state.
 
 ## Operations
 
 ### List
 
-List active and deferred tasks from `.hyper/tasks/` with:
+List entries from the probe's `active_tasks` whose `category` is `active` or `deferred`, with:
 
 - id
 - title
@@ -24,7 +28,7 @@ List active and deferred tasks from `.hyper/tasks/` with:
 - scope
 - awaiting
 
-Do not list archived tasks unless the user asks.
+Do not list archived tasks unless the user asks; archived entries live in the probe's `archived_tasks` list.
 
 ### Status
 
@@ -54,8 +58,7 @@ Artifacts of interest:
 
 Create a tracked task the user does not want to start yet.
 
-1. Determine the next task id by scanning both `.hyper/tasks/` and
-   `.hyper/archive/`.
+1. Use `next_task_id` from the probe output.
 2. Derive a short title and slug.
 3. Draft the task body from the user's request and optionally carry over a
    `## Why` section when the request already contains a clear motivation.

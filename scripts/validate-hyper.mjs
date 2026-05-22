@@ -3,6 +3,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -21,6 +22,7 @@ const HYPER_GATES = path.join(ROOT, "skills", "hyper", "reference", "gates.md");
 const HYPER_IMPLEMENT_SKILL = path.join(ROOT, "skills", "hyper-implement", "SKILL.md");
 const HYPER_WORKER_SKILL = path.join(ROOT, "skills", "hyper-worker", "SKILL.md");
 const HYPER_TECHNICAL_PLAN_SKILL = path.join(ROOT, "skills", "hyper-technical-plan", "SKILL.md");
+const STATE_PROBE = path.join(ROOT, "skills", "hyper", "scripts", "state.mjs");
 
 const USER_FACING_HYPER = new Set([
   "hyper",
@@ -340,11 +342,150 @@ function validatePlanConflictRedirect() {
   ensureContains(HYPER_SKILL, "implement -> technical-plan");
 }
 
+function ensureFile(filePath) {
+  if (!fs.existsSync(filePath)) {
+    fail(`${filePath}: missing required file`);
+    return false;
+  }
+  const stat = fs.statSync(filePath);
+  if (!stat.isFile()) {
+    fail(`${filePath}: expected a regular file`);
+    return false;
+  }
+  return true;
+}
+
+function assertField(record, key, predicate, descriptor, location) {
+  if (!Object.prototype.hasOwnProperty.call(record, key)) {
+    fail(`${location}: missing key ${JSON.stringify(key)}`);
+    return false;
+  }
+  const value = record[key];
+  if (!predicate(value)) {
+    fail(
+      `${location}: key ${JSON.stringify(key)} expected ${descriptor}, got ${JSON.stringify(value)}`,
+    );
+    return false;
+  }
+  return true;
+}
+
+function validateStateProbe() {
+  if (!ensureFile(STATE_PROBE)) {
+    return;
+  }
+
+  const firstLine = read(STATE_PROBE).split("\n", 1)[0];
+  if (firstLine !== "#!/usr/bin/env node") {
+    fail(
+      `${STATE_PROBE}: expected first line "#!/usr/bin/env node", got ${JSON.stringify(firstLine)}`,
+    );
+  }
+
+  const result = spawnSync("node", [STATE_PROBE, "--from", ROOT], {
+    cwd: ROOT,
+    encoding: "utf8",
+  });
+
+  if (result.error) {
+    fail(`${STATE_PROBE}: spawn failed: ${result.error.message}`);
+    return;
+  }
+  if (result.status !== 0) {
+    fail(
+      `${STATE_PROBE}: probe exited non-zero (status=${result.status}); stderr: ${JSON.stringify(result.stderr?.trim() ?? "")}`,
+    );
+    return;
+  }
+
+  let snapshot;
+  try {
+    snapshot = JSON.parse(result.stdout);
+  } catch (err) {
+    fail(`${STATE_PROBE}: stdout is not valid JSON: ${err.message}`);
+    return;
+  }
+
+  const where = `${STATE_PROBE} stdout`;
+
+  const isNonEmptyString = (v) => typeof v === "string" && v.length > 0;
+  const isBool = (v) => typeof v === "boolean";
+  const isPositiveInt = (v) => Number.isInteger(v) && v >= 1;
+  const isArray = (v) => Array.isArray(v);
+  const isString = (v) => typeof v === "string";
+  const isInt = (v) => Number.isInteger(v);
+
+  assertField(snapshot, "state_root", isNonEmptyString, "non-empty string", where);
+  assertField(snapshot, "bootstrapped", isBool, "boolean", where);
+  assertField(snapshot, "next_task_id", isPositiveInt, "integer >= 1", where);
+  assertField(snapshot, "next_loop_id", isPositiveInt, "integer >= 1", where);
+  assertField(snapshot, "next_backlog_id", isPositiveInt, "integer >= 1", where);
+  assertField(snapshot, "active_tasks", isArray, "array", where);
+  assertField(snapshot, "archived_tasks", isArray, "array", where);
+  assertField(snapshot, "active_loops", isArray, "array", where);
+  assertField(snapshot, "backlog_entries", isArray, "array", where);
+  assertField(snapshot, "parse_errors", isArray, "array", where);
+
+  if (Array.isArray(snapshot.active_tasks) && snapshot.active_tasks.length > 0) {
+    const first = snapshot.active_tasks[0];
+    const at = `${where} active_tasks[0]`;
+    for (const key of [
+      "id",
+      "title",
+      "phase",
+      "scope",
+      "awaiting",
+      "created",
+      "path",
+      "has_handoff",
+      "phase_known",
+      "category",
+    ]) {
+      if (!Object.prototype.hasOwnProperty.call(first, key)) {
+        fail(`${at}: missing key ${JSON.stringify(key)}`);
+      }
+    }
+
+    // awaiting must be JSON null or a string per item — never the string "null".
+    for (const t of snapshot.active_tasks) {
+      if (t.awaiting === null) continue;
+      if (typeof t.awaiting === "string" && t.awaiting !== "null") continue;
+      fail(
+        `${where} active_tasks: item ${JSON.stringify(t.id)} has invalid awaiting value ${JSON.stringify(t.awaiting)} (expected JSON null or a non-"null" string)`,
+      );
+    }
+  }
+
+  if (Array.isArray(snapshot.backlog_entries) && snapshot.backlog_entries.length > 0) {
+    const first = snapshot.backlog_entries[0];
+    const at = `${where} backlog_entries[0]`;
+    assertField(first, "id", isInt, "integer", at);
+    assertField(first, "title", isString, "string", at);
+  }
+
+  if (Array.isArray(snapshot.archived_tasks) && snapshot.archived_tasks.length > 0) {
+    const first = snapshot.archived_tasks[0];
+    const at = `${where} archived_tasks[0]`;
+    for (const key of ["id", "title", "phase", "path"]) {
+      if (!Object.prototype.hasOwnProperty.call(first, key)) {
+        fail(`${at}: missing key ${JSON.stringify(key)}`);
+      }
+    }
+    if (Object.prototype.hasOwnProperty.call(first, "cancelled_at")) {
+      assertField(first, "cancelled_at", isString, "string when present", at);
+    }
+    if (Object.prototype.hasOwnProperty.call(first, "cancelled_reason")) {
+      assertField(first, "cancelled_reason", isString, "string when present", at);
+    }
+  }
+}
+
 function main() {
   validateSkillFiles();
   validateReadmeAndDataModel();
   validateHyperIterate();
   validatePlanConflictRedirect();
+  validateStateProbe();
 
   if (ERRORS.length > 0) {
     process.stdout.write("Hyper validation failed:\n\n");

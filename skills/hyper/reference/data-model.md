@@ -44,8 +44,8 @@ worktree. Plain markdown. No database, no CLI, no hidden state.
   always writes to that path.
 - When a task becomes terminal, the folder is moved from `.hyper/tasks/` to
   `.hyper/archive/`.
-- Task ids are allocated by scanning `tasks/ ∪ archive/` for the highest
-  `T<N>` and adding 1. Ids are never reused.
+- Task ids are allocated by the state probe; see
+  [reference/state-root.md](state-root.md). Ids are never reused.
 
 ## `task.md`
 
@@ -357,9 +357,10 @@ contains:
   referenced from `## Relevant artifacts` in `loop.md`. Subfolders are allowed
   when grouping helps.
 
-Loop ids are allocated by scanning `loops/` for folders matching `L<N>-*` and
-adding 1; ids are never reused. Loops are standalone adaptive-work artifacts,
-not Hyper task folders, and they do not participate in Hyper phase routing.
+Loop ids are allocated by the state probe; see
+[reference/state-root.md](state-root.md). Ids are never reused. Loops are
+standalone adaptive-work artifacts, not Hyper task folders, and they do not
+participate in Hyper phase routing.
 
 Loop frontmatter fields:
 
