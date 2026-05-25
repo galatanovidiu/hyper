@@ -17,13 +17,23 @@ that own them.
 
 ## Invocation
 
+There is exactly one probe binary. It lives in the `hyper` skill folder
+because (a) the `hyper` skill owns the routing surface the probe describes,
+and (b) keeping it in one folder lets `install-hyper` symlink it across
+runtime skill roots without copying. Sibling Hyper skills (`hyper-task`,
+`hyper-backlog`, `hyper-iterate`, etc.) reach the same binary through the
+sibling-folder path because `install-hyper` symlinks every Hyper skill as a
+sibling under each runtime's skills root (`~/.claude/skills/hyper/`,
+`~/.claude/skills/hyper-task/`, etc.). That sibling layout is the invariant
+the two call paths depend on.
+
 From the `hyper` skill itself:
 
 ```bash
 node "<skill-base-dir>/scripts/state.mjs" [--from <abs-path>]
 ```
 
-From any sibling Hyper skill (`hyper-task`, `hyper-backlog`, `hyper-iterate`, etc.):
+From any sibling Hyper skill:
 
 ```bash
 node "<skill-base-dir>/../hyper/scripts/state.mjs" [--from <abs-path>]
@@ -32,17 +42,44 @@ node "<skill-base-dir>/../hyper/scripts/state.mjs" [--from <abs-path>]
 - `<skill-base-dir>` is announced by the runtime as "Base directory for this
   skill" when the skill is loaded. Use that path verbatim; never hard-code
   `~/.claude/`, `~/.codex/`, or any other runtime-specific prefix.
-- The probe lives only in the `hyper` skill folder. Sibling skills reach it via
-  `../hyper/scripts/state.mjs` because `install-hyper` symlinks every Hyper
-  skill as a sibling under each runtime's skills root.
+- A new sibling skill follows the same rule: the probe is always reachable
+  at `../hyper/scripts/state.mjs` relative to that skill's base.
 - `--from <abs-path>` is the only optional flag. It supplies an absolute path
   hint when the agent already knows it is operating against a specific
   `.hyper/` location (for example, a path passed in from another tool). The
-  probe also accepts `--from=<abs-path>`.
+  probe also accepts `--from=<abs-path>`. The path must be absolute. If the
+  path points at an existing file, the probe uses its parent directory. If
+  the path doesn't exist and carries no `.hyper/` marker, the probe rejects
+  it.
 - Without `--from`, the probe uses `process.cwd()` as the starting point for
   resolution.
-- Output is a single JSON object written to stdout. Errors are a single line
-  on stderr with a non-zero exit.
+- Output is a single JSON object written to stdout. A successful run emits
+  nothing to stderr. Errors are a single line on stderr with a non-zero exit.
+
+## Sub-skill resolution (when the probe call is the calling skill's
+responsibility vs. the parent's)
+
+Hyper skills fall into two categories for this purpose:
+
+- **Probe callers** — every skill that handles a user-typed entry point or
+  that runs as the orchestrator. Today these are `hyper`, `hyper-task`,
+  `hyper-backlog`, `hyper-iterate`. They call the probe at session entry and
+  pass the result down through routing.
+- **Sub-skills** — every skill that `hyper` dispatches as part of the
+  phased workflow: `hyper-intake`, `hyper-spec`, `hyper-technical-plan`,
+  `hyper-execution-plan`, `hyper-execution-plan-review`, `hyper-research`,
+  `hyper-implement`, `hyper-worker`, `hyper-verify`, `hyper-docs`,
+  `hyper-code-review`. Plus user-invocable standalone skills that don't
+  need routing state: `hyper-team`, `hyper-handoff`, `hyper-retro`,
+  `hyper-recipe`. These skills inherit `state_root` (and any other probe
+  fields they need) from the calling skill's conversation context. They
+  do not call the probe themselves.
+
+When a sub-skill SKILL.md says "Resolve the Hyper state root per
+`../hyper/reference/state-root.md`", read it as: *use the `state_root` that
+the calling skill already resolved through the probe*. If a sub-skill is
+ever invoked standalone (no parent probe call), it should fall back to
+calling the probe itself using the sibling-skill invocation above.
 
 ## State-root resolution
 

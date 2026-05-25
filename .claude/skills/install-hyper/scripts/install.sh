@@ -222,19 +222,35 @@ verify_probe_reachable() {
       any_fail=1
       continue
     fi
-    local probe_out probe_status
-    probe_out="$(node "$probe_dst" --from "$repo_root" 2>&1)"
+    # Keep stdout and stderr separate so warnings from node (deprecation
+    # notices, nvm hooks, libc warnings) do not get parsed as JSON.
+    local probe_stdout probe_stderr_file probe_status
+    probe_stderr_file="$(mktemp -t hyper-probe-err.XXXXXX)"
+    probe_stdout="$(node "$probe_dst" --from "$repo_root" 2>"$probe_stderr_file")"
     probe_status=$?
     if [ "$probe_status" -ne 0 ]; then
       local first_line
-      first_line="$(printf '%s' "$probe_out" | head -n 1)"
+      first_line="$(head -n 1 "$probe_stderr_file" 2>/dev/null)"
+      if [ -z "$first_line" ]; then
+        first_line="$(printf '%s' "$probe_stdout" | head -n 1)"
+      fi
       echo "    probe   fail: node exited $probe_status: $first_line"
+      rm -f "$probe_stderr_file"
       any_fail=1
       continue
     fi
+    if [ -s "$probe_stderr_file" ]; then
+      local stderr_first
+      stderr_first="$(head -n 1 "$probe_stderr_file")"
+      echo "    probe   fail: probe wrote to stderr on success: $stderr_first"
+      rm -f "$probe_stderr_file"
+      any_fail=1
+      continue
+    fi
+    rm -f "$probe_stderr_file"
     # Validate that stdout parses as a JSON object with a non-empty
     # state_root field. node -e returns 0 only when both hold.
-    if ! printf '%s' "$probe_out" | node -e '
+    if ! printf '%s' "$probe_stdout" | node -e '
       let buf = "";
       process.stdin.on("data", (d) => { buf += d; });
       process.stdin.on("end", () => {

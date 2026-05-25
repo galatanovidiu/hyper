@@ -43,7 +43,14 @@ and point the user to `reference/state-recovery.md`. Do not guess a route.
 
 ## Routing
 
-Walk these checks in order.
+The probe's `active_tasks` array carries every task folder under `.hyper/tasks/` regardless of phase — the field name is historical and matches the folder, not the routing category. Before walking the routing checks below, build the two routing buckets from the probe output:
+
+- `active` = `active_tasks.filter(t => t.category === "active")` — these are the only entries that count as "active" for the routing branches.
+- `deferred` = `active_tasks.filter(t => t.category === "deferred")`.
+
+Terminal entries (`category: terminal`) under `.hyper/tasks/` are anomalies (the folder was not moved to archive). Surface them to the user separately; do not route them as active.
+
+Walk these checks in order, using `active` and `deferred` as defined above.
 
 ### 1. Request is a task id
 
@@ -51,7 +58,7 @@ Jump to **Resume by id**.
 
 ### 2. Reply to an open gate
 
-Read the probe's `active_tasks` and pick entries with `awaiting != null`.
+Inside `active`, pick entries with `awaiting != null`.
 
 - If exactly one active task has an open gate and the user reply is
   substantive, resume that task and jump to **Dispatch phase**.
@@ -69,19 +76,19 @@ Ask whether to treat this as new work or fold it into the active task.
 
 ### 5. No goal, exactly one active task
 
-Resume it and jump to **Cold-resume check**.
+When `active.length === 1`, resume it and jump to **Cold-resume check**.
 
 ### 6. No goal, multiple active tasks
 
-List them and ask which to continue.
+When `active.length > 1`, list them and ask which to continue.
 
 ### 7. No goal, no active task
 
-If deferred tasks exist, tell the user. Otherwise ask what to work on.
+When `active.length === 0`: if `deferred.length > 0`, tell the user. Otherwise ask what to work on.
 
 ### 8. Goal provided, no active task
 
-Apply `reference/intake-triage.md`.
+When `active.length === 0`, apply `reference/intake-triage.md`.
 
 - If it is direct-handling sized, recommend handling it outside Hyper.
 - If it is backlog-shaped, recommend `hyper-backlog`.

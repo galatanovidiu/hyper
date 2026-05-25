@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import process from "node:process";
 import { spawnSync } from "node:child_process";
@@ -370,44 +371,139 @@ function assertField(record, key, predicate, descriptor, location) {
   return true;
 }
 
-function validateStateProbe() {
-  if (!ensureFile(STATE_PROBE)) {
-    return;
-  }
-
-  const firstLine = read(STATE_PROBE).split("\n", 1)[0];
-  if (firstLine !== "#!/usr/bin/env node") {
-    fail(
-      `${STATE_PROBE}: expected first line "#!/usr/bin/env node", got ${JSON.stringify(firstLine)}`,
-    );
-  }
-
-  const result = spawnSync("node", [STATE_PROBE, "--from", ROOT], {
+function runProbe(fromPath, label) {
+  const result = spawnSync("node", [STATE_PROBE, "--from", fromPath], {
     cwd: ROOT,
     encoding: "utf8",
   });
 
   if (result.error) {
-    fail(`${STATE_PROBE}: spawn failed: ${result.error.message}`);
-    return;
+    fail(`${label}: spawn failed: ${result.error.message}`);
+    return null;
   }
   if (result.status !== 0) {
     fail(
-      `${STATE_PROBE}: probe exited non-zero (status=${result.status}); stderr: ${JSON.stringify(result.stderr?.trim() ?? "")}`,
+      `${label}: probe exited non-zero (status=${result.status}); stderr: ${JSON.stringify(result.stderr?.trim() ?? "")}`,
     );
-    return;
+    return null;
+  }
+  // A successful probe call must emit nothing to stderr — otherwise the
+  // install-hyper portability check breaks and the validator should catch
+  // it first.
+  const stderrText = (result.stderr ?? "").trim();
+  if (stderrText.length > 0) {
+    fail(
+      `${label}: probe wrote to stderr on a successful run (this breaks install-hyper portability check): ${JSON.stringify(stderrText.split("\n", 1)[0])}`,
+    );
+    return null;
   }
 
   let snapshot;
   try {
     snapshot = JSON.parse(result.stdout);
   } catch (err) {
-    fail(`${STATE_PROBE}: stdout is not valid JSON: ${err.message}`);
-    return;
+    fail(`${label}: stdout is not valid JSON: ${err.message}`);
+    return null;
   }
+  return snapshot;
+}
 
-  const where = `${STATE_PROBE} stdout`;
+// Build a synthetic .hyper fixture under a tempdir so schema assertions are
+// not gated on the current repo's task state. Catches schema drift even on
+// a fresh checkout where active_tasks would otherwise be empty.
+function setupProbeFixture() {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "hyper-validator-"));
+  const writeTaskMd = (relPath, frontmatter) => {
+    const abs = path.join(root, ".hyper", relPath, "task.md");
+    fs.mkdirSync(path.dirname(abs), { recursive: true });
+    const fm = Object.entries(frontmatter)
+      .map(([k, v]) => `${k}: ${v}`)
+      .join("\n");
+    fs.writeFileSync(abs, `---\n${fm}\n---\n\n# fixture\n`, "utf8");
+  };
+  const writeLoopMd = (relPath, frontmatter) => {
+    const abs = path.join(root, ".hyper", relPath, "loop.md");
+    fs.mkdirSync(path.dirname(abs), { recursive: true });
+    const fm = Object.entries(frontmatter)
+      .map(([k, v]) => `${k}: ${v}`)
+      .join("\n");
+    fs.writeFileSync(abs, `---\n${fm}\n---\n\n# fixture\n`, "utf8");
+  };
 
+  fs.mkdirSync(path.join(root, ".hyper", "tasks"), { recursive: true });
+  fs.mkdirSync(path.join(root, ".hyper", "archive"), { recursive: true });
+  fs.mkdirSync(path.join(root, ".hyper", "loops"), { recursive: true });
+
+  writeTaskMd("tasks/T3-active", {
+    id: "T3",
+    title: "Active fixture",
+    phase: "intake",
+    scope: "feature",
+    awaiting: "null",
+    created: "2026-05-25T00:00:00",
+    bugfix: "false",
+  });
+  writeTaskMd("tasks/T5-gated", {
+    id: "T5",
+    title: "Gated fixture",
+    phase: "spec",
+    scope: "feature",
+    awaiting: "user-approval",
+    created: "2026-05-25T00:00:00",
+    bugfix: "false",
+  });
+  writeTaskMd("archive/T1-archived", {
+    id: "T1",
+    title: "Done fixture",
+    phase: "done",
+    scope: "feature",
+    awaiting: "null",
+    created: "2026-05-20T00:00:00",
+    bugfix: "false",
+  });
+  writeTaskMd("archive/T2-cancelled", {
+    id: "T2",
+    title: "Cancelled fixture",
+    phase: "cancelled",
+    scope: "feature",
+    awaiting: "null",
+    created: "2026-05-21T00:00:00",
+    bugfix: "false",
+    cancelled_at: "2026-05-22T00:00:00",
+    cancelled_reason: "fixture cancellation",
+  });
+  writeLoopMd("loops/L1-active", {
+    id: "L1",
+    title: "Active loop fixture",
+    status: "active",
+    created: "2026-05-25T00:00:00",
+    updated: "2026-05-25T00:00:00",
+  });
+  writeLoopMd("loops/L2-done", {
+    id: "L2",
+    title: "Done loop fixture",
+    status: "done",
+    created: "2026-05-20T00:00:00",
+    updated: "2026-05-22T00:00:00",
+  });
+  fs.writeFileSync(
+    path.join(root, ".hyper", "backlog.md"),
+    "# Hyper Backlog\n\n## B1 — em-dash entry\n\n## B2 - hyphen entry\n\n## B3 – en-dash entry\n",
+    "utf8",
+  );
+
+  return root;
+}
+
+function teardownProbeFixture(root) {
+  try {
+    fs.rmSync(root, { recursive: true, force: true });
+  } catch {
+    // best-effort cleanup
+  }
+}
+
+function validateStateProbeSchema(snapshot, where) {
   const isNonEmptyString = (v) => typeof v === "string" && v.length > 0;
   const isBool = (v) => typeof v === "boolean";
   const isPositiveInt = (v) => Number.isInteger(v) && v >= 1;
@@ -425,6 +521,7 @@ function validateStateProbe() {
   assertField(snapshot, "active_loops", isArray, "array", where);
   assertField(snapshot, "backlog_entries", isArray, "array", where);
   assertField(snapshot, "parse_errors", isArray, "array", where);
+  assertField(snapshot, "warnings", isArray, "array", where);
 
   if (Array.isArray(snapshot.active_tasks) && snapshot.active_tasks.length > 0) {
     const first = snapshot.active_tasks[0];
@@ -478,6 +575,79 @@ function validateStateProbe() {
       assertField(first, "cancelled_reason", isString, "string when present", at);
     }
   }
+}
+
+function validateStateProbeAgainstFixture() {
+  const fixtureRoot = setupProbeFixture();
+  try {
+    const snapshot = runProbe(fixtureRoot, `${STATE_PROBE} (fixture ${fixtureRoot})`);
+    if (!snapshot) return;
+
+    const where = `${STATE_PROBE} fixture stdout`;
+    validateStateProbeSchema(snapshot, where);
+
+    // Exact-value assertions against known inputs. These catch schema drift
+    // that the populated-repo check would miss when the repo happens not
+    // to exercise a particular branch.
+    const expect = (cond, msg) => { if (!cond) fail(`${where}: ${msg}`); };
+
+    expect(snapshot.bootstrapped === true, `expected bootstrapped: true, got ${snapshot.bootstrapped}`);
+    expect(snapshot.next_task_id === 6, `expected next_task_id: 6 (max folder T5 + 1), got ${snapshot.next_task_id}`);
+    expect(snapshot.next_loop_id === 3, `expected next_loop_id: 3 (max folder L2 + 1), got ${snapshot.next_loop_id}`);
+    expect(snapshot.next_backlog_id === 4, `expected next_backlog_id: 4 (max heading B3 + 1), got ${snapshot.next_backlog_id}`);
+    expect(snapshot.active_tasks.length === 2, `expected active_tasks.length: 2, got ${snapshot.active_tasks.length}`);
+    expect(snapshot.archived_tasks.length === 2, `expected archived_tasks.length: 2, got ${snapshot.archived_tasks.length}`);
+    expect(snapshot.active_loops.length === 1, `expected active_loops.length: 1 (only L1 is active), got ${snapshot.active_loops.length}`);
+    expect(snapshot.backlog_entries.length === 3, `expected backlog_entries.length: 3 (em-dash + en-dash + hyphen), got ${snapshot.backlog_entries.length}`);
+
+    const t3 = snapshot.active_tasks.find((t) => t.id === "T3");
+    expect(t3 != null, `expected T3 in active_tasks`);
+    if (t3) {
+      expect(t3.awaiting === null, `expected T3.awaiting === null (JSON null), got ${JSON.stringify(t3.awaiting)}`);
+      expect(t3.category === "active", `expected T3.category: active, got ${JSON.stringify(t3.category)}`);
+      expect(t3.phase_known === true, `expected T3.phase_known: true, got ${t3.phase_known}`);
+    }
+    const t5 = snapshot.active_tasks.find((t) => t.id === "T5");
+    expect(t5 != null, `expected T5 in active_tasks`);
+    if (t5) {
+      expect(t5.awaiting === "user-approval", `expected T5.awaiting: "user-approval", got ${JSON.stringify(t5.awaiting)}`);
+    }
+    const t2 = snapshot.archived_tasks.find((t) => t.id === "T2");
+    expect(t2 != null, `expected T2 in archived_tasks`);
+    if (t2) {
+      expect(t2.cancelled_at === "2026-05-22T00:00:00", `expected T2.cancelled_at to round-trip, got ${JSON.stringify(t2.cancelled_at)}`);
+      expect(t2.category === "terminal", `expected T2.category: terminal, got ${JSON.stringify(t2.category)}`);
+    }
+    const l1 = snapshot.active_loops.find((l) => l.id === "L1");
+    expect(l1 != null, `expected L1 in active_loops`);
+    const l2 = snapshot.active_loops.find((l) => l.id === "L2");
+    expect(l2 == null, `expected L2 NOT in active_loops (status: done)`);
+  } finally {
+    teardownProbeFixture(fixtureRoot);
+  }
+}
+
+function validateStateProbe() {
+  if (!ensureFile(STATE_PROBE)) {
+    return;
+  }
+
+  const firstLine = read(STATE_PROBE).split("\n", 1)[0];
+  if (firstLine !== "#!/usr/bin/env node") {
+    fail(
+      `${STATE_PROBE}: expected first line "#!/usr/bin/env node", got ${JSON.stringify(firstLine)}`,
+    );
+  }
+
+  // Run twice: once against a controlled synthetic fixture (catches schema
+  // drift on any developer's machine, regardless of local .hyper state),
+  // once against the repo itself (catches breakage in the deployed
+  // state). The fixture pass is the load-bearing schema gate.
+  validateStateProbeAgainstFixture();
+
+  const snapshot = runProbe(ROOT, `${STATE_PROBE} (repo)`);
+  if (!snapshot) return;
+  validateStateProbeSchema(snapshot, `${STATE_PROBE} repo stdout`);
 }
 
 function main() {

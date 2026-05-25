@@ -46,7 +46,7 @@ Each loop is a folder at `.hyper/loops/L<N>-<slug>/` containing:
 - `loop.md` — the canonical state file. See `templates/loop.md` for the full structure.
 - Optional evidence files (logs, diffs, screenshots, console output) referenced from `## Relevant artifacts`. Use kebab-case names: `cycle3-build-log.txt`, `verify2-2026-05-13.txt`.
 
-Use `state_root` from the probe output (called at the top of Phase 1 below). This aligns hyper-iterate with the shared state-root rule used by the rest of Hyper. Create `.hyper/loops/` under `state_root` if missing. Use absolute paths only for transient tool execution when the working directory differs from `state_root`; keep paths written into `loop.md` and user-facing summaries repo-relative.
+Path resolution uses the probe's `state_root` field (Phase 1 below makes the probe call). This aligns hyper-iterate with the shared state-root rule used by the rest of Hyper. Create `.hyper/loops/` under `state_root` if missing. Use absolute paths only for transient tool execution when the working directory differs from `state_root`; keep paths written into `loop.md` and user-facing summaries repo-relative.
 
 Use the exact section layout shipped in `templates/loop.md`.
 

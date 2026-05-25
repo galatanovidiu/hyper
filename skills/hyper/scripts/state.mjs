@@ -72,16 +72,59 @@ function parseArgs(argv) {
   return args;
 }
 
+// Validate a --from hint. Returns the cleaned starting path, or dies with a
+// clear single-line stderr message. A null hint is passed through (caller uses
+// process.cwd()).
+function cleanFromHint(fromArg) {
+  if (fromArg === null) return null;
+  if (fromArg === "") {
+    die("hyper state probe: --from requires a non-empty absolute path");
+  }
+  if (!path.isAbsolute(fromArg)) {
+    die(`hyper state probe: --from requires an absolute path, got ${JSON.stringify(fromArg)}`);
+  }
+
+  // If the path points at an existing file, use its directory.
+  let stat = null;
+  try {
+    stat = fs.statSync(fromArg);
+  } catch {
+    stat = null;
+  }
+  if (stat && stat.isFile()) {
+    return path.dirname(fromArg);
+  }
+
+  // Existing directory: use as-is.
+  if (stat) return fromArg;
+
+  // Non-existent path: only accept if it carries a `.hyper/` marker we can
+  // still strip downstream. Otherwise it points nowhere useful.
+  const hyperMarker = `${path.sep}.hyper${path.sep}`;
+  const hyperTrailing = `${path.sep}.hyper`;
+  if (fromArg.includes(hyperMarker) || fromArg.endsWith(hyperTrailing)) {
+    return fromArg;
+  }
+  die(`hyper state probe: --from path does not exist: ${fromArg}`);
+}
+
 // ---------- State-root resolution ----------
+
+// Captures git availability so the caller can surface a warning when git
+// is missing (ENOENT) vs. a normal run that returned non-zero (e.g. not in
+// a repo). The two cases warrant different routing.
+let gitUnavailable = false;
 
 function runGit(cwd, gitArgs) {
   const result = spawnSync("git", gitArgs, {
     cwd,
     encoding: "utf8",
   });
-  if (result.error || result.status !== 0) {
+  if (result.error) {
+    if (result.error.code === "ENOENT") gitUnavailable = true;
     return null;
   }
+  if (result.status !== 0) return null;
   return result.stdout;
 }
 
@@ -167,10 +210,11 @@ function stripQuotes(raw) {
 function parseFrontmatter(text) {
   const lines = text.split("\n");
 
-  // Find the first '---' line.
+  // Find the first '---' line. Tolerate trailing whitespace introduced by
+  // editors that strip-trim selectively (a common interruption hazard).
   let openIdx = -1;
   for (let i = 0; i < lines.length; i += 1) {
-    if (lines[i] === "---") {
+    if (lines[i].trim() === "---") {
       openIdx = i;
       break;
     }
@@ -182,7 +226,7 @@ function parseFrontmatter(text) {
   // Find the next '---' line after the opener.
   let closeIdx = -1;
   for (let i = openIdx + 1; i < lines.length; i += 1) {
-    if (lines[i] === "---") {
+    if (lines[i].trim() === "---") {
       closeIdx = i;
       break;
     }
@@ -251,13 +295,18 @@ function relPath(stateRoot, abs) {
 }
 
 function collectTaskFolders(stateRoot, dirAbs, kind, parseErrors) {
-  const out = [];
+  const records = [];
+  const folderIds = [];
   const entries = readDirSafe(dirAbs);
   entries.sort((a, b) => a.name.localeCompare(b.name));
 
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
-    if (!/^T(\d+)-/.test(entry.name)) continue;
+    const folderMatch = /^T(\d+)-/.exec(entry.name);
+    if (!folderMatch) continue;
+
+    const folderId = Number.parseInt(folderMatch[1], 10);
+    folderIds.push(folderId);
 
     const folderAbs = path.join(dirAbs, entry.name);
     const taskMd = path.join(folderAbs, "task.md");
@@ -287,8 +336,18 @@ function collectTaskFolders(stateRoot, dirAbs, kind, parseErrors) {
     const phase = fm.phase === undefined ? null : fm.phase;
     const { category, known } = classifyPhase(phase);
 
+    // Folder name is canonical for id allocation. Disagreement with
+    // frontmatter is a data-integrity issue worth surfacing.
+    const fmIdNum = extractNumericId(fm.id, "T");
+    if (fmIdNum != null && fmIdNum !== folderId) {
+      parseErrors.push({
+        path: path.relative(stateRoot, taskMd),
+        reason: `frontmatter id ${fm.id ?? "<missing>"} does not match folder T${folderId}`,
+      });
+    }
+
     const record = {
-      id: fm.id ?? null,
+      id: fm.id ?? `T${folderId}`,
       title: fm.title ?? null,
       phase,
       scope: fm.scope ?? null,
@@ -309,21 +368,25 @@ function collectTaskFolders(stateRoot, dirAbs, kind, parseErrors) {
       }
     }
 
-    out.push(record);
+    records.push(record);
   }
 
-  return out;
+  return { records, folderIds };
 }
 
 function collectLoopFolders(stateRoot, dirAbs, parseErrors) {
   const active = [];
-  const allLoopIds = [];
+  const folderIds = [];
   const entries = readDirSafe(dirAbs);
   entries.sort((a, b) => a.name.localeCompare(b.name));
 
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
-    if (!/^L(\d+)-/.test(entry.name)) continue;
+    const folderMatch = /^L(\d+)-/.exec(entry.name);
+    if (!folderMatch) continue;
+
+    const folderId = Number.parseInt(folderMatch[1], 10);
+    folderIds.push(folderId);
 
     const folderAbs = path.join(dirAbs, entry.name);
     const loopMd = path.join(folderAbs, "loop.md");
@@ -350,12 +413,18 @@ function collectLoopFolders(stateRoot, dirAbs, parseErrors) {
     }
 
     const fm = parsed.data;
-    const idNum = extractNumericId(fm.id, "L");
-    if (idNum != null) allLoopIds.push(idNum);
+    // Folder name is canonical for id allocation; surface mismatches.
+    const fmIdNum = extractNumericId(fm.id, "L");
+    if (fmIdNum != null && fmIdNum !== folderId) {
+      parseErrors.push({
+        path: path.relative(stateRoot, loopMd),
+        reason: `frontmatter id ${fm.id ?? "<missing>"} does not match folder L${folderId}`,
+      });
+    }
 
     if (fm.status === "active") {
       active.push({
-        id: fm.id ?? null,
+        id: fm.id ?? `L${folderId}`,
         title: fm.title ?? null,
         status: fm.status,
         updated: fm.updated ?? null,
@@ -364,7 +433,7 @@ function collectLoopFolders(stateRoot, dirAbs, parseErrors) {
     }
   }
 
-  return { active, allLoopIds };
+  return { active, folderIds };
 }
 
 function collectBacklog(stateRoot, parseErrors) {
@@ -385,14 +454,28 @@ function collectBacklog(stateRoot, parseErrors) {
   }
 
   const entries = [];
-  const headingPattern = /^## B(\d+) — (.+)$/;
+  // Accept the em-dash, en-dash, and hyphen-minus families. Heading drift
+  // (wrong dash glyph) is common enough that strict matching silently
+  // drops entries.
+  const headingPattern = /^## B(\d+)\s+[—–-]\s+(.+)$/;
+  // Loose pattern to detect `## B<N>` lines that fail the strict match —
+  // surface them as parse errors instead of dropping silently.
+  const looseHeading = /^## B(\d+)\b/;
   for (const line of text.split("\n")) {
     const match = line.match(headingPattern);
-    if (!match) continue;
-    entries.push({
-      id: Number.parseInt(match[1], 10),
-      title: match[2].trim(),
-    });
+    if (match) {
+      entries.push({
+        id: Number.parseInt(match[1], 10),
+        title: match[2].trim(),
+      });
+      continue;
+    }
+    if (looseHeading.test(line)) {
+      parseErrors.push({
+        path: path.relative(stateRoot, backlogPath),
+        reason: `backlog heading did not match expected format: ${JSON.stringify(line)}`,
+      });
+    }
   }
   return entries;
 }
@@ -416,10 +499,11 @@ function nextId(ids) {
 
 function main() {
   const args = parseArgs(process.argv.slice(2));
+  const fromHint = cleanFromHint(args.from);
 
   let stateRoot;
   try {
-    stateRoot = resolveStateRoot(args.from);
+    stateRoot = resolveStateRoot(fromHint);
   } catch (err) {
     die(`hyper state probe: failed to resolve state root: ${err.message}`);
   }
@@ -439,18 +523,29 @@ function main() {
 
   const parseErrors = [];
 
-  const activeTasks = collectTaskFolders(stateRoot, tasksDir, "active", parseErrors);
-  const archivedTasks = collectTaskFolders(stateRoot, archiveDir, "archive", parseErrors);
-  const { active: activeLoops, allLoopIds } = collectLoopFolders(stateRoot, loopsDir, parseErrors);
+  const activeResult = collectTaskFolders(stateRoot, tasksDir, "active", parseErrors);
+  const archivedResult = collectTaskFolders(stateRoot, archiveDir, "archive", parseErrors);
+  const loopResult = collectLoopFolders(stateRoot, loopsDir, parseErrors);
   const backlogEntries = collectBacklog(stateRoot, parseErrors);
 
-  const taskIds = [
-    ...activeTasks.map((t) => extractNumericId(t.id, "T")),
-    ...archivedTasks.map((t) => extractNumericId(t.id, "T")),
-  ].filter((n) => n != null);
-  const nextTaskId = nextId(taskIds);
-  const nextLoopId = nextId(allLoopIds);
+  // Id allocation uses the folder-name set as canonical. This survives
+  // missing or malformed frontmatter and prevents id reissue when a task's
+  // task.md fails to parse.
+  const nextTaskId = nextId([...activeResult.folderIds, ...archivedResult.folderIds]);
+  const nextLoopId = nextId(loopResult.folderIds);
   const nextBacklogId = nextId(backlogEntries.map((e) => e.id));
+
+  // Global, non-per-file environmental notes. Distinct from parse_errors,
+  // which is per-file. Consumers can ignore but should not error out on
+  // unknown warning kinds.
+  const warnings = [];
+  if (gitUnavailable) {
+    warnings.push({
+      kind: "git_unavailable",
+      reason:
+        "git command not found on PATH; state-root resolution fell back to --from or process.cwd(). Linked worktrees will not resolve to the main worktree.",
+    });
+  }
 
   const output = {
     state_root: stateRoot,
@@ -458,14 +553,35 @@ function main() {
     next_task_id: nextTaskId,
     next_loop_id: nextLoopId,
     next_backlog_id: nextBacklogId,
-    active_tasks: activeTasks,
-    archived_tasks: archivedTasks,
-    active_loops: activeLoops,
+    active_tasks: activeResult.records,
+    archived_tasks: archivedResult.records,
+    active_loops: loopResult.active,
     backlog_entries: backlogEntries,
     parse_errors: parseErrors,
+    warnings,
   };
 
   process.stdout.write(`${JSON.stringify(output, null, 2)}\n`);
+
+  // Spec promise: exit non-zero when every candidate record failed to parse.
+  // A candidate is a folder under .hyper/tasks/, .hyper/archive/, or
+  // .hyper/loops/ that matched the T<N>- or L<N>- prefix. Backlog parse
+  // failures alone are not enough to fail the exit code — they're a softer
+  // signal (heading drift, not a structural state issue).
+  const totalFolderCandidates =
+    activeResult.folderIds.length +
+    archivedResult.folderIds.length +
+    loopResult.folderIds.length;
+  const successfulFolderRecords =
+    activeResult.records.length +
+    archivedResult.records.length +
+    loopResult.active.length;
+  if (totalFolderCandidates > 0 && successfulFolderRecords === 0) {
+    process.stderr.write(
+      `hyper state probe: every candidate task/loop folder failed to parse (${totalFolderCandidates} candidates)\n`,
+    );
+    process.exit(2);
+  }
 }
 
 main();
