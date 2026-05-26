@@ -103,7 +103,10 @@ Tracked lanes:
 | `research`        | Investigate a question and produce a recommendation with no code changes.                     | `research.md`                                       |
 
 Approval gates happen after `intake`, `spec`, `technical-plan`,
-`execution-plan`, and `research`.
+`execution-plan`, and `research`. Other phase transitions are automatic:
+after implementation Hyper proceeds to verify, after passing feature verify it
+proceeds to docs, and after required remediation it loops back into the
+owning phase without asking for a bare "continue".
 
 ### Example
 

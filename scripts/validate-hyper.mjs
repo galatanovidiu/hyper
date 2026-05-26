@@ -207,6 +207,13 @@ function ensureContains(filePath, needle) {
   }
 }
 
+function ensureNotContains(filePath, needle) {
+  const text = read(filePath);
+  if (text.includes(needle)) {
+    fail(`${filePath}: contains forbidden text: ${JSON.stringify(needle)}`);
+  }
+}
+
 function validateReadmeAndDataModel() {
   ensureContains(README, "Internal skills such as");
   for (const skill of [...USER_FACING_HYPER, ...INTERNAL_HYPER].sort()) {
@@ -316,12 +323,16 @@ function validateHyperIterate() {
 }
 
 function validatePlanConflictRedirect() {
-  // Gates contract — new redirect row and remediation gates section.
+  // Gates contract — redirect rows and remediation redirects section.
   ensureContains(HYPER_GATES, "`implement` | `redirect target: technical-plan`");
-  ensureContains(HYPER_GATES, "`phase: technical-plan`, `awaiting: user-input`");
+  ensureContains(HYPER_GATES, "`phase: technical-plan`, `awaiting: null`");
   ensureContains(HYPER_GATES, "`technical-plan` | `redirect target: implement`");
+  ensureContains(HYPER_GATES, "## Remediation redirects");
   ensureContains(HYPER_GATES, "For blocked implement results from plan conflicts:");
   ensureContains(HYPER_GATES, "For plan-conflict subtasks:");
+  ensureNotContains(HYPER_GATES, "Continue to verify?");
+  ensureNotContains(HYPER_GATES, "Continue to docs?");
+  ensureNotContains(HYPER_GATES, "Post-transition checkpoint");
 
   // Data model — new artifact, new subtask enum value.
   ensureContains(DATA_MODEL, "## `plan-conflict.md`");
@@ -341,6 +352,8 @@ function validatePlanConflictRedirect() {
 
   // hyper — redirect mention of the new transition.
   ensureContains(HYPER_SKILL, "implement -> technical-plan");
+  ensureContains(HYPER_SKILL, "Continue deterministic transitions");
+  ensureNotContains(HYPER_SKILL, "Verify checkpoint");
 }
 
 function ensureFile(filePath) {

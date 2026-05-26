@@ -178,16 +178,20 @@ per `reference/dashboard.md` before announcing or stopping.
 
 Skip dashboard generation for `scope: code-review`.
 
+### Continue deterministic transitions
+
+When the updated `phase` is non-terminal and `awaiting: null`, re-enter
+**Dispatch phase** in the same turn. This applies to ordinary phase-complete
+transitions and redirects. Stop only when a gate is open, routing is ambiguous,
+the task is terminal, or the next phase itself returns a user-facing approval
+or input verdict.
+
+Do not ask the user for a bare "continue" on deterministic transitions such as
+`implement -> verify`, `verify -> docs`, `verify -> implement`, or
+`implement -> technical-plan`. The destination phase owns any real question or
+approval gate.
+
 ### Archive on terminal
 
 When a transition sets `phase: done`, archive the task folder per
 `reference/archive.md` before announcing completion.
-
-### Verify checkpoint
-
-The gate contract owns when `implement -> verify` and `verify -> docs` stop for
-a checkpoint prompt. Render the prompt per `reference/gates.md` and stop. For
-`verify -> docs`, the `pass` branch is a fixed string and the `needs-changes`
-branch is a remediation-aware prompt rendered at runtime; for
-`implement -> verify`, the prompt is a single fixed string. The next user
-reply re-dispatches the task into the chosen next step.
