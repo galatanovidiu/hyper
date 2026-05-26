@@ -15,6 +15,7 @@ Standalone utility. Does not read or write Hyper task state. Applies to chat-sid
 | User says | Action |
 |-----------|--------|
 | `/hyper-digest`, `/hyper-digest on`, "turn on digest format" | Set mode to ON. Confirm with one line: `Digest format: ON.` Then apply the format starting with the next response. |
+| Unrecognized `/hyper-digest` variant (for example, `/hyper-digest enable` or `/digest on`) | Treat as activation intent. Set mode to ON. Confirm with `Digest format: ON.` Then note the recognized commands in one line. |
 | `/hyper-digest off`, "turn off digest format", "stop digest" | Set mode to OFF. Confirm with one line: `Digest format: OFF.` Revert to normal output style. |
 | `/hyper-digest status` | Report current mode in one line. |
 
@@ -24,11 +25,11 @@ Carry the mode across turns in conversation context. This skill does not persist
 
 ## The format (when mode is ON)
 
-Apply this shape to responses likely to exceed roughly 15 lines of prose. Short responses, pure tool calls, and single code blocks skip the format. For borderline responses around 8-15 lines, use only a BLUF and compact body section.
+Start formatting at roughly 8 lines of prose: for 8-15 lines, use only a BLUF and compact body section; above roughly 15 lines, use the full shape. Short responses and tool-call-only turns skip the format. Responses consisting entirely of a single code block with no prose skip the format. If a code block is accompanied by explanatory prose that would otherwise exceed the line threshold, apply the format to the prose and wrap the code block in a `<details>` block if it exceeds ~20 lines.
 
 ### 1. BLUF — one sentence
 
-When no higher-priority output contract applies, the first line is the answer, conclusion, or recommendation in a single sentence. Do not restate the question.
+Unless the system prompt, an active skill (for example, `hyper-technical-plan`), or the user's explicit formatting request specifies a different first-line format, the first line is the answer, conclusion, or recommendation in a single sentence. Do not restate the question.
 
 Examples:
 
@@ -80,7 +81,16 @@ Caveats, edge cases, follow-up suggestions, and sources go at the bottom. The re
 - It does not strip code, paths, errors, or identifiers needed for the answer. Keep them exactly as they appear.
 - It does not change the agent's reasoning or work. Only the presentation layer.
 - It does not apply to tool-call-only turns (no prose to format).
-- It does not override higher-priority instructions, safety requirements, citation requirements, review formats, or the user's explicit formatting requests. If the user asks for a single code block, give them a single code block.
+- It does not override higher-priority instructions. If the user asks for a single code block, give them a single code block.
+
+## Priority order
+
+When formatting instructions conflict, obey them in this order:
+
+1. Safety requirements.
+2. System-level citation or review format instructions.
+3. The user's explicit formatting request in the current turn.
+4. This skill's format.
 
 ## Length threshold
 
@@ -136,4 +146,4 @@ The skill assumes the renderer supports HTML `<details>` (Claude.ai web, VSCode 
 
 ## Session mode vs one-shot
 
-This skill is best-effort session mode once enabled. For a one-time restructure of the previous response only, use `/hyper-short-story` (narrative rewrite, drops detail) — different goal, different skill.
+This skill is best-effort session mode once enabled. If the user asks to reformat the previous response in digest format without enabling session mode, apply the digest format to that response only, then return to OFF. Do not redirect to `/hyper-short-story` unless the user explicitly wants a narrative rewrite.
