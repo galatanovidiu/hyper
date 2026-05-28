@@ -39,6 +39,12 @@ and point the user to `reference/state-recovery.md`. Do not guess a route.
 
 Walk these checks in order.
 
+### 0. Request is a help invocation
+
+If the user's request is `help`, `--help`, `-h`, `?`, or any short phrase that
+asks for a command list or usage reference (e.g. "what commands are there",
+"how do I use hyper"), invoke the `hyper-help` skill immediately and stop.
+
 ### 1. Request is a task id
 
 Jump to **Resume by id**.
