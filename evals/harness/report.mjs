@@ -1,6 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { wilsonScoreCI, bootstrapCI, median } from "./stats.mjs";
+
 export function writeRunReport({ runDir, runMeta, skill, fixture, trace, traceMetrics, traceFindings, artifacts, judgeResult }) {
   fs.mkdirSync(runDir, { recursive: true });
 
@@ -130,11 +132,40 @@ export function writeAggregateReport({ aggregateDir, runs }) {
     grouped[key].push(r);
   }
   for (const [key, group] of Object.entries(grouped)) {
-    const totals = group.map((g) => g.judgeResult.score.total).sort((a, b) => a - b);
-    const median = totals[Math.floor(totals.length / 2)];
+    const totals = group.map((g) => g.judgeResult.score.total);
+    const med = median(totals);
     const verdicts = group.map((g) => g.judgeResult.score.verdict);
-    const passRate = verdicts.filter((v) => v === "pass").length / verdicts.length;
-    out.push(`- **${key}**: median total ${median}/10, pass rate ${(passRate * 100).toFixed(0)}% (${group.length} runs)`);
+    const passes = verdicts.filter((v) => v === "pass").length;
+    const passRate = passes / verdicts.length;
+    out.push(`- **${key}**: median total ${med}/10, pass rate ${(passRate * 100).toFixed(0)}% (${group.length} runs)`);
   }
+  out.push("");
+
+  out.push(`## Confidence intervals (95%)`);
+  out.push("");
+  out.push(`Pass rate uses the Wilson score interval (well-calibrated for small n); median uses a percentile bootstrap with 1000 resamples. Both methods are implemented in \`harness/stats.mjs\` and use no external dependencies.`);
+  out.push("");
+  out.push(`| Skill | Fixture | Runs | Pass rate (Wilson CI) | Median total (bootstrap CI) |`);
+  out.push(`|-------|---------|------|-----------------------|-----------------------------|`);
+  for (const [key, group] of Object.entries(grouped)) {
+    const [skill, fixture] = key.split("/");
+    const passes = group.filter((g) => g.judgeResult.score.verdict === "pass").length;
+    const wilson = wilsonScoreCI(passes, group.length);
+    const totals = group.map((g) => g.judgeResult.score.total);
+    let bootCell;
+    if (group.length < 2) {
+      bootCell = `${median(totals).toFixed(1)} (n/a — single run)`;
+    } else {
+      const boot = bootstrapCI(totals, { statistic: median, resamples: 1000 });
+      bootCell = `${boot.point.toFixed(1)} [${boot.lower.toFixed(1)}, ${boot.upper.toFixed(1)}]`;
+    }
+    out.push(`| ${skill} | ${fixture} | ${group.length} | ${fmtPct(wilson.point)} [${fmtPct(wilson.lower)}, ${fmtPct(wilson.upper)}] | ${bootCell} |`);
+  }
+  out.push("");
+
   fs.writeFileSync(path.join(aggregateDir, "summary.md"), out.join("\n") + "\n");
+}
+
+function fmtPct(x) {
+  return `${(x * 100).toFixed(0)}%`;
 }

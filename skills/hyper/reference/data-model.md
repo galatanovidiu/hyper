@@ -503,31 +503,39 @@ Loop frontmatter fields:
 Each loop combines:
 
 - **Living state** — goal, constraints, definition of done, task
-  understanding, existing code and findings, agreed big plan, current route,
-  current focus, current bar, parts, part alignment, evidence digest,
-  relevant artifacts, handoff cues, and final outcome
+  understanding, existing code and findings, authority mode, loop plan,
+  current route, current focus, current bar, parts, part alignment, evidence
+  digest, relevant artifacts, handoff cues, and final outcome
 - **Evidence history** — bar history, route shifts, decisions, starting point,
   and cycle log
 
 For long loops, the intended read order is layered:
 
-1. hot state — task understanding, existing code and findings, agreed big
-   plan, route, focus, bar, parts, part alignment, evidence digest, handoff
-   cues
+1. hot state — authority, task understanding, existing code and findings, loop
+   plan, route, focus, bar, parts, part alignment, evidence digest, handoff cues
 2. warm state — recent decisions, recent route shifts, relevant artifacts, and
    recent cycles
 3. cold state — older cycles and large linked artifacts only when needed
 
 `hyper-iterate` has a hard approval gate before implementation:
 
-- the loop starts with an interview-style alignment pass
+- the loop starts with an alignment pass
 - `loop.md` is created immediately
+- `## Authority` records whether approval gates are interactive or delegated
 - `## Task understanding`, `## Existing code and findings`, and
-  `## Agreed big plan` must be filled before any implementation cycle starts
-- `## Agreed big plan` carries `Status: awaiting approval | approved | needs rework`
-  and `Approved by user: ...`
+  `## Loop plan` must be filled before any implementation cycle starts
+- `## Loop plan` carries `Status: awaiting approval | approved | needs rework`,
+  `Approval source: Not yet. | user | delegated authority`, and
+  `Approved at: ...`
 - each part repeats the same pattern under `## Part alignment`
 - no work on a part starts until that part plan is approved
+
+In delegated authority mode, a specialist proxy agent may approve a loop plan,
+approve a part plan, or choose a bounded route option under the authority the
+user recorded in `## Authority`. The parent agent still writes `loop.md` and
+must stop for the user if the goal, definition of done, non-negotiables,
+security/privacy/legal posture, destructive actions, external side effects,
+material cost, or public behavior outside the approved goal would change.
 
 Loops may cover investigation, implementation, validation, and route
 corrections inside one adaptive lane. The canonical file layout, including the

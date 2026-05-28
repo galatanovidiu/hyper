@@ -236,6 +236,7 @@ function validateHyperIterate() {
     "## Definition of done",
     "## Task understanding",
     "## Existing code and findings",
+    "## Authority",
     "## Loop plan",
     "## Current route",
     "## Current focus",
@@ -269,7 +270,11 @@ function validateHyperIterate() {
   }
 
   ensureContains(HYPER_ITERATE_TEMPLATE, "Status: awaiting approval");
-  ensureContains(HYPER_ITERATE_TEMPLATE, "Approved by user: Not yet.");
+  ensureContains(HYPER_ITERATE_TEMPLATE, "Mode: interactive");
+  ensureContains(HYPER_ITERATE_TEMPLATE, "Delegated authority: none");
+  ensureContains(HYPER_ITERATE_TEMPLATE, "Decision proxies: none");
+  ensureContains(HYPER_ITERATE_TEMPLATE, "Approval source: Not yet.");
+  ensureContains(HYPER_ITERATE_TEMPLATE, "Approved at: Not yet.");
   ensureContains(HYPER_ITERATE_TEMPLATE, "### P1 — Whole goal");
   ensureContains(HYPER_ITERATE_TEMPLATE, "#### Understanding");
   ensureContains(HYPER_ITERATE_TEMPLATE, "#### Existing code and findings");
@@ -290,14 +295,20 @@ function validateHyperIterate() {
   ensureContains(HYPER_ITERATE_SKILL, "No cycle starts before both gates are cleared.");
   ensureContains(HYPER_ITERATE_SKILL, "Before work on `P<N>` starts, the part block must meet the current-part-block gate above");
   ensureContains(HYPER_ITERATE_SKILL, "## Delegation");
+  ensureContains(HYPER_ITERATE_SKILL, "## Authority Modes");
+  ensureContains(HYPER_ITERATE_SKILL, "YOLO mode");
+  ensureContains(HYPER_ITERATE_SKILL, "Approval source: delegated authority");
   ensureContains(HYPER_ITERATE_SKILL, "Part statuses: `todo | aligning | doing | done`.");
 
   ensureContains(README, "/hyper-iterate L3");
-  ensureContains(README, "interview-style alignment pass");
+  ensureContains(README, "user or delegated approval");
+  ensureContains(README, "YOLO/delegated authority");
   ensureContains(README, ".hyper/loops/");
 
   ensureContains(DATA_MODEL, "## `.hyper/loops/`");
-  ensureContains(DATA_MODEL, "agreed big plan");
+  ensureContains(DATA_MODEL, "authority mode");
+  ensureContains(DATA_MODEL, "Approval source");
+  ensureContains(DATA_MODEL, "loop plan");
   ensureContains(DATA_MODEL, "part alignment");
   ensureContains(DATA_MODEL, "evidence digest");
   ensureContains(DATA_MODEL, "relevant artifacts");

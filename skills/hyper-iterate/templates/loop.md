@@ -10,7 +10,7 @@ updated: <YYYY-MM-DDTHH:MM:SS>
 
 # L<N> — <title>
 
-<!-- Pre-cycle alignment surface: Goal, Why, Constraints, Non-negotiables, Definition of done, Task understanding, Existing code and findings, Loop plan, Current route, Current focus, Current bar, Handoff cues (Next atomic move at minimum), the current `aligning` or `doing` part under Parts, and the current `aligning` or `doing` part block under Part alignment. -->
+<!-- Pre-cycle alignment surface: Authority, Goal, Why, Constraints, Non-negotiables, Definition of done, Task understanding, Existing code and findings, Loop plan, Current route, Current focus, Current bar, Handoff cues (Next atomic move at minimum), the current `aligning` or `doing` part under Parts, and the current `aligning` or `doing` part block under Part alignment. -->
 
 ## Goal
 Not stated yet.
@@ -33,6 +33,19 @@ Not filled yet.
 ## Existing code and findings
 Not filled yet.
 
+## Authority
+Mode: interactive
+<!-- Legal values: interactive | delegated -->
+Delegated authority: none
+<!-- Shape: none | <standing authority the user granted, including boundaries> -->
+Decision proxies: none
+<!-- Shape: none | <skills or agent roles that may decide inside delegated authority> -->
+Stop for user:
+- goal, why, definition of done, or non-negotiables would change
+- destructive action, credential/security/privacy/legal risk, external side effect, or material cost appears
+- public contract or user-facing behavior would change outside the approved goal
+- close without verify, unresolved delegate disagreement, or missing required proxy
+
 ## Loop plan
 Pressure-tested at: Not yet.
 <!-- Legal values: Not yet. | <YYYY-MM-DDTHH:MM:SS> -->
@@ -41,12 +54,15 @@ External review: Not yet.
 <!-- Pick by precedence:
      trivial plan                                          → n/a — trivial loop plan
      non-trivial + no installed skill                      → n/a — no cross-model-review skill installed
-     non-trivial + skill installed + user runs it          → completed by a cross-model-review skill
-     non-trivial + skill installed + user declines         → skipped by user
+     non-trivial + interactive + skill installed + user runs it    → completed by a cross-model-review skill
+     non-trivial + interactive + skill installed + user declines   → skipped by user
+     non-trivial + delegated + skill installed                     → completed by a cross-model-review skill
 -->
 Status: awaiting approval
-<!-- Legal values: awaiting approval = waiting for user response | approved = explicit approve received | needs rework = user rejected current plan -->
-Approved by user: Not yet.
+<!-- Legal values: awaiting approval = waiting for user/proxy verdict | approved = approval recorded | needs rework = plan rejected -->
+Approval source: Not yet.
+<!-- Legal values: Not yet. | user | delegated authority -->
+Approved at: Not yet.
 <!-- Legal values: Not yet. | <YYYY-MM-DDTHH:MM:SS> -->
 <!-- `Not yet.` is also the reset value after `needs rework`. -->
 
@@ -90,8 +106,10 @@ Part pressure test: Not yet.
 <!-- Legal values: Not yet. | completed at <YYYY-MM-DDTHH:MM:SS> | covered by loop pressure test <YYYY-MM-DDTHH:MM:SS> -->
 Status: awaiting approval
 <!-- Same legal values as the loop-plan status field above -->
-Approved by user: Not yet.
-<!-- Same legal values as the loop-plan approval field above -->
+Approval source: Not yet.
+<!-- Same legal values as the loop-plan approval source field above -->
+Approved at: Not yet.
+<!-- Same legal values as the loop-plan approved-at field above -->
 
 - Goal: Not agreed yet.
 - Approach: Not agreed yet.

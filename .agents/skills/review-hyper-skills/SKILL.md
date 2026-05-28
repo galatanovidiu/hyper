@@ -109,14 +109,17 @@ For maintainer-drift work, hotspot patterns include:
 - references to README / AGENTS / data-model skill lists
 - artifact names, verdict vocabularies, and auto-fix wording
 
+For Mode 1 (`contract-drift`) and shipped-skill targets in Mode 3, also run the deterministic anti-pattern checker against the target skill. The rules and severities are in [reference/anti-patterns.md](reference/anti-patterns.md); the implementation lives at `evals/harness/static-checks.mjs`. Any rule that fires becomes a candidate finding (still subject to the severity floor and cap in Step 4).
+
 When the severity floor (Step 1) is `drift+load-bearing` or `load-bearing`, short-circuit nit-class evidence-gathering: skip wording-uniformity grep, byte-for-byte comparison of equivalent prose, structural-conformance scans across peer skills, and other patterns that only produce `nit`-class findings. Evidence-gathering for findings at or above the floor proceeds in full. The cost saving is real: nit-class grep across the suite often dominates a pass's read budget.
 
 ### 3. Evaluate against invariants
 
-Two different axis sets apply, picked by mode:
+Two different axis sets apply, picked by mode. A third deterministic axis applies to both.
 
 - **Mode 1 (`contract-drift`) and shipped-skill findings in Mode 3** — use the canonical authoring invariants at [reference/authoring-invariants.md](reference/authoring-invariants.md). These govern the `skills/**` tree; `AGENTS.md` cites the same file so authoring-time and review-time judgments stay aligned.
 - **Mode 2 (`maintainer-drift`) and repo-surface findings in Mode 3** — use the focus list in Mode 2's own description above (non-operational provenance prose, stale inventories, portability violations, dead or duplicated instruction surface). These govern `AGENTS.md`, `README.md`, `.Codex/skills/**`, and repo-local documentation — not the shipped skills.
+- **Anti-pattern catalogue (any mode against a shipped skill)** — apply the six deterministic rules in [reference/anti-patterns.md](reference/anti-patterns.md): `OVER_CONSTRAINED`, `EMPTY_DESCRIPTION`, `MISSING_TRIGGER`, `BLOATED_SKILL`, `ORPHAN_REFERENCE`, `DEAD_CROSS_REF`. The detector at `evals/harness/static-checks.mjs` is the source of truth; the reference file documents the rules for human authors and reviewers. Findings carry the severity stated in the catalogue.
 
 Structural uniformity across skills (e.g., "7 phase skills carry section X, 4 don't") is **not a finding** unless (a) the missing surface is documented as required in `reference/`, or (b) uniformity is the explicit locked axis at Step 1. Otherwise it is a peer-comparison observation, not contract drift.
 
