@@ -23,6 +23,7 @@ const HYPER_GATES = path.join(ROOT, "skills", "hyper", "reference", "gates.md");
 const HYPER_IMPLEMENT_SKILL = path.join(ROOT, "skills", "hyper-implement", "SKILL.md");
 const HYPER_WORKER_SKILL = path.join(ROOT, "skills", "hyper-worker", "SKILL.md");
 const HYPER_TECHNICAL_PLAN_SKILL = path.join(ROOT, "skills", "hyper-technical-plan", "SKILL.md");
+const HYPER_RESEARCH_SKILL = path.join(ROOT, "skills", "hyper-research", "SKILL.md");
 const STATE_PROBE = path.join(ROOT, "skills", "hyper", "scripts", "state.mjs");
 
 const USER_FACING_HYPER = new Set([
@@ -356,6 +357,15 @@ function validatePlanConflictRedirect() {
   ensureNotContains(HYPER_SKILL, "Verify checkpoint");
 }
 
+function validateGateMessaging() {
+  ensureContains(HYPER_GATES, "## User-facing gate messages");
+  ensureContains(HYPER_GATES, "Do not finish with only status, file links, or a gate label.");
+  ensureContains(HYPER_SKILL, "### Announce open gates");
+  ensureContains(HYPER_SKILL, "Do not rely on file attachment cards or state-probe facts as the approval ask.");
+  ensureContains(HYPER_RESEARCH_SKILL, "Reply approve or continue to accept it");
+  ensureContains(HYPER_RESEARCH_SKILL, "archive the research task");
+}
+
 function ensureFile(filePath) {
   if (!fs.existsSync(filePath)) {
     fail(`${filePath}: missing required file`);
@@ -668,6 +678,7 @@ function main() {
   validateReadmeAndDataModel();
   validateHyperIterate();
   validatePlanConflictRedirect();
+  validateGateMessaging();
   validateStateProbe();
 
   if (ERRORS.length > 0) {

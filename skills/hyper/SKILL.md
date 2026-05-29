@@ -178,6 +178,25 @@ per `reference/dashboard.md` before announcing or stopping.
 
 Skip dashboard generation for `scope: code-review`.
 
+### Announce open gates
+
+When the updated task has `awaiting: user-approval`, stop with an approval
+message, not just a status report. Include:
+
+- `T<N>`, the current `phase`, and `awaiting: user-approval`
+- the approval artifact the user should review
+- one `[RECOMMENDED — <reason>]` line per `reference/gates.md`
+- exact resume options: `approve` or `continue` accepts the artifact; a change
+  request revises it
+- what approval does next according to the transition table, including archive
+  when approval completes a research task
+
+Do not rely on file attachment cards or state-probe facts as the approval ask.
+
+When the updated task has `awaiting: user-input`, stop by asking the one open
+question from the phase artifact. Include `T<N>`, the current `phase`, and
+`awaiting: user-input`.
+
 ### Continue deterministic transitions
 
 When the updated `phase` is non-terminal and `awaiting: null`, re-enter

@@ -116,6 +116,17 @@ When the open gate is `user-input`:
 - Once all are answered, rename `Open questions` to `Resolved questions` or
   delete the section if redundant.
 
+## User-facing gate messages
+
+When a gate opens, the final user-facing message must be actionable. Include:
+
+- task id, current phase, and `awaiting` label
+- the artifact to review or the one question to answer
+- exact replies that resume the workflow
+- what Hyper does next after each accepted reply
+
+Do not finish with only status, file links, or a gate label.
+
 ## Approval gates
 
 Approval-gated phases are:
@@ -137,6 +148,10 @@ in the form `[RECOMMENDED — <reason>]`. The reason cites concrete signal from
 the artifact (a tradeoff resolved, a constraint honored, a risk dropped). If
 the artifact presents alternatives, mark exactly one of them recommended by
 the same rule in "Question serialization" above.
+
+For approval gates, name both approval paths: approval accepts the artifact and
+continues by the transition table; a change request re-dispatches the same
+phase to revise the artifact.
 
 ## Remediation redirects
 
