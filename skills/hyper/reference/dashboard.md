@@ -99,7 +99,7 @@ Missing data emits `_not yet written_` for `Goal`, `Plan`, and `Progress`, and
 
 - Source: `task.md` frontmatter
 
-- Rule: `**Phase:** <phase> · **Awaiting:** <awaiting or none>`. When `task.md` has an `epic:` field present, append `· **Epic:** <value>` to the line. When `epic:` is absent, the line is unchanged.
+- Rule: `**Phase:** <phase> · **Awaiting:** <awaiting or none>`. When `task.md` has an `epic:` field present, append `· **Epic:** <value>` to the line. When `epic:` is absent, the line is unchanged. When `task.md` has `yolo: true`, append `· **YOLO:** on` to the line.
 
 ### `## Decisions`
 

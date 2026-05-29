@@ -118,9 +118,13 @@ Read `mode` from `.hyper/jira.md`. Use the agent's Jira MCP tools if
 
 1. Re-fetch the Jira issue description and acceptance criteria using `jira_key`.
 2. Compare the fetched description with the task body saved in `task.md`. If
-   substantive differences exist, show a brief diff and ask the developer
-   whether to update `task.md` before continuing. If confirmed, update the body;
-   otherwise continue with the saved version.
+   substantive differences exist:
+   - When `yolo: true`: apply the update to `task.md` automatically and append
+     a note: `> _Jira description auto-updated on resume (YOLO) at
+     <timestamp>._` Do not prompt.
+   - Otherwise: show a brief diff and ask the developer whether to update
+     `task.md` before continuing. If confirmed, update the body; otherwise
+     continue with the saved version.
 3. Fetch all comments on the Jira issue. Show any comments with a `created`
    timestamp newer than `jira_synced_at` in `task.md`, labeled "New since last
    sync". If no new comments exist, skip silently.
@@ -148,6 +152,11 @@ Read `mode` from `.hyper/jira.md`. Use the agent's Jira MCP tools if
     name the folder `E<N>T<M>-<slug>` instead of `T<M>-<slug>`. Update the `epics.md`
     Tasks column to include the new task id. When neither condition holds, task creation
     is identical to the standard flow.
+4b. (Conditional) If the user's request begins with `yolo` (case-insensitive,
+    followed by a space and the task details): strip the leading `yolo` word
+    from the request before deriving the title and slug, and write `yolo: true`
+    to the new `task.md` frontmatter. When the prefix is absent, omit the
+    field entirely — do not write `yolo: false`.
 5. Seed `dashboard.md` from `templates/dashboard.md`, filling `## Goal` from
    the drafted task body.
 6. Announce: `Created T<N> — <title>. Starting intake phase.`
@@ -194,6 +203,32 @@ retains its trigger artifact across the dispatch boundary: on
 `hyper-implement` deletes it on the subsequent re-entry per its re-entry
 behavior.
 
+### YOLO gate overrides
+
+When `task.md` has `yolo: true` and a phase returns `awaiting-approval` from
+`technical-plan` or `execution-plan`, do not set `awaiting: user-approval` and
+stop. Instead:
+
+1. Invoke the `hyper-team` skill with: the written artifact
+   (`03-technical-plan.md` or `04-execution-plan.md`), upstream context
+   (`01-intake.md` and `02-spec.md` when present), the task goal from
+   `task.md`, and a request for a verdict: `approve`, `needs-changes`, or
+   `no-consensus`.
+2. On `Verdict: approve`: treat as if the user replied "continue". Clear
+   `awaiting`, re-dispatch the phase skill; it returns `phase-complete`. Apply
+   the normal phase transition.
+3. On `Verdict: needs-changes`: re-dispatch the phase skill with the proxy's
+   findings as a change request (attach findings as context). The skill revises
+   the artifact and returns `awaiting-approval`. Re-enter step 1. If the proxy
+   returns `needs-changes` a second consecutive time without an `approve`,
+   stop for the user with the proxy's findings and set `awaiting: user-input`.
+4. On `Verdict: no-consensus`: stop for the user immediately. Set
+   `awaiting: user-input` and surface the proxy's rationale.
+
+All other verdicts from `technical-plan` and `execution-plan` (`awaiting-input`,
+`phase-complete`, `redirect target: <phase>`) follow the standard contract
+unchanged regardless of `yolo`.
+
 ### Regenerate dashboard
 
 After applying the verdict and any phase transition, regenerate `dashboard.md`
@@ -219,10 +254,14 @@ Read `mode` from `.hyper/jira.md`. Use the agent's Jira MCP tools if
    - `## Key decisions`: bullet list from the `## Decisions` section of
      `dashboard.md`. Include only rows with a date (non-empty rows).
    - `## Notes for QA`: include only if `checks.md` contains QA-relevant notes.
-2. Show the generated `jira.md` to the developer. Ask:
+2. When `yolo: true`: post the `jira.md` body (not the frontmatter) as a Jira
+   comment automatically without asking. When `yolo` is absent or false: show
+   the generated `jira.md` to the developer and ask:
    `"Post this comment to <jira_key>? [y/N]"`
 3. If confirmed: post the `jira.md` body (not the frontmatter) as a Jira
    comment. If declined: skip the post; still proceed with the transition.
+   (Step 3 applies only when `yolo` is absent or false. In YOLO mode, step 2
+   posts directly and step 3 is skipped.)
 4. Transition the Jira issue status to the value of `done_transition` from
    `.hyper/jira.md` (default `"QA Test"`). If the transition fails, report the
    error and continue — do not abort archiving.
@@ -250,3 +289,8 @@ a checkpoint prompt. Render the prompt per `reference/gates.md` and stop. For
 branch is a remediation-aware prompt rendered at runtime; for
 `implement -> verify`, the prompt is a single fixed string. The next user
 reply re-dispatches the task into the chosen next step.
+
+When `yolo: true`: suppress the `implement → verify` checkpoint prompt and
+advance to `verify` automatically. Suppress the `verify → docs` pass-branch
+checkpoint prompt and advance to `docs` automatically. The `verify → docs`
+needs-changes remediation-aware prompt fires regardless of `yolo`.

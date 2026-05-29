@@ -69,7 +69,8 @@ No credentials are written to `.hyper/jira.md`. The file is safe to commit.
 ## import
 
 Triggered when the user provides a Jira issue key matching pattern
-`[A-Z]{2,10}-\d+` (e.g., `PROJ-123`, `AUTH-45`).
+`[A-Z]{2,10}-\d+` (e.g., `PROJ-123`, `AUTH-45`). Supports an optional
+`--yolo` flag: `hyper-jira import PROJ-123 --yolo`.
 
 1. Check `.hyper/jira.md`. If absent: no-op rule applies.
 2. Read `base_url`, `default_project`, `done_transition`, and `mode`.
@@ -121,6 +122,7 @@ Triggered when the user provides a Jira issue key matching pattern
    - `jira_key` = `<JIRA-KEY>` (uppercase, as-is from Jira)
    - `jira_synced_at` = current timestamp
    - `epic` = `E<M>` if enrolled (omit field when not enrolled)
+   - `yolo: true` when the `--yolo` flag was passed (omit the field otherwise).
 10. Write the task body:
     - First line: `> Imported from Jira: <JIRA-KEY> — <base_url>/browse/<JIRA-KEY>`
     - Jira `description` as the main body text.
@@ -136,8 +138,13 @@ Triggered when the user provides a Jira issue key matching pattern
     a. Read `branch_from` from `.hyper/jira.md` (default: `dev`).
     b. Compose branch name: `<JIRA-KEY>-<slug>` using the uppercase Jira key
        and the same slug computed in step 8.
-    c. Run `git status --porcelain`. If output is non-empty (dirty working tree),
-       prompt the developer:
+    c. Run `git status --porcelain`. If output is non-empty (dirty working tree):
+
+       If `--yolo` was passed: auto-stash (`git stash`) without prompting, then
+       proceed to step 13d as if the tree were clean (create the branch). Skip
+       the stash/commit/skip prompt entirely.
+
+       If `--yolo` was not passed: prompt the developer:
        ```
        Working tree has uncommitted changes. Choose:
          1. Stash  — stash changes, create branch, pop stash

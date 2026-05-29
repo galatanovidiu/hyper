@@ -93,6 +93,7 @@ motivation, constraint, or triggering incident would help a future reader.
 | `epic` | absent · `E<N>` | Optional. Written only when the task is enrolled in an epic. Absent (not null) means no epic. |
 | `jira_key` | absent · `PROJ-123` | Optional. Absent on non-Jira tasks (never null). Jira issue key for tasks imported via `hyper-jira`. |
 | `jira_synced_at` | absent · `YYYY-MM-DDTHH:MM:SS` | Optional. Timestamp of last Jira data fetch. Updated on import and each resume sync. Absent on non-Jira tasks. |
+| `yolo` | absent · `true` | Optional. Present and `true` only on tasks created with the `yolo` prefix. When absent or not present, all YOLO overrides are inactive. Never set to `false` explicitly — omit the field instead. |
 | `cancelled_at` | `YYYY-MM-DDTHH:MM:SS` | Present only when `phase: cancelled`. |
 | `cancelled_reason` | short string | Present only when `phase: cancelled`. |
 

@@ -134,6 +134,48 @@ Resume later:
 /hyper T3
 ```
 
+### YOLO mode
+
+Invoke with a `yolo` prefix to run the task in delegated-authority mode:
+
+```text
+/hyper yolo Add a rate-limiting layer to the API endpoints.
+```
+
+In YOLO mode, `hyper` replaces routine approval gates with specialist proxy
+decisions (via `hyper-team`) and suppresses low-value checkpoint prompts. The
+task runs more autonomously; you are only interrupted for genuine blockers.
+
+**What changes in YOLO mode:**
+
+| Gate | YOLO behavior |
+|------|---------------|
+| `technical-plan` approval | Delegated to `hyper-team`. Consensus → auto-advance. No consensus → stops for you. |
+| `execution-plan` approval | Same as `technical-plan`. |
+| Implementation complete checkpoint | Suppressed. Advances to `verify` automatically. |
+| Verify passed checkpoint | Suppressed. Advances to `docs` automatically. |
+| Jira completion comment | Auto-posted without asking. |
+| Jira description diff on resume | Auto-applied without asking. |
+| Jira import dirty-tree (`--yolo` flag) | Auto-stashed without asking. |
+
+**What always requires you:**
+
+- `intake` and `spec` approval — these define your intent; a proxy cannot substitute.
+- Verify failures (`needs-changes` or `blocked`) — remediation requires your judgment.
+- Plan conflicts during implementation — same reason.
+- `verify → docs` needs-changes path — you choose the next step.
+- Proxy no-consensus — the proxy couldn't decide; it's your call.
+
+**Prerequisites:** install `hyper-team` alongside Hyper. Without it, YOLO mode
+cannot invoke a proxy and will stop at the first delegated gate.
+
+**Jira import with YOLO:** pass `--yolo` to the import command to set YOLO mode
+and apply delegated behavior during import:
+
+```text
+hyper-jira import PROJ-123 --yolo
+```
+
 ### What it writes
 
 ```text
