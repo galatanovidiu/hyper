@@ -49,6 +49,14 @@ mkdir -p ~/.claude/skills
 ln -s ~/hyper7/skills/* ~/.claude/skills/
 ```
 
+**Deploy to all agents at once** (Claude Code, Codex, and `~/.agents`):
+
+```bash
+bash ~/hyper7e/hyper7E/scripts/deploy.sh
+```
+
+This removes any existing `hyper` / `hyper-*` symlinks from each agent directory and re-links all skill folders from the repo. Run it whenever you pull new skills or switch repos — new skills are picked up automatically.
+
 Other agents can point at `skills/hyper/SKILL.md` or
 `skills/hyper-iterate/SKILL.md` and use the matching workflow.
 
@@ -124,6 +132,48 @@ Resume later:
 
 ```text
 /hyper T3
+```
+
+### YOLO mode
+
+Invoke with a `yolo` prefix to run the task in delegated-authority mode:
+
+```text
+/hyper yolo Add a rate-limiting layer to the API endpoints.
+```
+
+In YOLO mode, `hyper` replaces routine approval gates with specialist proxy
+decisions (via `hyper-team`) and suppresses low-value checkpoint prompts. The
+task runs more autonomously; you are only interrupted for genuine blockers.
+
+**What changes in YOLO mode:**
+
+| Gate | YOLO behavior |
+|------|---------------|
+| `technical-plan` approval | Delegated to `hyper-team`. Consensus → auto-advance. No consensus → stops for you. |
+| `execution-plan` approval | Same as `technical-plan`. |
+| Implementation complete checkpoint | Suppressed. Advances to `verify` automatically. |
+| Verify passed checkpoint | Suppressed. Advances to `docs` automatically. |
+| Jira completion comment | Auto-posted without asking. |
+| Jira description diff on resume | Auto-applied without asking. |
+| Jira import dirty-tree (`--yolo` flag) | Auto-stashed without asking. |
+
+**What always requires you:**
+
+- `intake` and `spec` approval — these define your intent; a proxy cannot substitute.
+- Verify failures (`needs-changes` or `blocked`) — remediation requires your judgment.
+- Plan conflicts during implementation — same reason.
+- `verify → docs` needs-changes path — you choose the next step.
+- Proxy no-consensus — the proxy couldn't decide; it's your call.
+
+**Prerequisites:** install `hyper-team` alongside Hyper. Without it, YOLO mode
+cannot invoke a proxy and will stop at the first delegated gate.
+
+**Jira import with YOLO:** pass `--yolo` to the import command to set YOLO mode
+and apply delegated behavior during import:
+
+```text
+hyper-jira import PROJ-123 --yolo
 ```
 
 ### What it writes
@@ -245,7 +295,10 @@ Both workflows share one project-local state directory:
     L3-slow-report-investigation/...
   archive/
   backlog.md
+  epics.md
+  jira.md
   memory.md
+  repo.md
   rules.md
   recipes/
 ```
@@ -265,28 +318,231 @@ User-facing skill names:
 - `hyper-retro`
 - `hyper-code-review`
 - `hyper-recipe`
+- `hyper-iterate`
+- `hyper-jira`
 - `hyper-team`
 - `hyper-short-story`
+- `hyper-sync`
 
-| Command                   | Use it for                                                              |
-| ------------------------- | ----------------------------------------------------------------------- |
-| `/hyper <request>`        | Start phased work.                                                      |
-| `/hyper T<N>`             | Resume a task.                                                          |
+
+| Command | Use it for |
+| --- | --- |
+| `/hyper <request>` | Start structured work. |
+| `/hyper T<N>` | Resume a task. |
 | `/hyper-iterate <goal>`   | Start adaptive work.                                                    |
 | `/hyper-iterate L<N>`     | Resume a loop.                                                          |
-| `/hyper-task`             | List, create, defer, cancel, or inspect tasks.                          |
-| `/hyper-backlog`          | Add, list, promote, or drop future ideas.                               |
-| `/hyper-handoff`          | Write a handoff when conversation context would be lost.                |
-| `/hyper-retro`            | Record lessons after a task or session.                                 |
-| `/hyper-code-review`      | Review an arbitrary diff, branch, PR, or staged change.                 |
-| `/hyper-recipe`           | Manage reusable project-local procedures in `.hyper/recipes/`.          |
-| `/hyper-team`             | Ask another AI agent CLI for a second opinion.                          |
+| `/hyper-task` | List, create, defer, cancel, or inspect tasks; manage epics. |
+| `/hyper-backlog` | Add, list, promote, or drop future ideas. |
+| `/hyper-handoff` | Write a handoff when conversation context would be lost. |
+| `/hyper-retro` | Record lessons after a task or session. |
+| `/hyper-code-review` | Review an arbitrary diff, branch, PR, or staged change. |
+| `/hyper-recipe` | Manage reusable project-local procedures in `.hyper/recipes/`. |
+| `/hyper-iterate` | Run an adaptive OODA-style loop in `.hyper/loops/` for goal-led work that should course-correct while it executes. It begins with understanding, code scan, findings, and an agreed plan, then moves part by part through the same approval gate. Long loops may use bounded delegated slices while one parent-owned loop stays authoritative. |
+| `/hyper-jira` | Import a Jira issue by key, manage Jira status transitions, and post completion comments back to Jira. |
+| `/hyper-team` | Ask another AI agent CLI for a second opinion. |
+| `/hyper-sync` | Sync `.hyper/` with the shared team repo. Pull before starting a task, push after completing one. |
 | `/hyper-short-story`      | Rewrite the previous response as a short, plain-language narrative.     |
 
-Internal skills such as `hyper-intake`, `hyper-spec`, `hyper-technical-plan`,
-`hyper-execution-plan`, `hyper-execution-plan-review`, `hyper-research`,
-`hyper-implement`, `hyper-worker`, `hyper-verify`, and `hyper-docs` are
-invoked by `hyper`; you usually do not call them directly.
+Internal skills such as `hyper-intake`, `hyper-spec`,
+`hyper-technical-plan`, `hyper-execution-plan`,
+`hyper-execution-plan-review`, `hyper-research`, `hyper-implement`,
+`hyper-worker`, `hyper-verify`, and `hyper-docs` are invoked by `hyper`; you
+usually do not call them directly.
+
+## Epics
+
+Group related tasks under an epic. Epics are opt-in — they activate when
+`.hyper/epics.md` exists. Without it, no epic behavior applies anywhere.
+
+**Create an epic:**
+
+```text
+/hyper-task epic create User Authentication
+→ Created E1 — User Authentication.
+```
+
+**Enroll an existing task in an epic:**
+
+```text
+/hyper-task epic add T3 E1
+→ T3 enrolled in E1. Folder renamed to E1T3-add-login.
+```
+
+**Create a task pre-enrolled in an epic** (at creation time):
+
+```text
+/hyper Add JWT refresh token support --epic E1
+→ Created E1T4 — Add JWT Refresh Token. Starting intake phase.
+```
+
+**List epics and their tasks:**
+
+```text
+/hyper-task epic list
+→ E1 | User Authentication | active | T3, T4
+   E2 | Dashboard Rebuild   | planned |
+```
+
+**List one epic:**
+
+```text
+/hyper-task epic list E1
+→ E1 — User Authentication
+   T3 — Add Login Page (verify)
+   T4 — Add JWT Refresh (implement)
+```
+
+Task folders with an epic are named `E<N>T<M>-<slug>` (e.g. `E1T3-add-login`).
+The `epic: E<N>` field in `task.md` is authoritative; `epics.md` Tasks column
+is a convenience view recomputed by `epic list`.
+
+## Team Sync
+
+Share `.hyper/` state across a team so all developers see the same task list,
+backlog, and context. Team sync is opt-in — activated by `.hyper/repo.md`.
+
+**One-time setup (project lead):**
+
+```text
+/hyper-sync init git@github.com:myteam/project-hyper.git --branch my-app
+→ Team sync initialized. Branch: my-app. Remote: git@github.com:myteam/project-hyper.git.
+```
+
+This writes `.hyper/repo.md` and does the initial push.
+
+**New team member joining:**
+
+```text
+/hyper-sync clone git@github.com:myteam/project-hyper.git --branch my-app
+→ Cloned my-app from git@github.com:myteam/project-hyper.git. Team sync ready.
+```
+
+**Daily workflow:**
+
+```text
+# Before starting work — pull latest team state
+/hyper-sync pull
+→ Pulled latest state from my-app.
+
+# Start your task as normal
+/hyper T7
+
+# After finishing or archiving a task — push to share
+/hyper-sync push
+→ Pushed .hyper/ state to my-app.
+```
+
+**Check sync status:**
+
+```text
+/hyper-sync status
+→ Branch: my-app. Ahead: 2, Behind: 0. Last commit: "hyper state update"
+```
+
+`hyper` also reminds you to pull before creating a task and push after
+archiving, when `repo.md` is present.
+
+Architecture: each project uses its own branch in the shared repo, so multiple
+projects can share one repo without merge conflicts.
+
+## Jira Integration
+
+Import Jira issues directly into Hyper tasks. The integration is opt-in —
+activated by `.hyper/jira.md`. Without it, no Jira behavior applies anywhere.
+Credentials are never stored in `.hyper/`; `jira.md` is safe to commit.
+
+### Setup
+
+**MCP mode** (default — requires Jira MCP server installed in your agent):
+
+```text
+/hyper-jira init https://myorg.atlassian.net --project PROJ
+→ Jira integration initialized. mode: mcp. base_url: https://myorg.atlassian.net. Project: PROJ.
+```
+
+**Docker mode** (direct REST API to a local/Docker Jira instance):
+
+```text
+/hyper-jira init http://localhost:8080 --project PROJ --mode docker --docker-url http://localhost:8090
+→ Jira integration initialized. mode: docker. base_url: http://localhost:8080. Project: PROJ.
+```
+
+In docker mode, set credentials in your shell (never in any tracked file):
+
+```bash
+export JIRA_USER=yourname@org.com
+export JIRA_TOKEN=your-api-token
+```
+
+**Check connectivity:**
+
+```text
+/hyper-jira status
+→ Jira connected. mode: mcp. base_url: https://myorg.atlassian.net. Project: PROJ.
+```
+
+### Import a Jira issue
+
+```text
+/hyper-jira PROJ-123
+→ Fetches summary, description, acceptance criteria, issue type, epic link,
+  reporter, and all comments from Jira.
+→ Maps issue type: Story → scope: feature, bugfix: false
+→ Finds epic PROJ-42 in epics.md Source column → reuses E1
+→ Creates T5-proj-123-add-login/task.md with jira_key: PROJ-123
+→ Transitions PROJ-123 → "In Progress" in Jira
+→ "Created T5 — Add Login (from PROJ-123). Continue with: hyper T5"
+```
+
+Issue type routing:
+
+| Jira type | Hyper scope | bugfix |
+|-----------|-------------|--------|
+| Bug, Defect, Incident | feature | true |
+| Story, Task, Feature | feature | false |
+| Research, Spike | research | false |
+| Epic | error — use `hyper-task epic create` | — |
+
+Folder name always embeds the Jira key: `T5-proj-123-add-login` or
+`E1T5-proj-123-add-login` when enrolled in an epic.
+
+### Resume — automatic Jira sync
+
+Every time you resume a Jira-linked task, `hyper` re-fetches the Jira issue:
+
+```text
+/hyper T5
+→ Re-fetches PROJ-123 description + acceptance criteria
+→ Shows diff if Jira spec changed since last sync (asks whether to update task.md)
+→ Shows any new Jira comments since last sync (labeled "New since last sync")
+→ Updates jira_synced_at in task.md
+→ Continues to current phase
+```
+
+### Post a comment to Jira mid-work
+
+```text
+/hyper-jira comment "Decided on RSA-256 for JWT signing — better key rotation story."
+→ Comment posted to PROJ-123.
+```
+
+### Archive — completion comment + status transition
+
+When a task completes and `hyper` archives it:
+
+```text
+[Task reaches done →]
+→ hyper generates jira.md with:
+   - What was done (2–4 sentence summary)
+   - Key decisions (from dashboard Decisions log)
+   - Notes for QA (if any)
+→ Shows jira.md, asks: "Post this comment to PROJ-123? [y/N]"
+→ [y] Posts comment to PROJ-123
+→ Transitions PROJ-123 → "QA Test" (or custom done_transition from jira.md)
+→ Archives task folder to .hyper/archive/
+```
+
+The `done_transition` value is configurable per project in `.hyper/jira.md`.
 
 ## Working On Hyper
 
@@ -309,3 +565,52 @@ Hyper stays intentionally small:
 - Two workflow shapes for two shapes of work — phased when direction is clear
   up front, adaptive when it has to evolve.
 - Large work gets structure; tiny work should stay tiny.
+
+## Hyper presentation
+
+https://adrianf-gamelounge.github.io/hyper7E/
+
+https://adrianf-gamelounge.github.io/hyper7E/hyper7-presentation.html
+
+## Workflow Flow
+
+```mermaid
+flowchart TD
+    subgraph feature ["feature / bugfix"]
+        direction LR
+        I1["intake"] -->|"approve"| S1["spec"]
+        S1 -->|"approve"| TP1["technical-plan"]
+        TP1 -->|"approve"| EP1["execution-plan"]
+        EP1 -->|"approve"| IM1["implement"]
+        IM1 --> V1["verify"]
+        V1 -->|"pass"| D1["docs"]
+        V1 -->|"blocked"| EP1
+        IM1 -->|"conflict"| TP1
+        D1 -->|"done"| DN1["done"]
+    end
+
+    subgraph quick ["quick / quick bugfix"]
+        direction LR
+        I2["intake"] -->|"approve"| TP2["technical-plan"]
+        TP2 -->|"approve"| IM2["implement"]
+        IM2 --> V2["verify"]
+        V2 -->|"pass"| DN2["done"]
+        V2 -->|"blocked"| IM2
+        IM2 -->|"conflict"| TP2
+    end
+
+    subgraph research ["research"]
+        direction LR
+        I3["intake"] -->|"approve"| R3["research"]
+        R3 -->|"done"| DN3["done"]
+    end
+
+    subgraph review ["code-review"]
+        direction LR
+        RV["review"] -->|"done"| DN4["done"]
+    end
+```
+
+See [schema.md](schema.md) for the full state model and file layout.
+
+![Hyper workflow diagram](hyper-workflow.png)

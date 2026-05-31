@@ -139,6 +139,42 @@ the artifact (a tradeoff resolved, a constraint honored, a risk dropped). If
 the artifact presents alternatives, mark exactly one of them recommended by
 the same rule in "Question serialization" above.
 
+## YOLO gate overrides
+
+When `task.md` has `yolo: true`, the following overrides apply on top of the
+standard gate contract. All other gate behavior is unchanged.
+
+### Overridden gates
+
+| Gate | Standard behavior | YOLO behavior |
+|------|-------------------|---------------|
+| `technical-plan` `awaiting-approval` | Set `awaiting: user-approval` and stop. | Invoke the `hyper-team` skill as proxy. On `approve`: advance. On `needs-changes`: re-dispatch phase skill with findings; retry once. On `no-consensus` or two consecutive `needs-changes`: stop for user. |
+| `execution-plan` `awaiting-approval` | Set `awaiting: user-approval` and stop. | Same as `technical-plan` above. |
+| `implement → verify` checkpoint | Emit prompt and stop. | Suppress prompt; advance to `verify` automatically. |
+| `verify → docs` pass checkpoint | Emit prompt and stop. | Suppress prompt; advance to `docs` automatically. |
+| Jira completion comment | Show `jira.md` and ask `"Post? [y/N]"`. | Post automatically without asking. |
+| Jira cold-resume description diff | Show diff and ask whether to update. | Apply update automatically. |
+| Jira import dirty-tree (auto_branch) | Prompt: stash / commit / skip. | Auto-stash without prompting. |
+
+### Gates that always fire regardless of `yolo`
+
+- `intake` and `spec` approval gates — elicit user intent; proxy cannot substitute.
+- `verify → docs` needs-changes prompt — user must choose the remediation path.
+- `verify → implement` redirect (verify failure) — remediation requires human judgment.
+- `implement → technical-plan` redirect (plan conflict) — same reason.
+- Proxy `no-consensus` on `technical-plan` or `execution-plan` — genuine ambiguity.
+- Two consecutive proxy `needs-changes` without an `approve` — stop for user.
+- Jira `comment` disambiguation when multiple tasks share a `jira_key`.
+
+### Proxy verdict contract
+
+When `hyper` invokes the `hyper-team` skill as proxy, the skill must return
+exactly one of:
+
+- `Verdict: approve` — the artifact is sound; proceed.
+- `Verdict: needs-changes` — the artifact has issues; findings listed below.
+- `Verdict: no-consensus` — proxy cannot reach a decision; defer to user.
+
 ## Remediation gates
 
 For blocked verify results:
