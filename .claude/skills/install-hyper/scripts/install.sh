@@ -278,16 +278,19 @@ verify_probe_reachable() {
   return 0
 }
 
-# --- SessionStart recall hook management (Claude Code only) ---------------
+# --- SessionStart recall hook cleanup (Claude Code only) ------------------
 #
-# Claude Code is the only target with a settings.json hook mechanism. We
-# register a SessionStart hook that runs the Hyper memory-recall script so
-# saved project gotchas surface at session start. Codex, ~/.agents, and PI
-# have no equivalent and are left untouched.
+# Hyper no longer registers a SessionStart recall hook. Cross-session recall
+# is now agent-driven: the state probe emits a `learnings` pointer and the
+# entry-point skills read `.hyper/memory/index.md` when it is present. That
+# path works the same across every agent, with no settings.json mutation.
 #
-# The hook command is fail-open: it checks the script exists, runs it, and
-# swallows any error so a missing or broken script can never degrade session
-# start.
+# We keep the cleanup path so a machine that ran an older installer gets the
+# previously-registered hook stripped from ~/.claude/settings.json on the next
+# install or uninstall. Codex, ~/.agents, and PI never had a hook.
+#
+# `recall_hook_command` is the most recent managed command string; it plus the
+# legacy strings in LEGACY_COMMANDS are exactly what cleanup removes.
 recall_hook_command='{ test -f "$HOME/.claude/skills/hyper-memory/scripts/memory-recall.mjs" && node "$HOME/.claude/skills/hyper-memory/scripts/memory-recall.mjs"; } 2>/dev/null || true'
 
 # All JSON reading/mutating happens in node, never bash string-editing, so
@@ -652,33 +655,11 @@ run_hook_merge() {
   return "$rc"
 }
 
-# Register the recall hook. Only acts when ~/.claude exists (the Claude Code
-# config root). Other targets have no settings.json hook mechanism.
-register_recall_hook() {
-  echo "recall hook (Claude Code):"
-  if [ ! -d "$HOME/.claude" ]; then
-    echo "    hook    skip (~/.claude not present)"
-    return 0
-  fi
-  local out status
-  set +e
-  out="$(run_hook_merge register)"
-  status=$?
-  set -e
-  if [ "$status" -ne 0 ]; then
-    echo "    hook    error: $out" >&2
-    return 1
-  fi
-  case "$out" in
-    registered)  echo "    hook    registered SessionStart recall hook" ;;
-    unchanged)   echo "    hook    already registered (no change)" ;;
-    *)           echo "    hook    $out" ;;
-  esac
-  return 0
-}
-
-# Remove the recall hook, leaving all other settings intact.
-unregister_recall_hook() {
+# Strip any previously-registered recall hook (current + legacy command
+# strings), leaving all other settings intact. Only acts when ~/.claude exists
+# (the Claude Code config root). Other targets have no settings.json hook
+# mechanism. Hyper no longer registers a hook; this only cleans up.
+cleanup_recall_hook() {
   echo "recall hook (Claude Code):"
   if [ ! -d "$HOME/.claude" ]; then
     echo "    hook    skip (~/.claude not present)"
@@ -694,9 +675,9 @@ unregister_recall_hook() {
     return 1
   fi
   case "$out" in
-    removed)    echo "    hook    removed SessionStart recall hook" ;;
-    unchanged)  echo "    hook    not registered (no change)" ;;
-    absent)     echo "    hook    skip (settings.json not present)" ;;
+    removed)    echo "    hook    removed legacy SessionStart recall hook (recall is now agent-driven)" ;;
+    unchanged)  echo "    hook    none present (recall is agent-driven)" ;;
+    absent)     echo "    hook    none present (settings.json not present)" ;;
     *)          echo "    hook    $out" ;;
   esac
   return 0
@@ -719,9 +700,9 @@ status_recall_hook() {
     return 0
   fi
   case "$out" in
-    registered)     echo "    hook    registered" ;;
-    not-registered) echo "    hook    not registered" ;;
-    absent)         echo "    hook    not registered (settings.json not present)" ;;
+    registered)     echo "    hook    legacy recall hook present (run install/uninstall to remove)" ;;
+    not-registered) echo "    hook    none (recall is agent-driven)" ;;
+    absent)         echo "    hook    none (settings.json not present)" ;;
     unparseable)    echo "    hook    unknown (settings.json does not parse)" ;;
     *)              echo "    hook    $out" ;;
   esac
@@ -732,7 +713,7 @@ case "$action" in
   install)
     echo "source: $source_dir"
     for t in "${targets[@]}"; do install_one "$t"; done
-    register_recall_hook
+    cleanup_recall_hook
     echo "portability check:"
     if ! verify_probe_reachable; then
       echo "error: probe reachability check failed for one or more targets" >&2
@@ -743,7 +724,7 @@ case "$action" in
   uninstall)
     echo "source: $source_dir"
     for t in "${targets[@]}"; do uninstall_one "$t"; done
-    unregister_recall_hook
+    cleanup_recall_hook
     ;;
 
   status)
