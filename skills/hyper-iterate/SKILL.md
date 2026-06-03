@@ -74,6 +74,8 @@ Use the probe's `active_loops` list as the inventory of loops with `status: acti
 
 **Project rules.** Read `.hyper/rules.md` if it exists; treat as normative for the session. If absent, no project rules are in force. On every resume, re-read this file: if its content differs from when the loop was last touched (any prior cycle, decision, or rule reference in `loop.md` is now in tension with the current rules), surface the conflict to the user and append a `## Decisions` entry recording the new ruling before continuing the current cycle.
 
+**Learnings index.** When the probe reports `learnings.exists: true`, read `.hyper/memory/index.md` and treat its entries as recall hints; open individual entry files on demand when one looks relevant. Re-read the index on every resume, the same way as `rules.md`.
+
 When the loop needs a required capability from the registry below and no suitable skill is installed, tell the user which capability is missing and offer: install one, swap to a substitute for this loop, or stop. Never silently skip a required skill call. Suggested capabilities do not block the loop. **Conditional capabilities** (those marked `conditional` in the registry) are not checked at loop start; they are evaluated only at the phase that needs them. For example, `code-review` is evaluated only at Phase 4, and only after research-only detection has decided whether code changes exist.
 
 **Route.** Pick one:

@@ -15,7 +15,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
-import { spawnSync } from "node:child_process";
+import {
+  cleanFromHint,
+  resolveStateRoot,
+} from "./lib/state-root.mjs";
 
 // ---------- Phase classification ----------
 
@@ -70,118 +73,6 @@ function parseArgs(argv) {
     die(`hyper state probe: unknown argument ${JSON.stringify(arg)}`);
   }
   return args;
-}
-
-// Validate a --from hint. Returns the cleaned starting path, or dies with a
-// clear single-line stderr message. A null hint is passed through (caller uses
-// process.cwd()).
-function cleanFromHint(fromArg) {
-  if (fromArg === null) return null;
-  if (fromArg === "") {
-    die("hyper state probe: --from requires a non-empty absolute path");
-  }
-  if (!path.isAbsolute(fromArg)) {
-    die(`hyper state probe: --from requires an absolute path, got ${JSON.stringify(fromArg)}`);
-  }
-
-  // If the path points at an existing file, use its directory.
-  let stat = null;
-  try {
-    stat = fs.statSync(fromArg);
-  } catch {
-    stat = null;
-  }
-  if (stat && stat.isFile()) {
-    return path.dirname(fromArg);
-  }
-
-  // Existing directory: use as-is.
-  if (stat) return fromArg;
-
-  // Non-existent path: only accept if it carries a `.hyper/` marker we can
-  // still strip downstream. Otherwise it points nowhere useful.
-  const hyperMarker = `${path.sep}.hyper${path.sep}`;
-  const hyperTrailing = `${path.sep}.hyper`;
-  if (fromArg.includes(hyperMarker) || fromArg.endsWith(hyperTrailing)) {
-    return fromArg;
-  }
-  die(`hyper state probe: --from path does not exist: ${fromArg}`);
-}
-
-// ---------- State-root resolution ----------
-
-// Captures git availability so the caller can surface a warning when git
-// is missing (ENOENT) vs. a normal run that returned non-zero (e.g. not in
-// a repo). The two cases warrant different routing.
-let gitUnavailable = false;
-
-function runGit(cwd, gitArgs) {
-  const result = spawnSync("git", gitArgs, {
-    cwd,
-    encoding: "utf8",
-  });
-  if (result.error) {
-    if (result.error.code === "ENOENT") gitUnavailable = true;
-    return null;
-  }
-  if (result.status !== 0) return null;
-  return result.stdout;
-}
-
-function firstNonBareWorktree(porcelainOutput) {
-  if (porcelainOutput == null) return null;
-  const stanzas = porcelainOutput.split(/\n\n+/);
-  for (const stanza of stanzas) {
-    const lines = stanza.split("\n");
-    let worktreePath = null;
-    let bare = false;
-    for (const line of lines) {
-      if (line.startsWith("worktree ")) {
-        worktreePath = line.slice("worktree ".length).trim();
-      } else if (line === "bare") {
-        bare = true;
-      }
-    }
-    if (worktreePath && !bare) {
-      return worktreePath;
-    }
-  }
-  return null;
-}
-
-function resolveStateRoot(fromArg) {
-  // Rule 1: explicit .hyper/ hint wins outright.
-  if (fromArg) {
-    const idx = fromArg.indexOf(`${path.sep}.hyper${path.sep}`);
-    if (idx >= 0) {
-      return fromArg.slice(0, idx);
-    }
-    // Hint that is exactly ".../.hyper" with no trailing component.
-    const trailing = `${path.sep}.hyper`;
-    if (fromArg.endsWith(trailing)) {
-      return fromArg.slice(0, fromArg.length - trailing.length);
-    }
-  }
-
-  const startDir = fromArg && fs.existsSync(fromArg) ? fromArg : process.cwd();
-
-  // Rule 2: ask git for the worktree list.
-  const porcelain = runGit(startDir, ["worktree", "list", "--porcelain"]);
-  const mainWorktree = firstNonBareWorktree(porcelain);
-  if (mainWorktree) {
-    return mainWorktree;
-  }
-
-  // Rule 3: fall back to the toplevel of the containing Git repo.
-  const toplevel = runGit(startDir, ["rev-parse", "--show-toplevel"]);
-  if (toplevel) {
-    const trimmed = toplevel.trim();
-    if (trimmed) return trimmed;
-  }
-
-  // Rule 4: no Git in sight — use the explicit hint or cwd.
-  if (fromArg) return fromArg;
-  return process.cwd();
 }
 
 // ---------- Frontmatter parser ----------
@@ -480,6 +371,48 @@ function collectBacklog(stateRoot, parseErrors) {
   return entries;
 }
 
+// ---------- Learnings index ----------
+
+// Surfaces the project's learnings index as a pointer, not its body. The
+// index lives at .hyper/memory/index.md and lists one entry per line in the
+// `- [<title>](<entry-file>) — <one-line hook>` shape (see T70.2). Agents
+// without a SessionStart hook read this pointer after the probe reports it
+// and open individual entry files on demand.
+const LEARNINGS_INDEX_REL = ".hyper/memory/index.md";
+// Matches a markdown list item whose first token is a `[label](target)` link.
+// Mirrors the index entry shape; the trailing hook text is not required.
+const LEARNINGS_ENTRY_PATTERN = /^\s*[-*]\s+\[[^\]]+\]\([^)]+\)/;
+
+function collectLearnings(stateRoot, parseErrors) {
+  const indexAbs = path.join(stateRoot, ".hyper", "memory", "index.md");
+  const learnings = {
+    index_path: LEARNINGS_INDEX_REL,
+    exists: fs.existsSync(indexAbs),
+    entry_count: 0,
+  };
+  if (!learnings.exists) {
+    return learnings;
+  }
+
+  let text;
+  try {
+    text = readUtf8(indexAbs);
+  } catch (err) {
+    parseErrors.push({
+      path: path.relative(stateRoot, indexAbs),
+      reason: `read failed: ${err.message}`,
+    });
+    return learnings;
+  }
+
+  for (const line of text.split("\n")) {
+    if (LEARNINGS_ENTRY_PATTERN.test(line)) {
+      learnings.entry_count += 1;
+    }
+  }
+  return learnings;
+}
+
 // ---------- Id allocation ----------
 
 function extractNumericId(idStr, prefix) {
@@ -499,11 +432,12 @@ function nextId(ids) {
 
 function main() {
   const args = parseArgs(process.argv.slice(2));
-  const fromHint = cleanFromHint(args.from);
+  const fromHint = cleanFromHint(args.from, die);
 
   let stateRoot;
+  let gitUnavailable = false;
   try {
-    stateRoot = resolveStateRoot(fromHint);
+    ({ stateRoot, gitUnavailable } = resolveStateRoot(fromHint));
   } catch (err) {
     die(`hyper state probe: failed to resolve state root: ${err.message}`);
   }
@@ -527,6 +461,7 @@ function main() {
   const archivedResult = collectTaskFolders(stateRoot, archiveDir, "archive", parseErrors);
   const loopResult = collectLoopFolders(stateRoot, loopsDir, parseErrors);
   const backlogEntries = collectBacklog(stateRoot, parseErrors);
+  const learnings = collectLearnings(stateRoot, parseErrors);
 
   // Id allocation uses the folder-name set as canonical. This survives
   // missing or malformed frontmatter and prevents id reissue when a task's
@@ -557,6 +492,7 @@ function main() {
     archived_tasks: archivedResult.records,
     active_loops: loopResult.active,
     backlog_entries: backlogEntries,
+    learnings,
     parse_errors: parseErrors,
     warnings,
   };

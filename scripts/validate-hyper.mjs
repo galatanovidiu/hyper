@@ -37,6 +37,7 @@ const USER_FACING_HYPER = new Set([
   "hyper-iterate",
   "hyper-team",
   "hyper-short-story",
+  "hyper-digest",
 ]);
 
 const INTERNAL_HYPER = new Set([
@@ -224,7 +225,7 @@ function validateReadmeAndDataModel() {
   ensureContains(README, "Workflow 1 — `hyper` (phased)");
   ensureContains(README, "Workflow 2 — `hyper-iterate` (adaptive)");
 
-  ensureContains(DATA_MODEL, "Users invoke ten Hyper skills directly");
+  ensureContains(DATA_MODEL, "Users invoke eleven Hyper skills directly");
   ensureContains(DATA_MODEL, "`hyper-iterate`");
   ensureContains(
     DATA_MODEL,
@@ -514,6 +515,21 @@ function setupProbeFixture() {
     "# Hyper Backlog\n\n## B1 — em-dash entry\n\n## B2 - hyphen entry\n\n## B3 – en-dash entry\n",
     "utf8",
   );
+  fs.mkdirSync(path.join(root, ".hyper", "memory"), { recursive: true });
+  fs.writeFileSync(
+    path.join(root, ".hyper", "memory", "index.md"),
+    [
+      "# Memory Index",
+      "",
+      "## Section",
+      "- [first learning](first.md) — a one-line hook",
+      "- [second learning](second.md) — another hook",
+      "not an entry line",
+      "- plain bullet without a link",
+      "",
+    ].join("\n"),
+    "utf8",
+  );
 
   return root;
 }
@@ -545,6 +561,18 @@ function validateStateProbeSchema(snapshot, where) {
   assertField(snapshot, "backlog_entries", isArray, "array", where);
   assertField(snapshot, "parse_errors", isArray, "array", where);
   assertField(snapshot, "warnings", isArray, "array", where);
+
+  // learnings pointer (T70.3). Object with a fixed index_path string, an
+  // exists boolean, and a non-negative entry_count integer. The probe must
+  // never embed the index body.
+  const isObject = (v) => v != null && typeof v === "object" && !Array.isArray(v);
+  const isNonNegativeInt = (v) => Number.isInteger(v) && v >= 0;
+  if (assertField(snapshot, "learnings", isObject, "object", where)) {
+    const at = `${where} learnings`;
+    assertField(snapshot.learnings, "index_path", isNonEmptyString, "non-empty string", at);
+    assertField(snapshot.learnings, "exists", isBool, "boolean", at);
+    assertField(snapshot.learnings, "entry_count", isNonNegativeInt, "integer >= 0", at);
+  }
 
   if (Array.isArray(snapshot.active_tasks) && snapshot.active_tasks.length > 0) {
     const first = snapshot.active_tasks[0];
@@ -645,6 +673,10 @@ function validateStateProbeAgainstFixture() {
     expect(l1 != null, `expected L1 in active_loops`);
     const l2 = snapshot.active_loops.find((l) => l.id === "L2");
     expect(l2 == null, `expected L2 NOT in active_loops (status: done)`);
+
+    expect(snapshot.learnings.index_path === ".hyper/memory/index.md", `expected learnings.index_path: ".hyper/memory/index.md", got ${JSON.stringify(snapshot.learnings.index_path)}`);
+    expect(snapshot.learnings.exists === true, `expected learnings.exists: true (fixture wrote the index), got ${snapshot.learnings.exists}`);
+    expect(snapshot.learnings.entry_count === 2, `expected learnings.entry_count: 2 (two link entries, non-link bullets excluded), got ${snapshot.learnings.entry_count}`);
   } finally {
     teardownProbeFixture(fixtureRoot);
   }

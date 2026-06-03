@@ -1,6 +1,21 @@
 # Hyper — Memory Discipline
 
-Use `.hyper/memory.md` only for things a **different future task** should know.
+Use `.hyper/memory/` only for things a **different future task** should know.
+
+## Storage shape
+
+Memory is a folder, not a single file:
+
+- `.hyper/memory/index.md` — one line per entry, in this format:
+  `- [<title>](<entry-file>) — <one-line hook>`. The link target is the entry
+  file name; the hook is a short phrase a future reader scans to decide whether
+  to open the entry.
+- `.hyper/memory/<YYYY-MM-DD>-<slug>.md` — one file per entry, holding the full
+  entry body (see [Entry format](#entry-format)). `<YYYY-MM-DD>` is the date the
+  entry was recorded; `<slug>` is a short kebab-case label.
+
+The folder is created when the first entry is recorded. There is no empty
+placeholder.
 
 ## Good memory entries
 
@@ -44,7 +59,9 @@ Before writing to memory, ask:
 
 If any answer is no, do not write it.
 
-## Format
+## Entry format
+
+Each `.hyper/memory/<YYYY-MM-DD>-<slug>.md` file holds one entry:
 
 ```markdown
 ## <ISO date> — <Category>: <short title>

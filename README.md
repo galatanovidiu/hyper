@@ -52,6 +52,12 @@ ln -s ~/hyper7/skills/* ~/.claude/skills/
 Other agents can point at `skills/hyper/SKILL.md` or
 `skills/hyper-iterate/SKILL.md` and use the matching workflow.
 
+For Claude Code, `install` also registers a `SessionStart` hook that injects a
+repo's `.hyper/memory/index.md` at the start of each session (cross-session
+recall). `uninstall` removes it and `status` reports it. The hook edits only
+`~/.claude/settings.json`; agents without that mechanism fall back to the state
+probe, which surfaces the same index.
+
 ## Companion Skills
 
 Hyper depends on a few external skills hosted at
@@ -248,13 +254,17 @@ Both workflows share one project-local state directory:
     L3-slow-report-investigation/...
   archive/
   backlog.md
-  memory.md
+  memory/        # project gotchas: index.md + dated entry files (recall source)
   rules.md
   recipes/
 ```
 
 Add `.hyper/` to `.gitignore` unless you intentionally want to share task and
 loop history.
+
+`.hyper/memory/` is the cross-session recall store. Save a hard-won, non-obvious
+gotcha as a dated entry file plus a one-line `index.md` link, and Hyper surfaces
+that index at the start of later sessions so the next agent does not relearn it.
 
 ## Useful Commands
 
@@ -270,6 +280,7 @@ User-facing skill names:
 - `hyper-recipe`
 - `hyper-team`
 - `hyper-short-story`
+- `hyper-digest`
 
 | Command                   | Use it for                                                              |
 | ------------------------- | ----------------------------------------------------------------------- |
@@ -285,6 +296,7 @@ User-facing skill names:
 | `/hyper-recipe`           | Manage reusable project-local procedures in `.hyper/recipes/`.          |
 | `/hyper-team`             | Ask another AI agent CLI for a second opinion.                          |
 | `/hyper-short-story`      | Rewrite the previous response as a short, plain-language narrative.     |
+| `/hyper-digest`           | Toggle scannable digest formatting (BLUF + sections) for responses.     |
 
 Internal skills such as `hyper-intake`, `hyper-spec`, `hyper-technical-plan`,
 `hyper-execution-plan`, `hyper-execution-plan-review`, `hyper-research`,
