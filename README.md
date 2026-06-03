@@ -33,20 +33,20 @@ Skip both for tiny, obvious edits.
 Clone this repo:
 
 ```bash
-git clone https://github.com/ovidiugalatan/hyper7 ~/hyper7
+git clone https://github.com/galatanovidiu/hyper ~/hyper
 ```
 
 From the cloned repo, install the skills:
 
 ```bash
-bash ~/hyper7/.claude/skills/install-hyper/scripts/install.sh install
+bash ~/hyper/.claude/skills/install-hyper/scripts/install.sh install
 ```
 
 Manual install for Claude Code:
 
 ```bash
 mkdir -p ~/.claude/skills
-ln -s ~/hyper7/skills/* ~/.claude/skills/
+ln -s ~/hyper/skills/* ~/.claude/skills/
 ```
 
 Other agents can point at `skills/hyper/SKILL.md` or
