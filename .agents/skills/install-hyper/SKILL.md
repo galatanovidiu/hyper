@@ -1,14 +1,14 @@
 ---
 name: install-hyper
 description: >
-  Installs, uninstalls, or checks the status of Hyper skills across every supported agent skill directory on this machine — Codex (~/.Codex/skills/), Codex (~/.codex/skills/), ~/.agents/skills/, and PI (~/.pi/agent/skills/). Symlinks the skill folders from this repo so local edits take effect immediately. Use when the user asks to install Hyper, set up Hyper for testing, refresh the installed skills, uninstall Hyper, or check whether Hyper is installed. Only meaningful when Codex (or another agent) is running inside the hyper7 development repo. Keywords: install, hyper, setup, symlink, refresh, uninstall, status, codex, Codex, pi.
+  Installs, uninstalls, or checks the status of Hyper skills across every supported agent skill directory on this machine — Claude Code (~/.claude/skills/), Codex (~/.codex/skills/), ~/.agents/skills/, and PI (~/.pi/agent/skills/). Symlinks the skill folders from this repo so local edits take effect immediately. Use when the user asks to install Hyper, set up Hyper for testing, refresh the installed skills, uninstall Hyper, or check whether Hyper is installed. Only meaningful when Claude Code (or another agent) is running inside the hyper7 development repo. Keywords: install, hyper, setup, symlink, refresh, uninstall, status, codex, claude, pi.
 ---
 
 # install-hyper
 
 Dev-loop helper for working on Hyper itself. Install the skill folders under `skills/` into every supported agent skills directory on this machine as symlinks, so agents pick up edits live without reinstalling.
 
-This skill is not part of the distributed Hyper package — it lives in `.Codex/skills/install-hyper/` inside this repo and only surfaces when Codex is running in the hyper7 directory.
+This skill is not part of the distributed Hyper package — it lives in `.claude/skills/install-hyper/` inside this repo and only surfaces when Claude Code is running in the hyper7 directory.
 
 ## Targets
 
@@ -16,7 +16,7 @@ By default, the script installs into every one of the following whose parent dir
 
 | Path | Agent |
 |------|-------|
-| `~/.Codex/skills/` | Codex |
+| `~/.claude/skills/` | Claude Code |
 | `~/.codex/skills/` | Codex |
 | `~/.agents/skills/` | agent-common location (some tools read from here) |
 | `~/.pi/agent/skills/` | PI |
@@ -61,7 +61,7 @@ The script prints a header per target, then one line per skill with the action t
 - **`uninstall`** — how many symlinks were removed per target, and whether the recall hook was removed.
 - **`status`** — pass through the table; it's already readable. Include the recall-hook line.
 
-For Codex specifically: newly installed skills show up without a restart (Codex watches `~/.Codex/skills/` for changes), but the slash-menu may take a moment to refresh. Verify with `/hyper` autocomplete. Other agents may need a reload — check their docs.
+For Claude Code specifically: newly installed skills show up without a restart (Claude Code watches `~/.claude/skills/` for changes), but the slash-menu may take a moment to refresh. Verify with `/hyper` autocomplete. Other agents may need a reload — check their docs.
 
 ### Portability check
 
