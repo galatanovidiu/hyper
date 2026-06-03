@@ -26,6 +26,11 @@ Ensure `.hyper/` is bootstrapped per `reference/bootstrap.md` before any write. 
 If `.hyper/rules.md` exists, read it once at session start and treat its
 contents as normative project rules for every phase.
 
+When the probe reports `learnings.exists: true`, read `.hyper/memory/index.md`
+once at session start and treat its entries as recall hints. Open individual
+entry files on demand when an entry looks relevant to the current task; do not
+read every entry file up front.
+
 Read `reference/data-model.md` and `reference/gates.md` once per session. This
 skill assumes those contracts are active.
 

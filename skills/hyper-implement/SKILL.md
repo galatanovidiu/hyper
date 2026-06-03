@@ -74,6 +74,10 @@ reading or writing `.hyper/` paths. The data model is in
   from a documented `checks.md` remediation), append a `## Decisions`
   entry to `dashboard.md` per `../hyper/reference/dashboard.md`
   §Decisions log contract, authoring as `implement`.
+- When a durable cross-task learning surfaces, record it in
+  `.hyper/memory/` per the contract in
+  `../hyper-memory/reference/memory.md`, writing the entry inline rather
+  than invoking the `hyper-memory` skill.
 
 ## Feature orchestration rules
 

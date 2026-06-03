@@ -74,6 +74,8 @@ Use the probe's `active_loops` list as the inventory of loops with `status: acti
 
 **Project rules.** Read `.hyper/rules.md` if it exists; treat as normative for the session. If absent, no project rules are in force. On every resume, re-read this file: if its content differs from when the loop was last touched (any prior cycle, decision, or rule reference in `loop.md` is now in tension with the current rules), surface the conflict to the user and append a `## Decisions` entry recording the new ruling before continuing the current cycle.
 
+**Learnings index.** When the probe reports `learnings.exists: true`, read `.hyper/memory/index.md` and treat its entries as recall hints; open individual entry files on demand when one looks relevant. Re-read the index on every resume, the same way as `rules.md`.
+
 When the loop needs a required capability from the registry below and no suitable skill is installed, tell the user which capability is missing and offer: install one, swap to a substitute for this loop, or stop. Never silently skip a required skill call. Suggested capabilities do not block the loop. **Conditional capabilities** (those marked `conditional` in the registry) are not checked at loop start; they are evaluated only at the phase that needs them. For example, `code-review` is evaluated only at Phase 4, and only after research-only detection has decided whether code changes exist.
 
 **Route.** Pick one:
@@ -416,4 +418,5 @@ Cross-cutting invariants. Phase-specific behavior lives in the phase sections ab
 - **User-claim verification.** When the user states something is broken, wrong, missing, or different from what the agent believes, test the claim before disagreeing. Run the command, read the file, inspect the state. If the test result contradicts the user, do not dismiss. Report: the exact command run, the files read with paths and line ranges, what the agent observed. Then ask: "Is the test you wanted me to do different from what I did?" Never tell the user their claim is wrong without showing the test work and inviting correction. This rule overrides any anchoring from a prior pressure-test or grilling pass — surviving a grilling does not make a plan or belief immune to evidence the user can see now.
 - Done loops are never reopened. If continued work is needed, create a new loop and reference the closed one in `## Starting point`.
 - No `status: done` without a passing verify entry, unless the user explicitly closes scope without verify.
+- When a durable cross-task learning surfaces during a loop, record it in `.hyper/memory/` per the contract in `../hyper-memory/reference/memory.md`, writing the entry inline rather than invoking the `hyper-memory` skill.
 - Legal values inlined throughout this skill mirror `templates/loop.md`. If either changes, update the other.

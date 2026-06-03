@@ -13,7 +13,7 @@ Create missing directories as needed.
 Optional files are created only by the skills that own them:
 
 - `backlog.md` by `hyper-backlog`
-- `memory.md` when a user asks to record project memory
+- `memory/` (with `index.md`) when a learning is first recorded
 - `retro.md` by `hyper-retro`
 - `rules.md` when a user asks to record a project rule
 - `recipes/` by `hyper-recipe`

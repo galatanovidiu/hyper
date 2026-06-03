@@ -114,6 +114,7 @@ The probe writes one JSON object to stdout with these top-level keys:
 | `archived_tasks` | array | One entry per task folder under `.hyper/archive/` (see per-item shape below). |
 | `active_loops` | array | One entry per loop folder whose `loop.md` carries `status: active`. |
 | `backlog_entries` | array | One entry per `## B<N> — <title>` heading in `.hyper/backlog.md`, in heading order. |
+| `learnings` | object | Pointer to the project's learnings index (see shape below). Never embeds the index body. |
 | `parse_errors` | array | One entry per file the probe could not read or parse (see per-item shape below). |
 
 ### `active_tasks[*]`
@@ -153,6 +154,17 @@ Archived tasks usually carry `category: terminal`.
 |-------|------|---------|
 | `id` | number | Integer parsed from the `## B<N>` heading. |
 | `title` | string | Title text after the em-dash. |
+
+### `learnings`
+
+The portable recall pointer. Agents without a SessionStart hook read the
+index after the probe reports it and open individual entry files on demand.
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| `index_path` | string | Repo-relative path to the learnings index, always `.hyper/memory/index.md`. |
+| `exists` | boolean | `true` when the index file is present under `state_root`. |
+| `entry_count` | number | Count of index entry lines (markdown list items shaped `- [<title>](<entry-file>) — <hook>`); `0` when the index is absent or has no entries. The body is never embedded. |
 
 ### `parse_errors[*]`
 

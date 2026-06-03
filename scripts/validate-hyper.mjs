@@ -25,6 +25,10 @@ const HYPER_WORKER_SKILL = path.join(ROOT, "skills", "hyper-worker", "SKILL.md")
 const HYPER_TECHNICAL_PLAN_SKILL = path.join(ROOT, "skills", "hyper-technical-plan", "SKILL.md");
 const HYPER_RESEARCH_SKILL = path.join(ROOT, "skills", "hyper-research", "SKILL.md");
 const STATE_PROBE = path.join(ROOT, "skills", "hyper", "scripts", "state.mjs");
+const INSTALL_HYPER_CLAUDE = path.join(ROOT, ".claude", "skills", "install-hyper");
+const INSTALL_HYPER_AGENTS = path.join(ROOT, ".agents", "skills", "install-hyper");
+const INSTALL_HYPER_AGENTS_INSTALL_SH = path.join(INSTALL_HYPER_AGENTS, "scripts", "install.sh");
+const INSTALL_HYPER_AGENTS_SKILL = path.join(INSTALL_HYPER_AGENTS, "SKILL.md");
 
 const USER_FACING_HYPER = new Set([
   "hyper",
@@ -37,6 +41,8 @@ const USER_FACING_HYPER = new Set([
   "hyper-iterate",
   "hyper-team",
   "hyper-short-story",
+  "hyper-digest",
+  "hyper-memory",
 ]);
 
 const INTERNAL_HYPER = new Set([
@@ -224,7 +230,7 @@ function validateReadmeAndDataModel() {
   ensureContains(README, "Workflow 1 — `hyper` (phased)");
   ensureContains(README, "Workflow 2 — `hyper-iterate` (adaptive)");
 
-  ensureContains(DATA_MODEL, "Users invoke ten Hyper skills directly");
+  ensureContains(DATA_MODEL, "Users invoke twelve Hyper skills directly");
   ensureContains(DATA_MODEL, "`hyper-iterate`");
   ensureContains(
     DATA_MODEL,
@@ -237,6 +243,53 @@ function validateReadmeAndDataModel() {
 
   ensureContains(HYPER_TECHNICAL_PLAN_TEMPLATE, "## Alternatives considered");
   ensureContains(HYPER_TECHNICAL_PLAN_BUGFIX_TEMPLATE, "## Alternatives considered");
+}
+
+function validateHyperMemoryRegistration() {
+  // README — command-table row token. Adding hyper-memory to
+  // USER_FACING_HYPER only forces the backtick-wrapped skill-name check; the
+  // slash-prefixed command token is asserted explicitly here.
+  ensureContains(README, "/hyper-memory");
+
+  // data-model.md — user-facing list entry. Adding to USER_FACING_HYPER does
+  // not assert anything against the data model, so this is explicit.
+  ensureContains(DATA_MODEL, "`hyper-memory`");
+
+  // data-model.md — the memory contract link moved into the hyper-memory
+  // skill. Assert the new relative path and that the old in-skill link is gone.
+  ensureContains(DATA_MODEL, "../../hyper-memory/reference/memory.md");
+  ensureNotContains(DATA_MODEL, "](memory.md)");
+
+  // install-hyper hook migration. Assert the FULL recall_hook_command=
+  // assignment line so the legacy hyper/scripts path cannot satisfy it. The
+  // .claude copy is covered by the byte-identical check in
+  // validateInstallHyperCopies.
+  ensureContains(
+    INSTALL_HYPER_AGENTS_INSTALL_SH,
+    `recall_hook_command='{ test -f "$HOME/.claude/skills/hyper-memory/scripts/memory-recall.mjs" && node "$HOME/.claude/skills/hyper-memory/scripts/memory-recall.mjs"; } 2>/dev/null || true'`,
+  );
+
+  // Migration guard: LEGACY_COMMANDS must still carry the T70 command string
+  // (the recall script's pre-split path under the hyper skill). The merge
+  // program strips every LEGACY_COMMANDS entry during register/unregister, so
+  // dropping this string would silently break migration off an old install,
+  // leaving the legacy hook running alongside the new one. Asserting the bare
+  // command string is present keeps that migration path covered.
+  ensureContains(
+    INSTALL_HYPER_AGENTS_INSTALL_SH,
+    `{ test -f "$HOME/.claude/skills/hyper/scripts/memory-recall.mjs" && node "$HOME/.claude/skills/hyper/scripts/memory-recall.mjs"; } 2>/dev/null || true`,
+  );
+
+  // install-hyper SKILL.md code block. Assert the new path is present and the
+  // legacy in-hyper path is absent.
+  ensureContains(
+    INSTALL_HYPER_AGENTS_SKILL,
+    "hyper-memory/scripts/memory-recall.mjs",
+  );
+  ensureNotContains(
+    INSTALL_HYPER_AGENTS_SKILL,
+    "hyper/scripts/memory-recall.mjs",
+  );
 }
 
 function validateHyperIterate() {
@@ -514,6 +567,21 @@ function setupProbeFixture() {
     "# Hyper Backlog\n\n## B1 — em-dash entry\n\n## B2 - hyphen entry\n\n## B3 – en-dash entry\n",
     "utf8",
   );
+  fs.mkdirSync(path.join(root, ".hyper", "memory"), { recursive: true });
+  fs.writeFileSync(
+    path.join(root, ".hyper", "memory", "index.md"),
+    [
+      "# Memory Index",
+      "",
+      "## Section",
+      "- [first learning](first.md) — a one-line hook",
+      "- [second learning](second.md) — another hook",
+      "not an entry line",
+      "- plain bullet without a link",
+      "",
+    ].join("\n"),
+    "utf8",
+  );
 
   return root;
 }
@@ -545,6 +613,18 @@ function validateStateProbeSchema(snapshot, where) {
   assertField(snapshot, "backlog_entries", isArray, "array", where);
   assertField(snapshot, "parse_errors", isArray, "array", where);
   assertField(snapshot, "warnings", isArray, "array", where);
+
+  // learnings pointer (T70.3). Object with a fixed index_path string, an
+  // exists boolean, and a non-negative entry_count integer. The probe must
+  // never embed the index body.
+  const isObject = (v) => v != null && typeof v === "object" && !Array.isArray(v);
+  const isNonNegativeInt = (v) => Number.isInteger(v) && v >= 0;
+  if (assertField(snapshot, "learnings", isObject, "object", where)) {
+    const at = `${where} learnings`;
+    assertField(snapshot.learnings, "index_path", isNonEmptyString, "non-empty string", at);
+    assertField(snapshot.learnings, "exists", isBool, "boolean", at);
+    assertField(snapshot.learnings, "entry_count", isNonNegativeInt, "integer >= 0", at);
+  }
 
   if (Array.isArray(snapshot.active_tasks) && snapshot.active_tasks.length > 0) {
     const first = snapshot.active_tasks[0];
@@ -645,6 +725,10 @@ function validateStateProbeAgainstFixture() {
     expect(l1 != null, `expected L1 in active_loops`);
     const l2 = snapshot.active_loops.find((l) => l.id === "L2");
     expect(l2 == null, `expected L2 NOT in active_loops (status: done)`);
+
+    expect(snapshot.learnings.index_path === ".hyper/memory/index.md", `expected learnings.index_path: ".hyper/memory/index.md", got ${JSON.stringify(snapshot.learnings.index_path)}`);
+    expect(snapshot.learnings.exists === true, `expected learnings.exists: true (fixture wrote the index), got ${snapshot.learnings.exists}`);
+    expect(snapshot.learnings.entry_count === 2, `expected learnings.entry_count: 2 (two link entries, non-link bullets excluded), got ${snapshot.learnings.entry_count}`);
   } finally {
     teardownProbeFixture(fixtureRoot);
   }
@@ -673,12 +757,32 @@ function validateStateProbe() {
   validateStateProbeSchema(snapshot, `${STATE_PROBE} repo stdout`);
 }
 
+// install-hyper is bootstrapped as physical copies in each agent dir (it
+// cannot symlink itself), so the copies can silently diverge — a blind
+// find-replace once mangled the .agents SKILL.md. Assert the .claude and
+// .agents copies stay byte-identical so any future drift fails validation.
+function validateInstallHyperCopies() {
+  const files = ["SKILL.md", path.join("scripts", "install.sh")];
+  for (const rel of files) {
+    const a = path.join(INSTALL_HYPER_CLAUDE, rel);
+    const b = path.join(INSTALL_HYPER_AGENTS, rel);
+    if (!ensureFile(a) || !ensureFile(b)) continue;
+    if (read(a) !== read(b)) {
+      fail(
+        `install-hyper copies diverge: ${relativeToRoot(a)} != ${relativeToRoot(b)} (the .claude and .agents copies must be byte-identical)`,
+      );
+    }
+  }
+}
+
 function main() {
   validateSkillFiles();
   validateReadmeAndDataModel();
+  validateHyperMemoryRegistration();
   validateHyperIterate();
   validatePlanConflictRedirect();
   validateGateMessaging();
+  validateInstallHyperCopies();
   validateStateProbe();
 
   if (ERRORS.length > 0) {

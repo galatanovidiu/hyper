@@ -29,7 +29,9 @@ worktree. Plain markdown. No database, no CLI, no hidden state.
     T1-add-login-page/
       task.md
       ...
-  memory.md
+  memory/
+    index.md
+    2026-05-20-blue-green-two-step-rollout.md
   backlog.md
   retro.md
   recipes/
@@ -104,9 +106,10 @@ algorithm lives in `reference/dashboard.md`.
 
 ## Internal vs user-facing skills
 
-Users invoke ten Hyper skills directly: `hyper`, `hyper-task`,
+Users invoke twelve Hyper skills directly: `hyper`, `hyper-task`,
 `hyper-backlog`, `hyper-handoff`, `hyper-retro`, `hyper-code-review`,
-`hyper-recipe`, `hyper-iterate`, `hyper-team`, and `hyper-short-story`.
+`hyper-recipe`, `hyper-iterate`, `hyper-team`, `hyper-short-story`,
+`hyper-digest`, and `hyper-memory`.
 
 Internal skills are:
 
@@ -343,6 +346,40 @@ Subtask files raising a conflict carry an optional `## Plan conflict` section
 mirroring the per-conflict shape above (minus `raised_by`, which is implied
 by the file's own id). This section appears only when the subtask's
 `awaiting: plan-conflict`.
+
+## `.hyper/memory/`
+
+Durable, cross-task project learnings. A folder, not a single file. Created
+when the first entry is recorded; there is no empty placeholder. The discipline
+for what belongs here lives in [hyper-memory's memory contract](../../hyper-memory/reference/memory.md).
+
+The folder contains:
+
+- `index.md` — one line per entry, in this format:
+
+  ```text
+  - [<title>](<entry-file>) — <one-line hook>
+  ```
+
+  The link target is the entry file name; the hook is a short scannable phrase.
+
+- `<YYYY-MM-DD>-<slug>.md` — one file per entry. `<YYYY-MM-DD>` is the date the
+  entry was recorded; `<slug>` is a short kebab-case label. Each file holds the
+  entry body:
+
+  ```markdown
+  ## <ISO date> — <Category>: <short title>
+
+  Why: <what led to this>
+  See: T<N>, <file path>
+  <1–2 sentence description>
+  ```
+
+  Categories are `Decision`, `Pattern`, `Lesson`, `Constraint`.
+
+The index and the entry files are the recall contract: skills that read the
+probe's `learnings` pointer open `index.md`, then open individual entry files on
+demand.
 
 ## `.hyper/loops/`
 
