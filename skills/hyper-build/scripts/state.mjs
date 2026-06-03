@@ -5,7 +5,7 @@
 // Read-only snapshot of the Hyper routing surface for the calling skill:
 // state root, bootstrap status, next ids, active and archived tasks,
 // active loops, and backlog entries. Implements the resolution and parser
-// rules locked in skills/hyper/reference/state-root.md and
+// rules locked in skills/hyper-build/reference/state-root.md and
 // .hyper/tasks/T69-add-state-bootstrap-script/03-technical-plan.md.
 //
 // Usage: node state.mjs [--from <abs-path>]
@@ -22,7 +22,7 @@ import {
 
 // ---------- Phase classification ----------
 
-// From skills/hyper/reference/data-model.md. Tasks under .hyper/tasks/ may
+// From skills/hyper-build/reference/data-model.md. Tasks under .hyper/tasks/ may
 // carry any of these; the category drives how the calling skill routes.
 const ACTIVE_PHASES = new Set([
   "intake",

@@ -29,9 +29,9 @@ Name the mode out loud before touching any file. Each mode owns a distinct scope
 
 **Authorities.**
 
-- `skills/hyper/reference/gates.md` — phase transitions, verdicts, awaiting values.
-- `skills/hyper/reference/data-model.md` — `task.md` fields, artifact filenames, subtask shape.
-- `skills/hyper/SKILL.md` — orchestrator behavior.
+- `skills/hyper-build/reference/gates.md` — phase transitions, verdicts, awaiting values.
+- `skills/hyper-build/reference/data-model.md` — `task.md` fields, artifact filenames, subtask shape.
+- `skills/hyper-build/SKILL.md` — orchestrator behavior.
 - Each phase skill's own `SKILL.md` for its own phase.
 
 `README.md` and `AGENTS.md` are not authorities in this mode.
@@ -82,7 +82,7 @@ State:
 Good axes:
 
 - "agreement between documented and live `task.md` fields"
-- "duplicated contract surface between `gates.md` and `hyper/SKILL.md`"
+- "duplicated contract surface between `gates.md` and `hyper-build/SKILL.md`"
 - "dead surface in a phase skill's templates vs what the skill actually writes"
 - "non-operational provenance prose across shipped skills"
 - "inventory drift between `README.md` and `skills/`"

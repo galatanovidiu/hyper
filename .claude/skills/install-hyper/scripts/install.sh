@@ -176,7 +176,7 @@ canonical_path() {
 verify_probe_reachable() {
   local repo_root probe_src probe_src_real
   repo_root="$(dirname "$source_dir")"
-  probe_src="$source_dir/hyper/scripts/state.mjs"
+  probe_src="$source_dir/hyper-build/scripts/state.mjs"
   if [ ! -e "$probe_src" ]; then
     echo "    probe   fail: source probe missing at $probe_src" >&2
     return 1
@@ -194,9 +194,9 @@ verify_probe_reachable() {
       echo "    probe   skip (target not installed)"
       continue
     fi
-    local probe_dst="$t/hyper/scripts/state.mjs"
+    local probe_dst="$t/hyper-build/scripts/state.mjs"
     if [ ! -e "$probe_dst" ]; then
-      echo "    probe   fail: $probe_dst not present (hyper skill not linked?)"
+      echo "    probe   fail: $probe_dst not present (hyper-build skill not linked?)"
       any_fail=1
       continue
     fi

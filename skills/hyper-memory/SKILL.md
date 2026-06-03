@@ -12,11 +12,11 @@ This skill runs standalone. It never creates tasks, advances phases, edits backl
 
 Before reading or writing memory, resolve the Hyper state root with the state probe:
 
-    node "<skill-base-dir>/../hyper/scripts/state.mjs"
+    node "<skill-base-dir>/../hyper-build/scripts/state.mjs"
 
-`<skill-base-dir>` is the path printed at skill load as "Base directory for this skill". The probe lives in the sibling `hyper` skill folder — `install-hyper` symlinks all Hyper skills side by side, so `../hyper/scripts/state.mjs` resolves from any sibling skill base. Parse the JSON output and read the `state_root` and `learnings` fields from it; do not re-implement state-root resolution. Every `.hyper/` path in this skill is relative to that resolved root.
+`<skill-base-dir>` is the path printed at skill load as "Base directory for this skill". The probe lives in the sibling `hyper-build` skill folder — `install-hyper` symlinks all Hyper skills side by side, so `../hyper-build/scripts/state.mjs` resolves from any sibling skill base. Parse the JSON output and read the `state_root` and `learnings` fields from it; do not re-implement state-root resolution. Every `.hyper/` path in this skill is relative to that resolved root.
 
-The probe implements `../hyper/reference/state-root.md`. The memory contract — what to store, the bar for storing it, and the entry format — lives in `reference/memory.md`. Read it before any Save.
+The probe implements `../hyper-build/reference/state-root.md`. The memory contract — what to store, the bar for storing it, and the entry format — lives in `reference/memory.md`. Read it before any Save.
 
 ## Memory shape
 

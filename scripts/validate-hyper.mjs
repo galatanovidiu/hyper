@@ -13,18 +13,18 @@ const __dirname = path.dirname(__filename);
 const ROOT = path.resolve(__dirname, "..");
 const SKILLS_DIR = path.join(ROOT, "skills");
 const README = path.join(ROOT, "README.md");
-const DATA_MODEL = path.join(ROOT, "skills", "hyper", "reference", "data-model.md");
-const HYPER_ITERATE_SKILL = path.join(ROOT, "skills", "hyper-iterate", "SKILL.md");
-const HYPER_ITERATE_TEMPLATE = path.join(ROOT, "skills", "hyper-iterate", "templates", "loop.md");
+const DATA_MODEL = path.join(ROOT, "skills", "hyper-build", "reference", "data-model.md");
+const HYPER_SKILL = path.join(ROOT, "skills", "hyper", "SKILL.md");
+const HYPER_TEMPLATE = path.join(ROOT, "skills", "hyper", "templates", "loop.md");
 const HYPER_TECHNICAL_PLAN_TEMPLATE = path.join(ROOT, "skills", "hyper-technical-plan", "templates", "03-technical-plan.md");
 const HYPER_TECHNICAL_PLAN_BUGFIX_TEMPLATE = path.join(ROOT, "skills", "hyper-technical-plan", "templates", "03-technical-plan-bugfix.md");
-const HYPER_SKILL = path.join(ROOT, "skills", "hyper", "SKILL.md");
-const HYPER_GATES = path.join(ROOT, "skills", "hyper", "reference", "gates.md");
+const HYPER_BUILD_SKILL = path.join(ROOT, "skills", "hyper-build", "SKILL.md");
+const HYPER_BUILD_GATES = path.join(ROOT, "skills", "hyper-build", "reference", "gates.md");
 const HYPER_IMPLEMENT_SKILL = path.join(ROOT, "skills", "hyper-implement", "SKILL.md");
 const HYPER_WORKER_SKILL = path.join(ROOT, "skills", "hyper-worker", "SKILL.md");
 const HYPER_TECHNICAL_PLAN_SKILL = path.join(ROOT, "skills", "hyper-technical-plan", "SKILL.md");
 const HYPER_RESEARCH_SKILL = path.join(ROOT, "skills", "hyper-research", "SKILL.md");
-const STATE_PROBE = path.join(ROOT, "skills", "hyper", "scripts", "state.mjs");
+const STATE_PROBE = path.join(ROOT, "skills", "hyper-build", "scripts", "state.mjs");
 const INSTALL_HYPER_CLAUDE = path.join(ROOT, ".claude", "skills", "install-hyper");
 const INSTALL_HYPER_AGENTS = path.join(ROOT, ".agents", "skills", "install-hyper");
 const INSTALL_HYPER_AGENTS_INSTALL_SH = path.join(INSTALL_HYPER_AGENTS, "scripts", "install.sh");
@@ -38,7 +38,7 @@ const USER_FACING_HYPER = new Set([
   "hyper-retro",
   "hyper-code-review",
   "hyper-recipe",
-  "hyper-iterate",
+  "hyper-build",
   "hyper-team",
   "hyper-short-story",
   "hyper-digest",
@@ -227,11 +227,11 @@ function validateReadmeAndDataModel() {
     ensureContains(README, `\`${skill}\``);
   }
 
-  ensureContains(README, "Workflow 1 — `hyper` (phased)");
-  ensureContains(README, "Workflow 2 — `hyper-iterate` (adaptive)");
+  ensureContains(README, "Workflow 1 — `hyper` (adaptive)");
+  ensureContains(README, "Workflow 2 — `hyper-build` (phased)");
 
   ensureContains(DATA_MODEL, "Users invoke twelve Hyper skills directly");
-  ensureContains(DATA_MODEL, "`hyper-iterate`");
+  ensureContains(DATA_MODEL, "`hyper-build`");
   ensureContains(
     DATA_MODEL,
     "`hyper-execution-plan-review`",
@@ -292,7 +292,7 @@ function validateHyperMemoryRegistration() {
   );
 }
 
-function validateHyperIterate() {
+function validateHyper() {
   const requiredTemplateSections = [
     "## Goal",
     "## Definition of done",
@@ -325,44 +325,44 @@ function validateHyperIterate() {
   ];
 
   for (const needle of requiredTemplateSections) {
-    ensureContains(HYPER_ITERATE_TEMPLATE, needle);
+    ensureContains(HYPER_TEMPLATE, needle);
   }
   for (const needle of requiredTemplateFrontmatter) {
-    ensureContains(HYPER_ITERATE_TEMPLATE, needle);
+    ensureContains(HYPER_TEMPLATE, needle);
   }
 
-  ensureContains(HYPER_ITERATE_TEMPLATE, "Status: awaiting approval");
-  ensureContains(HYPER_ITERATE_TEMPLATE, "Mode: interactive");
-  ensureContains(HYPER_ITERATE_TEMPLATE, "Delegated authority: none");
-  ensureContains(HYPER_ITERATE_TEMPLATE, "Decision proxies: none");
-  ensureContains(HYPER_ITERATE_TEMPLATE, "Approval source: Not yet.");
-  ensureContains(HYPER_ITERATE_TEMPLATE, "Approved at: Not yet.");
-  ensureContains(HYPER_ITERATE_TEMPLATE, "### P1 — Whole goal");
-  ensureContains(HYPER_ITERATE_TEMPLATE, "#### Understanding");
-  ensureContains(HYPER_ITERATE_TEMPLATE, "#### Existing code and findings");
-  ensureContains(HYPER_ITERATE_TEMPLATE, "#### Part plan");
-  ensureContains(HYPER_ITERATE_TEMPLATE, "**Intent:** <probe | implement | validate | reroute | reframe | stop>");
-  ensureContains(HYPER_ITERATE_TEMPLATE, "**Prior belief:** <What I expected before this cycle.");
-  ensureContains(HYPER_ITERATE_TEMPLATE, "**Route impact:** <How this changes the route or parts.");
-  ensureContains(HYPER_ITERATE_TEMPLATE, "- P1 — Whole goal — aligning");
-  ensureContains(HYPER_ITERATE_TEMPLATE, "- Next atomic move: Not filled yet.");
-  ensureContains(HYPER_ITERATE_TEMPLATE, "- Dirty or unvalidated state: none");
+  ensureContains(HYPER_TEMPLATE, "Status: awaiting approval");
+  ensureContains(HYPER_TEMPLATE, "Mode: interactive");
+  ensureContains(HYPER_TEMPLATE, "Delegated authority: none");
+  ensureContains(HYPER_TEMPLATE, "Decision proxies: none");
+  ensureContains(HYPER_TEMPLATE, "Approval source: Not yet.");
+  ensureContains(HYPER_TEMPLATE, "Approved at: Not yet.");
+  ensureContains(HYPER_TEMPLATE, "### P1 — Whole goal");
+  ensureContains(HYPER_TEMPLATE, "#### Understanding");
+  ensureContains(HYPER_TEMPLATE, "#### Existing code and findings");
+  ensureContains(HYPER_TEMPLATE, "#### Part plan");
+  ensureContains(HYPER_TEMPLATE, "**Intent:** <probe | implement | validate | reroute | reframe | stop>");
+  ensureContains(HYPER_TEMPLATE, "**Prior belief:** <What I expected before this cycle.");
+  ensureContains(HYPER_TEMPLATE, "**Route impact:** <How this changes the route or parts.");
+  ensureContains(HYPER_TEMPLATE, "- P1 — Whole goal — aligning");
+  ensureContains(HYPER_TEMPLATE, "- Next atomic move: Not filled yet.");
+  ensureContains(HYPER_TEMPLATE, "- Dirty or unvalidated state: none");
 
-  ensureContains(HYPER_ITERATE_SKILL, "**Alignment gate.**");
-  ensureContains(HYPER_ITERATE_SKILL, "**On resume:**");
-  ensureContains(HYPER_ITERATE_SKILL, "**Hot** (always):");
-  ensureContains(HYPER_ITERATE_SKILL, "**Warm** (when the next move needs more):");
-  ensureContains(HYPER_ITERATE_SKILL, "**Cold** (on demand only):");
-  ensureContains(HYPER_ITERATE_SKILL, ".hyper/loops/L<N>-<slug>/");
-  ensureContains(HYPER_ITERATE_SKILL, "No cycle starts before both gates are cleared.");
-  ensureContains(HYPER_ITERATE_SKILL, "Before work on `P<N>` starts, the part block must meet the current-part-block gate above");
-  ensureContains(HYPER_ITERATE_SKILL, "## Delegation");
-  ensureContains(HYPER_ITERATE_SKILL, "## Authority Modes");
-  ensureContains(HYPER_ITERATE_SKILL, "YOLO mode");
-  ensureContains(HYPER_ITERATE_SKILL, "Approval source: delegated authority");
-  ensureContains(HYPER_ITERATE_SKILL, "Part statuses: `todo | aligning | doing | done`.");
+  ensureContains(HYPER_SKILL, "**Alignment gate.**");
+  ensureContains(HYPER_SKILL, "**On resume:**");
+  ensureContains(HYPER_SKILL, "**Hot** (always):");
+  ensureContains(HYPER_SKILL, "**Warm** (when the next move needs more):");
+  ensureContains(HYPER_SKILL, "**Cold** (on demand only):");
+  ensureContains(HYPER_SKILL, ".hyper/loops/L<N>-<slug>/");
+  ensureContains(HYPER_SKILL, "No cycle starts before both gates are cleared.");
+  ensureContains(HYPER_SKILL, "Before work on `P<N>` starts, the part block must meet the current-part-block gate above");
+  ensureContains(HYPER_SKILL, "## Delegation");
+  ensureContains(HYPER_SKILL, "## Authority Modes");
+  ensureContains(HYPER_SKILL, "YOLO mode");
+  ensureContains(HYPER_SKILL, "Approval source: delegated authority");
+  ensureContains(HYPER_SKILL, "Part statuses: `todo | aligning | doing | done`.");
 
-  ensureContains(README, "/hyper-iterate L3");
+  ensureContains(README, "/hyper L3");
   ensureContains(README, "user or delegated approval");
   ensureContains(README, "YOLO/delegated authority");
   ensureContains(README, ".hyper/loops/");
@@ -378,15 +378,15 @@ function validateHyperIterate() {
 
 function validatePlanConflictRedirect() {
   // Gates contract — redirect rows and remediation redirects section.
-  ensureContains(HYPER_GATES, "`implement` | `redirect target: technical-plan`");
-  ensureContains(HYPER_GATES, "`phase: technical-plan`, `awaiting: null`");
-  ensureContains(HYPER_GATES, "`technical-plan` | `redirect target: implement`");
-  ensureContains(HYPER_GATES, "## Remediation redirects");
-  ensureContains(HYPER_GATES, "For blocked implement results from plan conflicts:");
-  ensureContains(HYPER_GATES, "For plan-conflict subtasks:");
-  ensureNotContains(HYPER_GATES, "Continue to verify?");
-  ensureNotContains(HYPER_GATES, "Continue to docs?");
-  ensureNotContains(HYPER_GATES, "Post-transition checkpoint");
+  ensureContains(HYPER_BUILD_GATES, "`implement` | `redirect target: technical-plan`");
+  ensureContains(HYPER_BUILD_GATES, "`phase: technical-plan`, `awaiting: null`");
+  ensureContains(HYPER_BUILD_GATES, "`technical-plan` | `redirect target: implement`");
+  ensureContains(HYPER_BUILD_GATES, "## Remediation redirects");
+  ensureContains(HYPER_BUILD_GATES, "For blocked implement results from plan conflicts:");
+  ensureContains(HYPER_BUILD_GATES, "For plan-conflict subtasks:");
+  ensureNotContains(HYPER_BUILD_GATES, "Continue to verify?");
+  ensureNotContains(HYPER_BUILD_GATES, "Continue to docs?");
+  ensureNotContains(HYPER_BUILD_GATES, "Post-transition checkpoint");
 
   // Data model — new artifact, new subtask enum value.
   ensureContains(DATA_MODEL, "## `plan-conflict.md`");
@@ -405,16 +405,16 @@ function validatePlanConflictRedirect() {
   ensureContains(HYPER_TECHNICAL_PLAN_SKILL, "## Invalidated subtasks");
 
   // hyper — redirect mention of the new transition.
-  ensureContains(HYPER_SKILL, "implement -> technical-plan");
-  ensureContains(HYPER_SKILL, "Continue deterministic transitions");
-  ensureNotContains(HYPER_SKILL, "Verify checkpoint");
+  ensureContains(HYPER_BUILD_SKILL, "implement -> technical-plan");
+  ensureContains(HYPER_BUILD_SKILL, "Continue deterministic transitions");
+  ensureNotContains(HYPER_BUILD_SKILL, "Verify checkpoint");
 }
 
 function validateGateMessaging() {
-  ensureContains(HYPER_GATES, "## User-facing gate messages");
-  ensureContains(HYPER_GATES, "Do not finish with only status, file links, or a gate label.");
-  ensureContains(HYPER_SKILL, "### Announce open gates");
-  ensureContains(HYPER_SKILL, "Do not rely on file attachment cards or state-probe facts as the approval ask.");
+  ensureContains(HYPER_BUILD_GATES, "## User-facing gate messages");
+  ensureContains(HYPER_BUILD_GATES, "Do not finish with only status, file links, or a gate label.");
+  ensureContains(HYPER_BUILD_SKILL, "### Announce open gates");
+  ensureContains(HYPER_BUILD_SKILL, "Do not rely on file attachment cards or state-probe facts as the approval ask.");
   ensureContains(HYPER_RESEARCH_SKILL, "Reply approve or continue to accept it");
   ensureContains(HYPER_RESEARCH_SKILL, "archive the research task");
 }
@@ -779,7 +779,7 @@ function main() {
   validateSkillFiles();
   validateReadmeAndDataModel();
   validateHyperMemoryRegistration();
-  validateHyperIterate();
+  validateHyper();
   validatePlanConflictRedirect();
   validateGateMessaging();
   validateInstallHyperCopies();

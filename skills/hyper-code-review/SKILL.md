@@ -9,7 +9,7 @@ description: >
 Review code changes for bugs, regressions, contract violations, missing tests,
 and standards problems.
 
-Resolve the Hyper state root per `../hyper/reference/state-root.md` before
+Resolve the Hyper state root per `../hyper-build/reference/state-root.md` before
 reading or writing `.hyper/` paths when working inside a Hyper task.
 
 ## Modes
@@ -39,7 +39,7 @@ Used when the user directly asks for a review.
    tracked under `.hyper/`. New tracked tasks start with `phase: review`,
    `scope: code-review`, `awaiting: null`; the `review -> done` transition
    happens at step 4 below per the `code-review` flow in
-   `../hyper/reference/data-model.md`.
+   `../hyper-build/reference/data-model.md`.
 3. Return findings first, ordered by severity, with file and line references.
 4. If tracked, write `checks.md`, set `phase: done`, and archive the folder.
 
@@ -71,11 +71,11 @@ to `checks.md` `## review`. No phase-level verdict is returned to `hyper`;
 
 **Standalone mode (invoked directly by the user or by `hyper` for a
 `scope: code-review` task).** This skill owns terminal `phase: done` and the
-archive move directly per `../hyper/reference/gates.md` ownership split — it
+archive move directly per `../hyper-build/reference/gates.md` ownership split — it
 does not return a phase verdict to `hyper`. After writing `checks.md` and any
 review notes:
 
 - if the task is tracked under `.hyper/`: set `task.md` `phase: done`, clear
-  `awaiting`, and archive the task folder per `../hyper/reference/archive.md`
+  `awaiting`, and archive the task folder per `../hyper-build/reference/archive.md`
 - if the review is untracked (no `.hyper/` task): return findings inline to
   the user with no state mutation

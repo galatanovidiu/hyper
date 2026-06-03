@@ -8,7 +8,7 @@ description: >
 
 Capture lessons from Hyper work.
 
-Resolve the Hyper state root per `../hyper/reference/state-root.md`.
+Resolve the Hyper state root per `../hyper-build/reference/state-root.md`.
 
 ## Scope
 

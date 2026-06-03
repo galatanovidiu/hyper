@@ -10,7 +10,7 @@ user-invocable: false
 You are in the **docs** phase. Update human-facing documentation when the
 verified feature-scope change needs it.
 
-Resolve the Hyper state root per `../hyper/reference/state-root.md` before
+Resolve the Hyper state root per `../hyper-build/reference/state-root.md` before
 reading or writing `.hyper/` paths.
 
 ## Inputs
@@ -34,7 +34,7 @@ reading or writing `.hyper/` paths.
 - When a load-bearing docs choice is settled (a deliberate
   non-update of a usually-affected surface, or a divergence from
   established docs convention), append a `## Decisions` entry to
-  `dashboard.md` per `../hyper/reference/dashboard.md` §Decisions log
+  `dashboard.md` per `../hyper-build/reference/dashboard.md` §Decisions log
   contract, authoring as `docs`.
 - Do not change behavior in docs phase.
 - Do not edit Hyper task artifacts other than `checks.md`.

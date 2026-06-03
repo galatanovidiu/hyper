@@ -7,7 +7,7 @@ Each rule is implemented in `evals/harness/static-checks.mjs`. The code is the s
 Run the checker from the repo root:
 
 ```bash
-node -e "import('./evals/harness/static-checks.mjs').then(m => console.log(JSON.stringify(m.runStaticChecks('skills/hyper-iterate'), null, 2)))"
+node -e "import('./evals/harness/static-checks.mjs').then(m => console.log(JSON.stringify(m.runStaticChecks('skills/hyper'), null, 2)))"
 ```
 
 The same module powers the static layer of the eval scoring framework. When an anti-pattern fires here, it also penalises the skill's static score during eval runs.

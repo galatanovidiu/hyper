@@ -18,7 +18,7 @@ The validator checks a small set of structural contracts:
 - referenced `templates/` and `reference/` files exist
 - named skill handoffs point to real shipped skills
 - README and the Hyper data model still describe the current skill inventory
-- `hyper-iterate` keeps its loop frontmatter, required sections, authority and
+- `hyper` keeps its loop frontmatter, required sections, authority and
   approval-gate sections, resume buckets, intent vocabulary, and
   no-task-artifact boundary aligned across the skill, template, README, and
   data model
@@ -32,13 +32,13 @@ These surfaces are the easiest to drift:
 
 1. **Skill inventory and counts**
    - README
-   - `skills/hyper/reference/data-model.md`
+   - `skills/hyper-build/reference/data-model.md`
    - `scripts/validate-hyper.mjs`
 
 2. **Gate protocol and transitions**
-   - `skills/hyper/SKILL.md`
+   - `skills/hyper-build/SKILL.md`
    - phase skills that set gates
-   - `skills/hyper/reference/gates.md`
+   - `skills/hyper-build/reference/gates.md`
    - README example flows
 
 3. **Phase and artifact naming**
@@ -53,10 +53,10 @@ These surfaces are the easiest to drift:
    - `skills/hyper-execution-plan-review/SKILL.md`
    - `skills/hyper-execution-plan-review/templates/05-execution-plan-review.md`
    - `skills/hyper-execution-plan/SKILL.md`
-   - `skills/hyper/reference/data-model.md`
+   - `skills/hyper-build/reference/data-model.md`
 
 5. **Worker-guardrails contract**
-   - `skills/hyper/reference/worker-guardrails.md`
+   - `skills/hyper-build/reference/worker-guardrails.md`
    - `skills/hyper-worker/SKILL.md`
    - `skills/hyper-code-review/SKILL.md`
    - dispatcher skills that mention the reference in their dispatch prompt
@@ -65,23 +65,23 @@ These surfaces are the easiest to drift:
    - `skills/hyper-verify/SKILL.md`
    - `skills/hyper-docs/SKILL.md`
    - `skills/hyper-verify/templates/checks.md`
-   - `skills/hyper/reference/data-model.md`
+   - `skills/hyper-build/reference/data-model.md`
 
-7. **`hyper-iterate` loop contract**
-   - `skills/hyper-iterate/SKILL.md`
-   - `skills/hyper-iterate/templates/loop.md`
-   - `skills/hyper/reference/data-model.md`
+7. **`hyper` loop contract**
+   - `skills/hyper/SKILL.md`
+   - `skills/hyper/templates/loop.md`
+   - `skills/hyper-build/reference/data-model.md`
    - README loop examples and wording
    - `scripts/validate-hyper.mjs`
    - optional eval hook: `scripts/eval-hooks/validate-iterate-loop.sh`
    - hard gate stays intact: authority -> understanding -> code scan -> findings -> loop plan -> part-level approvals -> cycles
 
 8. **State probe contract**
-   - `skills/hyper/scripts/state.mjs` (the read-only Node ESM probe)
-   - `skills/hyper/reference/state-root.md` (the probe's contract — invocation, output schema, category mapping, errors, env coverage, sub-skill resolution rule)
-   - `skills/hyper/reference/data-model.md` (the id-allocation references that point at the probe)
-   - the five probe-caller skills: `skills/hyper/SKILL.md` (uses `<skill-base-dir>/scripts/state.mjs`), `skills/hyper-task/SKILL.md`, `skills/hyper-backlog/SKILL.md`, `skills/hyper-iterate/SKILL.md`, `skills/hyper-memory/SKILL.md` (each uses `<skill-base-dir>/../hyper/scripts/state.mjs`)
-   - the indirect consumers — every other Hyper skill that says "Resolve the Hyper state root per `../hyper/reference/state-root.md`" relies on `state-root.md`'s **Sub-skill resolution** section. If that section is restructured or removed, walk these and update them too: `hyper-intake`, `hyper-spec`, `hyper-technical-plan`, `hyper-execution-plan`, `hyper-execution-plan-review`, `hyper-research`, `hyper-implement`, `hyper-worker`, `hyper-verify`, `hyper-docs`, `hyper-code-review`, `hyper-team`, `hyper-handoff`, `hyper-retro`, `hyper-recipe`
+   - `skills/hyper-build/scripts/state.mjs` (the read-only Node ESM probe)
+   - `skills/hyper-build/reference/state-root.md` (the probe's contract — invocation, output schema, category mapping, errors, env coverage, sub-skill resolution rule)
+   - `skills/hyper-build/reference/data-model.md` (the id-allocation references that point at the probe)
+   - the five probe-caller skills: `skills/hyper-build/SKILL.md` (uses `<skill-base-dir>/scripts/state.mjs`), `skills/hyper-task/SKILL.md`, `skills/hyper-backlog/SKILL.md`, `skills/hyper/SKILL.md`, `skills/hyper-memory/SKILL.md` (each uses `<skill-base-dir>/../hyper-build/scripts/state.mjs`)
+   - the indirect consumers — every other Hyper skill that says "Resolve the Hyper state root per `../hyper-build/reference/state-root.md`" relies on `state-root.md`'s **Sub-skill resolution** section. If that section is restructured or removed, walk these and update them too: `hyper-intake`, `hyper-spec`, `hyper-technical-plan`, `hyper-execution-plan`, `hyper-execution-plan-review`, `hyper-research`, `hyper-implement`, `hyper-worker`, `hyper-verify`, `hyper-docs`, `hyper-code-review`, `hyper-team`, `hyper-handoff`, `hyper-retro`, `hyper-recipe`
    - `scripts/validate-hyper.mjs` (presence + schema assertions, including a synthetic-fixture pass that exercises the probe against controlled inputs)
    - `.claude/skills/install-hyper/scripts/install.sh` and `.agents/skills/install-hyper/scripts/install.sh` (the `verify_probe_reachable` portability check; both files must remain byte-identical; stdout and stderr must stay separated when capturing probe output)
    - keep the probe **read-only**: no writes, no Git mutations, no new external dependencies
@@ -93,17 +93,17 @@ Do all of these together:
 
 1. add or rename the folder under `skills/`
 2. update README
-3. update `skills/hyper/reference/data-model.md` if the workflow or state model changed
+3. update `skills/hyper-build/reference/data-model.md` if the workflow or state model changed
 4. update `scripts/validate-hyper.mjs`
 5. run `node scripts/validate-hyper.mjs`
 6. grep for stale skill names and stale artifact names
 
 ## When changing the data model
 
-Treat `skills/hyper/reference/data-model.md` as authoritative. At minimum,
+Treat `skills/hyper-build/reference/data-model.md` as authoritative. At minimum,
 check:
 
-- `hyper`
+- `hyper-build`
 - `hyper-task`
 - `hyper-backlog`
 - `hyper-intake`
@@ -119,7 +119,7 @@ check:
 - `hyper-handoff`
 - `hyper-retro`
 - `hyper-recipe`
-- `hyper-iterate`
+- `hyper`
 - `hyper-short-story`
 - `hyper-memory`
 

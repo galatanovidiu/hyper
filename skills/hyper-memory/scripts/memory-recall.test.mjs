@@ -1,5 +1,5 @@
 // Tests for the SessionStart memory-recall script.
-// Run with: node --test skills/hyper/scripts/memory-recall.test.mjs
+// Run with: node --test skills/hyper-memory/scripts/memory-recall.test.mjs
 //
 // Built-ins only (node:test, node:assert). Integration cases run the script as
 // a child process with cwd set to throwaway fixture directories under the OS

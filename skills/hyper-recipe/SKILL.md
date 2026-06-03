@@ -10,7 +10,7 @@ Manage user-defined recipes in `.hyper/recipes/`. A recipe is a markdown playboo
 
 This skill runs standalone. It never creates tasks, advances phases, edits memory, or changes backlog.
 
-Before reading or writing recipes, resolve the Hyper state root per `../hyper/reference/state-root.md`. Every `.hyper/` path in this skill is relative to that root.
+Before reading or writing recipes, resolve the Hyper state root per `../hyper-build/reference/state-root.md`. Every `.hyper/` path in this skill is relative to that root.
 
 ## Recipe File Shape
 
@@ -83,7 +83,7 @@ Create a new recipe from user-provided instructions.
 
 Steps:
 
-1. Ensure `.hyper/` is bootstrapped per `../hyper/reference/bootstrap.md`, then ensure `.hyper/recipes/` exists.
+1. Ensure `.hyper/` is bootstrapped per `../hyper-build/reference/bootstrap.md`, then ensure `.hyper/recipes/` exists.
 2. Determine `name`. Use the user's explicit name if provided; otherwise derive a short kebab-case name from the recipe title or first instruction.
 3. If `.hyper/recipes/<name>.md` already exists, ask whether to update that recipe instead. Do not overwrite silently.
 4. Determine `description`. Use the user's summary if provided; otherwise write one concise sentence from the supplied steps.

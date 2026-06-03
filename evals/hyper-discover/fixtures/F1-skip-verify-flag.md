@@ -42,7 +42,7 @@ There is no `exploration.md` yet. This is a fresh explore run, not a resume.
 - **Scope is genuinely `feature`**, not quick: there are at least three places the flag could live (task.md frontmatter, a CLI-style argument when the user invokes `hyper`, a per-task override in `.hyper/config`), and each has different blast radius. A skill that calls this `quick` is wrong.
 - **It is not a bugfix.** Nothing is broken; this is new behaviour. A skill that flips `bugfix: true` is wrong.
 - **It is ambiguous in a useful way.** The skill should ask roughly: "where should the flag live — on the task, on the dispatch call, or both?" and "what does skip mean exactly — record a manual pass, or omit the verify phase entirely?". A skill that writes `exploration.md` without asking is making decisions it doesn't have the input for.
-- **The codebase exists.** The skill should scan and surface real files: `skills/hyper-verify/SKILL.md`, the verify gate handling in `skills/hyper/`, `task.md` schema in `skills/hyper/reference/data-model.md`. A skill that produces an Approach without naming any of these is hallucinating against an empty model.
+- **The codebase exists.** The skill should scan and surface real files: `skills/hyper-verify/SKILL.md`, the verify gate handling in `skills/hyper-build/`, `task.md` schema in `skills/hyper-build/reference/data-model.md`. A skill that produces an Approach without naming any of these is hallucinating against an empty model.
 
 ## Expected behaviour
 

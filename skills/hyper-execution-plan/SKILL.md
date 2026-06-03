@@ -10,10 +10,10 @@ user-invocable: false
 You are in the **execution-plan** phase. Turn the approved technical shape into
 worker-safe implementation slices.
 
-Resolve the Hyper state root per `../hyper/reference/state-root.md` before
+Resolve the Hyper state root per `../hyper-build/reference/state-root.md` before
 reading or writing `.hyper/` paths. The data model is in
-`../hyper/reference/data-model.md`. The gate contract is in
-`../hyper/reference/gates.md`.
+`../hyper-build/reference/data-model.md`. The gate contract is in
+`../hyper-build/reference/gates.md`.
 
 ## Inputs
 
@@ -65,7 +65,7 @@ reading or writing `.hyper/` paths. The data model is in
 - When a load-bearing slicing or ownership choice is settled (parallel
   vs serial decomposition, test/impl pairing strategy, conflict-driven
   re-slicing), append a `## Decisions` entry to `dashboard.md` per
-  `../hyper/reference/dashboard.md` §Decisions log contract, authoring
+  `../hyper-build/reference/dashboard.md` §Decisions log contract, authoring
   as `execution-plan`.
 
 ## Return contract

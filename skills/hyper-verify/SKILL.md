@@ -10,9 +10,9 @@ user-invocable: false
 You are in the **verify** phase. Prove the implemented work matches the
 approved artifacts.
 
-Resolve the Hyper state root per `../hyper/reference/state-root.md` before
+Resolve the Hyper state root per `../hyper-build/reference/state-root.md` before
 reading or writing `.hyper/` paths. The data model is in
-`../hyper/reference/data-model.md`.
+`../hyper-build/reference/data-model.md`.
 
 ## Inputs
 
@@ -65,7 +65,7 @@ reading or writing `.hyper/` paths. The data model is in
   decision tied to a specific upstream gap, or a `needs-changes`
   verdict whose remediation expands scope beyond the change under
   review), append a `## Decisions` entry to `dashboard.md` per
-  `../hyper/reference/dashboard.md` §Decisions log contract, authoring
+  `../hyper-build/reference/dashboard.md` §Decisions log contract, authoring
   as `verify`.
 - When a durable cross-task learning surfaces, record it in
   `.hyper/memory/` per the contract in
