@@ -52,11 +52,11 @@ ln -s ~/hyper/skills/* ~/.claude/skills/
 Other agents can point at `skills/hyper/SKILL.md` or
 `skills/hyper-build/SKILL.md` and use the matching workflow.
 
-For Claude Code, `install` also registers a `SessionStart` hook that injects a
-repo's `.hyper/memory/index.md` at the start of each session (cross-session
-recall). `uninstall` removes it and `status` reports it. The hook edits only
-`~/.claude/settings.json`; agents without that mechanism fall back to the state
-probe, which surfaces the same index.
+Cross-session recall is agent-driven, not a hook: the state probe reports a
+`learnings` pointer and the entry-point skills read `.hyper/memory/index.md`
+when it exists. This works the same across every agent, with no `settings.json`
+mutation. (`install` and `uninstall` strip the old `SessionStart` recall hook
+from `~/.claude/settings.json` if an earlier Hyper version registered one.)
 
 ## Companion Skills
 
