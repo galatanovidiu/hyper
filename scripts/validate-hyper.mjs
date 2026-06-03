@@ -25,6 +25,8 @@ const HYPER_WORKER_SKILL = path.join(ROOT, "skills", "hyper-worker", "SKILL.md")
 const HYPER_TECHNICAL_PLAN_SKILL = path.join(ROOT, "skills", "hyper-technical-plan", "SKILL.md");
 const HYPER_RESEARCH_SKILL = path.join(ROOT, "skills", "hyper-research", "SKILL.md");
 const STATE_PROBE = path.join(ROOT, "skills", "hyper", "scripts", "state.mjs");
+const INSTALL_HYPER_CLAUDE = path.join(ROOT, ".claude", "skills", "install-hyper");
+const INSTALL_HYPER_AGENTS = path.join(ROOT, ".agents", "skills", "install-hyper");
 
 const USER_FACING_HYPER = new Set([
   "hyper",
@@ -705,12 +707,31 @@ function validateStateProbe() {
   validateStateProbeSchema(snapshot, `${STATE_PROBE} repo stdout`);
 }
 
+// install-hyper is bootstrapped as physical copies in each agent dir (it
+// cannot symlink itself), so the copies can silently diverge — a blind
+// find-replace once mangled the .agents SKILL.md. Assert the .claude and
+// .agents copies stay byte-identical so any future drift fails validation.
+function validateInstallHyperCopies() {
+  const files = ["SKILL.md", path.join("scripts", "install.sh")];
+  for (const rel of files) {
+    const a = path.join(INSTALL_HYPER_CLAUDE, rel);
+    const b = path.join(INSTALL_HYPER_AGENTS, rel);
+    if (!ensureFile(a) || !ensureFile(b)) continue;
+    if (read(a) !== read(b)) {
+      fail(
+        `install-hyper copies diverge: ${relativeToRoot(a)} != ${relativeToRoot(b)} (the .claude and .agents copies must be byte-identical)`,
+      );
+    }
+  }
+}
+
 function main() {
   validateSkillFiles();
   validateReadmeAndDataModel();
   validateHyperIterate();
   validatePlanConflictRedirect();
   validateGateMessaging();
+  validateInstallHyperCopies();
   validateStateProbe();
 
   if (ERRORS.length > 0) {
