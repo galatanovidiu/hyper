@@ -271,7 +271,7 @@ function validateHyperMemoryRegistration() {
 
   // Migration guard: LEGACY_COMMANDS must still carry the T70 command string
   // (the recall script's pre-split path under the hyper skill). The merge
-  // program strips every LEGACY_COMMANDS entry during register/unregister, so
+  // program strips every LEGACY_COMMANDS entry during unregister, so
   // dropping this string would silently break migration off an old install,
   // leaving the legacy hook running alongside the new one. Asserting the bare
   // command string is present keeps that migration path covered.
