@@ -306,7 +306,7 @@ recall_hook_command='{ test -f "$HOME/.claude/skills/hyper-memory/scripts/memory
 hook_node_source() {
   cat <<'NODE_EOF'
 // Manage the Hyper SessionStart recall hook in a Claude Code settings.json.
-// Verbs (argv[2]): register | unregister | status.
+// Verbs (argv[2]): unregister | status.
 // Inputs via env: HYPER_SETTINGS_FILE (path), HYPER_RECALL_CMD (command).
 // Fail-safe: validate, compare-and-swap on content hash, safe backup, atomic
 // rename. Abort (touch nothing) on invalid JSON or concurrent edit.
@@ -323,7 +323,7 @@ const MATCHERS = ["startup", "resume", "clear"];
 // Every command this installer owns: the current command (HYPER_RECALL_CMD)
 // plus every known legacy command string from earlier Hyper versions. A
 // machine that ran an older installer carries a legacy command pointing at a
-// previous script path; normalize must strip those so recall never runs twice.
+// previous script path; unregister strips those so no stale recall hook lingers.
 // Legacy strings are matched verbatim — keep each one exactly as the version
 // that shipped it wrote it.
 const LEGACY_COMMANDS = [
@@ -374,10 +374,11 @@ function readValidated() {
   return { text, data };
 }
 
-// Is the config already normalized? True only when the current command is
-// present under all three matchers AND no managed command (current or legacy)
-// is stale anywhere in the SessionStart config. A legacy command lingering
-// under any matcher makes this false so register re-normalizes and removes it.
+// Does `status` consider the hook registered? True only when the current
+// command is present under all three matchers AND no managed command (current
+// or legacy) is stale anywhere in the SessionStart config. A legacy command
+// lingering under any matcher makes this false, so status reports
+// "not-registered" and the caller knows cleanup still has work to do.
 function isRegistered(data) {
   const groups = data?.hooks?.SessionStart;
   if (!Array.isArray(groups)) return false;
@@ -397,37 +398,6 @@ function isRegistered(data) {
   return MATCHERS.every((m) => seenUnderMatcher.has(m));
 }
 
-// Is the config already in the exact normalized shape, so register can report
-// "unchanged" and skip the rewrite? Stricter than isRegistered: it also
-// rejects duplicates. True only when the current command appears exactly once
-// under each owned matcher, never under any non-owned matcher, and no legacy
-// command exists anywhere. This is order-insensitive: a config that satisfies
-// these counts but lists the matcher groups in a different order is treated as
-// already normalized and left untouched, so a reorder is never a rewrite.
-// (normalize() is idempotent on any config that passes this check.)
-function isNormalized(data) {
-  const groups = data?.hooks?.SessionStart;
-  if (!Array.isArray(groups)) return false;
-  const countUnderMatcher = new Map();
-  for (const m of MATCHERS) countUnderMatcher.set(m, 0);
-  for (const group of groups) {
-    if (!group || !Array.isArray(group.hooks)) continue;
-    const matcherOwned = MATCHERS.includes(group.matcher);
-    for (const h of group.hooks) {
-      if (!h || h.type !== "command") continue;
-      // Any legacy managed command anywhere means the config is stale.
-      if (LEGACY_COMMANDS.includes(h.command)) return false;
-      if (h.command === command) {
-        // The current command under a non-owned matcher is not normalized.
-        if (!matcherOwned) return false;
-        countUnderMatcher.set(group.matcher, countUnderMatcher.get(group.matcher) + 1);
-      }
-    }
-  }
-  // Exactly one current command under each owned matcher: no missing, no dupes.
-  return MATCHERS.every((m) => countUnderMatcher.get(m) === 1);
-}
-
 // Is any managed command (current or legacy) present anywhere in the
 // SessionStart config? Drives unregister so a legacy-only machine still gets
 // cleaned even though isRegistered (the normalized predicate) returns false.
@@ -441,49 +411,6 @@ function hasManagedCommand(data) {
     }
   }
   return false;
-}
-
-// Normalize the SessionStart config to exactly the current command under each
-// of the three matcher groups: strip every managed command (current + legacy)
-// from all groups, then add the current command once under startup / resume /
-// clear, reusing an existing group with the same matcher. Leaves every
-// unrelated hook and matcher group in place. Mutates `data` in place.
-function normalize(data) {
-  if (!data.hooks || typeof data.hooks !== "object" || Array.isArray(data.hooks)) {
-    data.hooks = {};
-  }
-  if (!Array.isArray(data.hooks.SessionStart)) {
-    data.hooks.SessionStart = [];
-  }
-  let groups = data.hooks.SessionStart;
-  // Strip every managed command (current + legacy) from every group.
-  for (const group of groups) {
-    if (!group || !Array.isArray(group.hooks)) continue;
-    group.hooks = group.hooks.filter(
-      (h) => !(h && h.type === "command" && MANAGED_COMMANDS.includes(h.command))
-    );
-  }
-  // Prune matcher groups we own that are now empty, so a leftover legacy-only
-  // group does not survive as a bare { matcher, hooks: [] } shell. Groups we
-  // do not own are never pruned.
-  groups = groups.filter((group) => {
-    if (!group || !Array.isArray(group.hooks)) return true;
-    if (MATCHERS.includes(group.matcher) && group.hooks.length === 0) return false;
-    return true;
-  });
-  data.hooks.SessionStart = groups;
-  // Add the current command once under each owned matcher.
-  for (const matcher of MATCHERS) {
-    let group = groups.find((g) => g && g.matcher === matcher);
-    if (!group) {
-      group = { matcher, hooks: [] };
-      groups.push(group);
-    }
-    if (!Array.isArray(group.hooks)) {
-      group.hooks = [];
-    }
-    group.hooks.push({ type: "command", command });
-  }
 }
 
 // Remove every managed command (current + legacy) from the SessionStart
@@ -580,25 +507,6 @@ try {
   // the env var points at a file to copy over the target.
   if (process.env.HYPER_TEST_CONCURRENT_EDIT) {
     fs.writeFileSync(file, fs.readFileSync(process.env.HYPER_TEST_CONCURRENT_EDIT, "utf8"));
-  }
-
-  if (verb === "register") {
-    const data = parsed === null ? {} : parsed.data;
-    const originalText = parsed === null ? null : parsed.text;
-    // Fast path: an existing config that is already in the normalized shape is
-    // left exactly as it is on disk — no normalize, no write. This is semantic,
-    // not byte-based: a config that differs only in matcher-group order is
-    // already correct (command active under all three matchers, no dupes, no
-    // legacy) so we report "unchanged" and never rewrite it. A brand-new file
-    // (parsed === null) always falls through to normalize + write.
-    if (parsed !== null && isNormalized(data)) {
-      console.log("unchanged");
-      process.exit(0);
-    }
-    normalize(data);
-    safeWrite(data, originalText);
-    console.log("registered");
-    process.exit(0);
   }
 
   if (verb === "unregister") {
