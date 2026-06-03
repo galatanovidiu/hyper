@@ -17,17 +17,17 @@ that own them.
 
 ## Invocation
 
-There is exactly one probe binary. It lives in the `hyper` skill folder
-because (a) the `hyper` skill owns the routing surface the probe describes,
+There is exactly one probe binary. It lives in the `hyper-build` skill folder
+because (a) the `hyper-build` skill owns the routing surface the probe describes,
 and (b) keeping it in one folder lets `install-hyper` symlink it across
 runtime skill roots without copying. Sibling Hyper skills (`hyper-task`,
-`hyper-backlog`, `hyper-iterate`, etc.) reach the same binary through the
+`hyper-backlog`, `hyper`, etc.) reach the same binary through the
 sibling-folder path because `install-hyper` symlinks every Hyper skill as a
 sibling under each runtime's skills root (`~/.claude/skills/hyper/`,
 `~/.claude/skills/hyper-task/`, etc.). That sibling layout is the invariant
 the two call paths depend on.
 
-From the `hyper` skill itself:
+From the `hyper-build` skill itself:
 
 ```bash
 node "<skill-base-dir>/scripts/state.mjs" [--from <abs-path>]
@@ -36,14 +36,14 @@ node "<skill-base-dir>/scripts/state.mjs" [--from <abs-path>]
 From any sibling Hyper skill:
 
 ```bash
-node "<skill-base-dir>/../hyper/scripts/state.mjs" [--from <abs-path>]
+node "<skill-base-dir>/../hyper-build/scripts/state.mjs" [--from <abs-path>]
 ```
 
 - `<skill-base-dir>` is announced by the runtime as "Base directory for this
   skill" when the skill is loaded. Use that path verbatim; never hard-code
   `~/.claude/`, `~/.codex/`, or any other runtime-specific prefix.
 - A new sibling skill follows the same rule: the probe is always reachable
-  at `../hyper/scripts/state.mjs` relative to that skill's base.
+  at `../hyper-build/scripts/state.mjs` relative to that skill's base.
 - `--from <abs-path>` is the only optional flag. It supplies an absolute path
   hint when the agent already knows it is operating against a specific
   `.hyper/` location (for example, a path passed in from another tool). The
@@ -62,10 +62,10 @@ responsibility vs. the parent's)
 Hyper skills fall into two categories for this purpose:
 
 - **Probe callers** — every skill that handles a user-typed entry point or
-  that runs as the orchestrator. Today these are `hyper`, `hyper-task`,
-  `hyper-backlog`, `hyper-iterate`. They call the probe at session entry and
+  that runs as the orchestrator. Today these are `hyper-build`, `hyper-task`,
+  `hyper-backlog`, `hyper`. They call the probe at session entry and
   pass the result down through routing.
-- **Sub-skills** — every skill that `hyper` dispatches as part of the
+- **Sub-skills** — every skill that `hyper-build` dispatches as part of the
   phased workflow: `hyper-intake`, `hyper-spec`, `hyper-technical-plan`,
   `hyper-execution-plan`, `hyper-execution-plan-review`, `hyper-research`,
   `hyper-implement`, `hyper-worker`, `hyper-verify`, `hyper-docs`,
@@ -76,7 +76,7 @@ Hyper skills fall into two categories for this purpose:
   do not call the probe themselves.
 
 When a sub-skill SKILL.md says "Resolve the Hyper state root per
-`../hyper/reference/state-root.md`", read it as: *use the `state_root` that
+`../hyper-build/reference/state-root.md`", read it as: *use the `state_root` that
 the calling skill already resolved through the probe*. If a sub-skill is
 ever invoked standalone (no parent probe call), it should fall back to
 calling the probe itself using the sibling-skill invocation above.
@@ -146,7 +146,7 @@ Archived tasks usually carry `category: terminal`.
 | `title` | string \| null | Human-readable title. |
 | `status` | string | Always `active` for entries in this list. |
 | `updated` | string \| null | Last cycle or metadata update timestamp. |
-| `path` | string | Repo-relative folder path, e.g. `.hyper/loops/L5-hyper-iterate-tuneup/`. |
+| `path` | string | Repo-relative folder path, e.g. `.hyper/loops/L5-slow-report-tuneup/`. |
 
 ### `backlog_entries[*]`
 

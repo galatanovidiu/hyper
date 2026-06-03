@@ -30,7 +30,7 @@ The agent running this skill is always the **team lead**. The agent(s) being cal
 
 This skill works from any agent platform. Claude can lead Codex. Codex can lead Gemini. Any agent with Hyper can lead any other.
 
-Resolve the Hyper state root per `../hyper/reference/state-root.md` before reading or writing `.hyper/team/` paths. Codebase context, diffs, and teammate CLI commands still run in the current working tree.
+Resolve the Hyper state root per `../hyper-build/reference/state-root.md` before reading or writing `.hyper/team/` paths. Codebase context, diffs, and teammate CLI commands still run in the current working tree.
 
 ## Workflow
 

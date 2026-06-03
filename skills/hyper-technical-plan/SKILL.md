@@ -10,10 +10,10 @@ user-invocable: false
 You are in the **technical-plan** phase. Decide how the accepted change should
 be built in this codebase.
 
-Resolve the Hyper state root per `../hyper/reference/state-root.md` before
+Resolve the Hyper state root per `../hyper-build/reference/state-root.md` before
 reading or writing `.hyper/` paths. The data model is in
-`../hyper/reference/data-model.md`. The gate contract is in
-`../hyper/reference/gates.md`.
+`../hyper-build/reference/data-model.md`. The gate contract is in
+`../hyper-build/reference/gates.md`.
 
 ## Inputs
 
@@ -122,7 +122,7 @@ reading or writing `.hyper/` paths. The data model is in
 
 - When the chosen approach is settled (or when a conflict-revision
   re-opens an alternative), append a `## Decisions` entry to
-  `dashboard.md` per `../hyper/reference/dashboard.md` §Decisions log
+  `dashboard.md` per `../hyper-build/reference/dashboard.md` §Decisions log
   contract, authoring as `technical-plan`.
 - `quick` tasks still get a real technical plan, but keep it short and local.
 - `feature` tasks should compare plausible approaches and recommend one.

@@ -10,10 +10,10 @@ user-invocable: false
 You are in the **research** phase. Investigate the question and produce a
 recommendation, not an implementation plan.
 
-Resolve the Hyper state root per `../hyper/reference/state-root.md` before
+Resolve the Hyper state root per `../hyper-build/reference/state-root.md` before
 reading or writing `.hyper/` paths. The data model is in
-`../hyper/reference/data-model.md`. The gate contract is in
-`../hyper/reference/gates.md`.
+`../hyper-build/reference/data-model.md`. The gate contract is in
+`../hyper-build/reference/gates.md`.
 
 ## Inputs
 
@@ -53,7 +53,7 @@ archive the research task, or tell me what to change in research.md.`
 ## Rules
 
 - When the recommendation is settled, append a `## Decisions` entry
-  to `dashboard.md` per `../hyper/reference/dashboard.md` §Decisions
+  to `dashboard.md` per `../hyper-build/reference/dashboard.md` §Decisions
   log contract, authoring as `research`.
 - When a durable cross-task learning surfaces, record it in
   `.hyper/memory/` per the contract in

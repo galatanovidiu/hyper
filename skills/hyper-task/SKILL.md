@@ -10,11 +10,11 @@ Manage task state without running the workflow.
 
 Call the state probe once at session start:
 
-    node "<skill-base-dir>/../hyper/scripts/state.mjs"
+    node "<skill-base-dir>/../hyper-build/scripts/state.mjs"
 
-`<skill-base-dir>` is the path printed at skill load as "Base directory for this skill". The probe lives in the sibling `hyper` skill folder — `install-hyper` symlinks all Hyper skills side by side, so `../hyper/scripts/state.mjs` resolves from any sibling skill base. Parse the JSON output and route all subsequent decisions (state root, active tasks, next task id) from its fields. Do not re-scan folders or re-read individual `task.md` frontmatter for routing or id allocation.
+`<skill-base-dir>` is the path printed at skill load as "Base directory for this skill". The probe lives in the sibling `hyper-build` skill folder — `install-hyper` symlinks all Hyper skills side by side, so `../hyper-build/scripts/state.mjs` resolves from any sibling skill base. Parse the JSON output and route all subsequent decisions (state root, active tasks, next task id) from its fields. Do not re-scan folders or re-read individual `task.md` frontmatter for routing or id allocation.
 
-The probe implements `../hyper/reference/state-root.md`. Read `../hyper/reference/data-model.md` before changing task state.
+The probe implements `../hyper-build/reference/state-root.md`. Read `../hyper-build/reference/data-model.md` before changing task state.
 
 ## Operations
 
@@ -63,12 +63,12 @@ Create a tracked task the user does not want to start yet.
 3. Draft the task body from the user's request and optionally carry over a
    `## Why` section when the request already contains a clear motivation.
 4. Create `.hyper/tasks/T<N>-<slug>/task.md` from
-   `../hyper/templates/task.md`, using the drafted body and:
+   `../hyper-build/templates/task.md`, using the drafted body and:
    - `phase: deferred`
    - `scope: unknown`
    - `bugfix: false`
    - `awaiting: null`
-5. Seed `dashboard.md` from `../hyper/templates/dashboard.md`, filling `## Goal`
+5. Seed `dashboard.md` from `../hyper-build/templates/dashboard.md`, filling `## Goal`
    from the task body and leaving other computed sections as placeholders.
 6. Report: `Created T<N> — <title> (deferred). Invoke hyper T<N> when ready.`
 

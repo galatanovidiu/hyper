@@ -10,10 +10,10 @@ user-invocable: false
 You are in the **spec** phase. Decide the right change before deciding the
 technical shape.
 
-Resolve the Hyper state root per `../hyper/reference/state-root.md` before
+Resolve the Hyper state root per `../hyper-build/reference/state-root.md` before
 reading or writing `.hyper/` paths. The data model is in
-`../hyper/reference/data-model.md`. The gate contract is in
-`../hyper/reference/gates.md`.
+`../hyper-build/reference/data-model.md`. The gate contract is in
+`../hyper-build/reference/gates.md`.
 
 ## Inputs
 
@@ -52,7 +52,7 @@ reading or writing `.hyper/` paths. The data model is in
   changes accepted outcomes, an opt-out from a usually-required
   acceptance signal, or a constraint that closes off a downstream
   approach), append a `## Decisions` entry to `dashboard.md` per
-  `../hyper/reference/dashboard.md` §Decisions log contract, authoring
+  `../hyper-build/reference/dashboard.md` §Decisions log contract, authoring
   as `spec`.
 
 ## Return contract

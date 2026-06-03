@@ -9,9 +9,9 @@ user-invocable: false
 
 Implement exactly one subtask.
 
-Resolve the Hyper state root per `../hyper/reference/state-root.md` before
+Resolve the Hyper state root per `../hyper-build/reference/state-root.md` before
 reading or writing `.hyper/` paths. Read
-`../hyper/reference/worker-guardrails.md` before editing code.
+`../hyper-build/reference/worker-guardrails.md` before editing code.
 
 ## Inputs
 

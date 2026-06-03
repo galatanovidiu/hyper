@@ -9,7 +9,7 @@ description: >
 Capture what this session knows that is not already on disk, so the next
 session can pick up without re-deriving.
 
-Resolve the Hyper state root per `../hyper/reference/state-root.md`.
+Resolve the Hyper state root per `../hyper-build/reference/state-root.md`.
 
 ## When to use
 

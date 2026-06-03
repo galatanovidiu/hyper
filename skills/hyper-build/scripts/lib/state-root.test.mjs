@@ -1,5 +1,5 @@
 // Tests for the shared state-root resolver.
-// Run with: node --test skills/hyper/scripts/lib/state-root.test.mjs
+// Run with: node --test skills/hyper-build/scripts/lib/state-root.test.mjs
 //
 // Built-ins only (node:test, node:assert). Git-dependent cases build real
 // throwaway repos under the OS temp dir and skip cleanly if `git` is missing.

@@ -10,9 +10,9 @@ user-invocable: false
 Review `04-execution-plan.md` and the subtask files before implementation
 starts.
 
-Resolve the Hyper state root per `../hyper/reference/state-root.md` before
+Resolve the Hyper state root per `../hyper-build/reference/state-root.md` before
 reading or writing `.hyper/` paths. The data model is in
-`../hyper/reference/data-model.md`.
+`../hyper-build/reference/data-model.md`.
 
 ## Inputs
 

@@ -4,13 +4,13 @@ Hyper is a lightweight workflow for AI coding agents.
 
 It ships two workflows for work that should not live inside one long prompt:
 
-- **`hyper`** — **phased**:
-  `intake -> spec -> technical-plan -> execution-plan -> implement -> verify -> docs -> done`.
-  Approval gates at the points where direction matters.
-- **`hyper-iterate`** — **adaptive**:
+- **`hyper`** — **adaptive** (the main workflow):
   `observe -> orient -> decide -> act`, repeated. One agreed plan up front,
   then bounded cycles that course-correct on real evidence. It can run with
   interactive approval gates or with explicitly delegated YOLO authority.
+- **`hyper-build`** — **phased**:
+  `intake -> spec -> technical-plan -> execution-plan -> implement -> verify -> docs -> done`.
+  Approval gates at the points where direction matters.
 
 Both are delivered as [Agent Skills](https://agentskills.io): plain markdown
 files an agent can load. There is no CLI, plugin, server, database, or hidden
@@ -18,13 +18,13 @@ state. Workflow state lives in `.hyper/` inside your project.
 
 ## When To Use Which
 
-| Use **`hyper`** when                                       | Use **`hyper-iterate`** when                                          |
-| ---------------------------------------------------------- | --------------------------------------------------------------------- |
-| Destination and route are both stable up front             | Destination known, but the route must evolve through evidence         |
-| Phased gates fit (spec, plan, build, verify)               | Goal still forming and needs probing before commitment                |
-| Work does not need mid-flight re-routing                   | Reality is likely to reshape the plan once work starts                |
-| You want every artifact (spec, plan, subtasks) on disk     | You want one persistent log of cycles, decisions, and route shifts    |
-| Examples: feature, refactor, non-trivial bugfix            | Examples: investigation, prototype, tune-up, multi-session R&D        |
+| Use **`hyper`** when                                       | Use **`hyper-build`** when                                 |
+| ---------------------------------------------------------- | ---------------------------------------------------------- |
+| Destination known, but the route must evolve through evidence | Destination and route are both stable up front          |
+| Goal still forming and needs probing before commitment     | Phased gates fit (spec, plan, build, verify)               |
+| Reality is likely to reshape the plan once work starts     | Work does not need mid-flight re-routing                   |
+| You want one persistent log of cycles, decisions, and route shifts | You want every artifact (spec, plan, subtasks) on disk |
+| Examples: investigation, prototype, tune-up, multi-session R&D | Examples: feature, refactor, non-trivial bugfix         |
 
 Skip both for tiny, obvious edits.
 
@@ -50,7 +50,7 @@ ln -s ~/hyper/skills/* ~/.claude/skills/
 ```
 
 Other agents can point at `skills/hyper/SKILL.md` or
-`skills/hyper-iterate/SKILL.md` and use the matching workflow.
+`skills/hyper-build/SKILL.md` and use the matching workflow.
 
 For Claude Code, `install` also registers a `SessionStart` hook that injects a
 repo's `.hyper/memory/index.md` at the start of each session (cross-session
@@ -62,17 +62,94 @@ probe, which surfaces the same index.
 
 Hyper depends on a few external skills hosted at
 [mattpocock/skills](https://github.com/mattpocock/skills). The most important
-one for `hyper-iterate` is `grill-me`, which pressure-tests the loop plan and
+one for `hyper` is `grill-me`, which pressure-tests the loop plan and
 each part plan before approval. Install those skills alongside Hyper if you
 intend to use the adaptive workflow.
 
-For delegated `hyper-iterate` runs, install a decision-proxy skill such as
+For delegated `hyper` runs, install a decision-proxy skill such as
 `hyper-team` too. In YOLO mode, Hyper uses specialist agents for bounded
 approval and route decisions instead of interrupting you for every gate.
 
-## Workflow 1 — `hyper` (phased)
+## Workflow 1 — `hyper` (adaptive)
 
-Use `hyper` when the cost of losing context is higher than the cost of a
+Use `hyper` when the destination is known well enough to start but
+the route must evolve through contact with reality, or when the goal itself
+is still forming and needs probing before commitment:
+
+- iterative work where each move feeds the next decision
+- prototypes and throwaway probes before committing to a route
+- multi-session investigations that need context to survive interrupts
+- a big goal that should be split into adaptive parts, not a rigid plan
+- anything where reality is likely to reshape the plan mid-flight
+
+### Phases
+
+| Phase                | Purpose                                                                                                                                              |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Load and Route`     | Resume the right loop or create a new one. Re-check project rules and capability bindings.                                                           |
+| `Align`              | An alignment pass: restate the request, scan the codebase, agree the **loop plan** and current **part plan**, then pressure-test before user or delegated approval. |
+| `Cycle`              | One coherent observe → orient → decide → act move at a time. Each cycle picks an intent and an evidence-backed next step.                            |
+| `Verify and Close`   | Run tests, code review, docs check, and definition-of-done check. The loop flips to `done` only on a passing verify entry.                           |
+
+Cycle intents: `probe`, `implement`, `validate`, `reroute`, `reframe`, `stop`.
+
+Approval gates happen after the loop plan and after every new part plan. By
+default those gates ask you. If you explicitly grant YOLO/delegated authority,
+`hyper` records that authority in `loop.md` and uses specialist agents
+to decide routine approvals and route choices inside the stated goal.
+
+Delegated authority is bounded. Hyper still stops for you when the goal,
+definition of done, or non-negotiables would change; when destructive actions,
+security/privacy/legal risk, external side effects, or material cost appear;
+when public behavior would change outside the approved goal; when a loop would
+close without verify; or when proxy agents disagree.
+
+### Example
+
+```text
+You: /hyper Investigate slow report generation and try a fix.
+Agent: Created L3 — slow-report-investigation. Starting adaptive loop.
+Agent: Loop plan — probe DB query plans first, then test caching vs. denormalization. Approve?
+You: approve
+Agent: Cycle 1 (probe). Captured slow EXPLAIN output. Learning: missing index on report_runs(user_id, created_at).
+Agent: Cycle 2 (implement). Added the index. Evidence: 3.4s -> 180ms on hot path.
+Agent: Cycle 3 (validate). Confirmed across three sample tenants. Next: close.
+Agent: Verify pass. Closed L3.
+```
+
+Resume later:
+
+```text
+/hyper L3
+```
+
+### What it writes
+
+```text
+.hyper/loops/L3-slow-report-investigation/
+  loop.md
+  cycle1-explain-output.txt
+  verify1-2026-05-14.txt
+```
+
+`loop.md` is the canonical state file. It carries goal, why, constraints,
+definition of done, loop plan, current route, current focus, current bar,
+parts, part alignment, evidence digest, cycles (append-only), verify entries
+(append-only), and outcome. Optional evidence files (logs, diffs, screenshots)
+live next to it and are referenced from `## Relevant artifacts`.
+
+### Terminology
+
+- **Loop** — the whole tracked unit of work, persisted in `.hyper/loops/L<N>-<slug>/`.
+- **Loop plan** — the agreed top-level approach for the loop.
+- **Part** — one bounded scope inside the loop. Numbered `P<N>`, append-only.
+- **Part plan** — the agreed approach for one part.
+- **Cycle** — one coherent observe-orient-decide-act move. Numbered `Cycle N`, append-only.
+- **Verify entry** — one record of running the verify gate. Numbered `Verify N`, append-only.
+
+## Workflow 2 — `hyper-build` (phased)
+
+Use `hyper-build` when the cost of losing context is higher than the cost of a
 little structure:
 
 - features and large refactors
@@ -117,7 +194,7 @@ owning phase without asking for a bare "continue".
 ### Example
 
 ```text
-You: /hyper Add a login page with email and password, and keep the session after reload.
+You: /hyper-build Add a login page with email and password, and keep the session after reload.
 Agent: Wrote 01-intake.md. Review the framing and route.
 You: approve
 Agent: Wrote 02-spec.md. Approve to continue.
@@ -132,7 +209,7 @@ Agent: Implements, verifies, updates docs, and archives the finished task.
 Resume later:
 
 ```text
-/hyper T3
+/hyper-build T3
 ```
 
 ### What it writes
@@ -165,92 +242,15 @@ Most useful files:
   assumption, evidence, and revival signal so the design phase can revise
   against a concrete trigger
 
-## Workflow 2 — `hyper-iterate` (adaptive)
-
-Use `hyper-iterate` when the destination is known well enough to start but
-the route must evolve through contact with reality, or when the goal itself
-is still forming and needs probing before commitment:
-
-- iterative work where each move feeds the next decision
-- prototypes and throwaway probes before committing to a route
-- multi-session investigations that need context to survive interrupts
-- a big goal that should be split into adaptive parts, not a rigid plan
-- anything where reality is likely to reshape the plan mid-flight
-
-### Phases
-
-| Phase                | Purpose                                                                                                                                              |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Load and Route`     | Resume the right loop or create a new one. Re-check project rules and capability bindings.                                                           |
-| `Align`              | An alignment pass: restate the request, scan the codebase, agree the **loop plan** and current **part plan**, then pressure-test before user or delegated approval. |
-| `Cycle`              | One coherent observe → orient → decide → act move at a time. Each cycle picks an intent and an evidence-backed next step.                            |
-| `Verify and Close`   | Run tests, code review, docs check, and definition-of-done check. The loop flips to `done` only on a passing verify entry.                           |
-
-Cycle intents: `probe`, `implement`, `validate`, `reroute`, `reframe`, `stop`.
-
-Approval gates happen after the loop plan and after every new part plan. By
-default those gates ask you. If you explicitly grant YOLO/delegated authority,
-`hyper-iterate` records that authority in `loop.md` and uses specialist agents
-to decide routine approvals and route choices inside the stated goal.
-
-Delegated authority is bounded. Hyper still stops for you when the goal,
-definition of done, or non-negotiables would change; when destructive actions,
-security/privacy/legal risk, external side effects, or material cost appear;
-when public behavior would change outside the approved goal; when a loop would
-close without verify; or when proxy agents disagree.
-
-### Example
-
-```text
-You: /hyper-iterate Investigate slow report generation and try a fix.
-Agent: Created L3 — slow-report-investigation. Starting adaptive loop.
-Agent: Loop plan — probe DB query plans first, then test caching vs. denormalization. Approve?
-You: approve
-Agent: Cycle 1 (probe). Captured slow EXPLAIN output. Learning: missing index on report_runs(user_id, created_at).
-Agent: Cycle 2 (implement). Added the index. Evidence: 3.4s -> 180ms on hot path.
-Agent: Cycle 3 (validate). Confirmed across three sample tenants. Next: close.
-Agent: Verify pass. Closed L3.
-```
-
-Resume later:
-
-```text
-/hyper-iterate L3
-```
-
-### What it writes
-
-```text
-.hyper/loops/L3-slow-report-investigation/
-  loop.md
-  cycle1-explain-output.txt
-  verify1-2026-05-14.txt
-```
-
-`loop.md` is the canonical state file. It carries goal, why, constraints,
-definition of done, loop plan, current route, current focus, current bar,
-parts, part alignment, evidence digest, cycles (append-only), verify entries
-(append-only), and outcome. Optional evidence files (logs, diffs, screenshots)
-live next to it and are referenced from `## Relevant artifacts`.
-
-### Terminology
-
-- **Loop** — the whole tracked unit of work, persisted in `.hyper/loops/L<N>-<slug>/`.
-- **Loop plan** — the agreed top-level approach for the loop.
-- **Part** — one bounded scope inside the loop. Numbered `P<N>`, append-only.
-- **Part plan** — the agreed approach for one part.
-- **Cycle** — one coherent observe-orient-decide-act move. Numbered `Cycle N`, append-only.
-- **Verify entry** — one record of running the verify gate. Numbered `Verify N`, append-only.
-
 ## What `.hyper/` Looks Like
 
 Both workflows share one project-local state directory:
 
 ```text
 .hyper/
-  tasks/         # hyper (phased) work
+  tasks/         # hyper-build (phased) work
     T1-add-login-page/...
-  loops/         # hyper-iterate (adaptive) work
+  loops/         # hyper (adaptive) work
     L3-slow-report-investigation/...
   archive/
   backlog.md
@@ -274,7 +274,7 @@ gotchas surface during work.
 User-facing skill names:
 
 - `hyper`
-- `hyper-iterate`
+- `hyper-build`
 - `hyper-task`
 - `hyper-backlog`
 - `hyper-handoff`
@@ -288,10 +288,10 @@ User-facing skill names:
 
 | Command                   | Use it for                                                              |
 | ------------------------- | ----------------------------------------------------------------------- |
-| `/hyper <request>`        | Start phased work.                                                      |
-| `/hyper T<N>`             | Resume a task.                                                          |
-| `/hyper-iterate <goal>`   | Start adaptive work.                                                    |
-| `/hyper-iterate L<N>`     | Resume a loop.                                                          |
+| `/hyper <goal>`           | Start adaptive work.                                                    |
+| `/hyper L<N>`             | Resume a loop.                                                          |
+| `/hyper-build <request>`  | Start phased work.                                                      |
+| `/hyper-build T<N>`       | Resume a task.                                                          |
 | `/hyper-task`             | List, create, defer, cancel, or inspect tasks.                          |
 | `/hyper-backlog`          | Add, list, promote, or drop future ideas.                               |
 | `/hyper-handoff`          | Write a handoff when conversation context would be lost.                |
@@ -306,7 +306,7 @@ User-facing skill names:
 Internal skills such as `hyper-intake`, `hyper-spec`, `hyper-technical-plan`,
 `hyper-execution-plan`, `hyper-execution-plan-review`, `hyper-research`,
 `hyper-implement`, `hyper-worker`, `hyper-verify`, and `hyper-docs` are
-invoked by `hyper`; you usually do not call them directly.
+invoked by `hyper-build`; you usually do not call them directly.
 
 ## Working On Hyper
 
@@ -326,6 +326,6 @@ Hyper stays intentionally small:
 - The agent reads and writes those files directly.
 - Approval gates happen after the artifacts that set direction.
 - Verification is part of the workflow, not an optional afterthought.
-- Two workflow shapes for two shapes of work — phased when direction is clear
-  up front, adaptive when it has to evolve.
+- Two workflow shapes for two shapes of work — adaptive when the route has to
+  evolve, phased when direction is clear up front.
 - Large work gets structure; tiny work should stay tiny.

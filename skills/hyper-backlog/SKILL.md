@@ -10,11 +10,11 @@ Manage `.hyper/backlog.md`, the idea inbox before work becomes a task.
 
 Call the state probe once at session start:
 
-    node "<skill-base-dir>/../hyper/scripts/state.mjs"
+    node "<skill-base-dir>/../hyper-build/scripts/state.mjs"
 
-`<skill-base-dir>` is the path printed at skill load as "Base directory for this skill". The probe lives in the sibling `hyper` skill folder — `install-hyper` symlinks all Hyper skills side by side, so `../hyper/scripts/state.mjs` resolves from any sibling skill base. Parse the JSON output; route all subsequent decisions (state root, backlog entries, next backlog id, next task id) from its fields. Do not re-scan folders or `backlog.md` for ids.
+`<skill-base-dir>` is the path printed at skill load as "Base directory for this skill". The probe lives in the sibling `hyper-build` skill folder — `install-hyper` symlinks all Hyper skills side by side, so `../hyper-build/scripts/state.mjs` resolves from any sibling skill base. Parse the JSON output; route all subsequent decisions (state root, backlog entries, next backlog id, next task id) from its fields. Do not re-scan folders or `backlog.md` for ids.
 
-The probe implements `../hyper/reference/state-root.md`. Apply the shared triage heuristic in `../hyper/reference/intake-triage.md`.
+The probe implements `../hyper-build/reference/state-root.md`. Apply the shared triage heuristic in `../hyper-build/reference/intake-triage.md`.
 
 ## Backlog format
 
@@ -51,7 +51,7 @@ Convert a backlog entry into a deferred task.
    - `scope: unknown`
    - `bugfix: false`
    - `awaiting: null`
-4. Seed `dashboard.md` from `../hyper/templates/dashboard.md`.
+4. Seed `dashboard.md` from `../hyper-build/templates/dashboard.md`.
 5. Remove the backlog entry.
 6. Report: `Promoted B<N> -> T<M> — <title> (deferred).`
 

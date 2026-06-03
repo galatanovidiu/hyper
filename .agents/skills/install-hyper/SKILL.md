@@ -65,7 +65,7 @@ For Claude Code specifically: newly installed skills show up without a restart (
 
 ### Portability check
 
-Both `install` and `status` run a probe-reachability check after the per-target output. For every target, the script asserts that `<target>/hyper/scripts/state.mjs` resolves (via the symlink chain) to this repo's `skills/hyper/scripts/state.mjs`, is readable, and can be smoke-called via `node` to emit a JSON object with a non-empty `state_root`. Each target gets one line:
+Both `install` and `status` run a probe-reachability check after the per-target output. For every target, the script asserts that `<target>/hyper-build/scripts/state.mjs` resolves (via the symlink chain) to this repo's `skills/hyper-build/scripts/state.mjs`, is readable, and can be smoke-called via `node` to emit a JSON object with a non-empty `state_root`. Each target gets one line:
 
 - `    probe   ok` — reachable and the smoke call succeeded.
 - `    probe   skip (target not installed)` — the target directory is not present on this machine.

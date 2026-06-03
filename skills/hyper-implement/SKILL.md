@@ -9,10 +9,10 @@ user-invocable: false
 
 You are in the **implement** phase. Execute only the approved plan.
 
-Resolve the Hyper state root per `../hyper/reference/state-root.md` before
+Resolve the Hyper state root per `../hyper-build/reference/state-root.md` before
 reading or writing `.hyper/` paths. The data model is in
-`../hyper/reference/data-model.md`. Worker guardrails are in
-`../hyper/reference/worker-guardrails.md`.
+`../hyper-build/reference/data-model.md`. Worker guardrails are in
+`../hyper-build/reference/worker-guardrails.md`.
 
 ## Inputs
 
@@ -36,7 +36,7 @@ reading or writing `.hyper/` paths. The data model is in
    `awaiting-input` and `task.md` `awaiting` was just cleared by `hyper`),
    route the reply to the subtask that produced the open question:
    record the answer under the subtask's `## Open questions` per
-   `../hyper/reference/gates.md` §Question serialization, then re-dispatch
+   `../hyper-build/reference/gates.md` §Question serialization, then re-dispatch
    `hyper-worker` against that subtask. The worker clears its own `awaiting`
    on resumption per its own Flow. Continue to step 6 only after this
    routing completes.
@@ -72,7 +72,7 @@ reading or writing `.hyper/` paths. The data model is in
   escalation that changes the slicing assumptions, a remediation that
   expands scope beyond `checks.md` findings, a quick-scope opt-out
   from a documented `checks.md` remediation), append a `## Decisions`
-  entry to `dashboard.md` per `../hyper/reference/dashboard.md`
+  entry to `dashboard.md` per `../hyper-build/reference/dashboard.md`
   §Decisions log contract, authoring as `implement`.
 - When a durable cross-task learning surfaces, record it in
   `.hyper/memory/` per the contract in
