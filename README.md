@@ -265,6 +265,9 @@ loop history.
 `.hyper/memory/` is the cross-session recall store. Save a hard-won, non-obvious
 gotcha as a dated entry file plus a one-line `index.md` link, and Hyper surfaces
 that index at the start of later sessions so the next agent does not relearn it.
+Use `/hyper-memory` to save, list, search, or drop entries by hand; the learning
+phases (verify, retro, research, and the rest) also write entries inline as
+gotchas surface during work.
 
 ## Useful Commands
 
@@ -281,6 +284,7 @@ User-facing skill names:
 - `hyper-team`
 - `hyper-short-story`
 - `hyper-digest`
+- `hyper-memory`
 
 | Command                   | Use it for                                                              |
 | ------------------------- | ----------------------------------------------------------------------- |
@@ -297,6 +301,7 @@ User-facing skill names:
 | `/hyper-team`             | Ask another AI agent CLI for a second opinion.                          |
 | `/hyper-short-story`      | Rewrite the previous response as a short, plain-language narrative.     |
 | `/hyper-digest`           | Toggle scannable digest formatting (BLUF + sections) for responses.     |
+| `/hyper-memory`           | Save, list, search, or drop project learnings in `.hyper/memory/`.      |
 
 Internal skills such as `hyper-intake`, `hyper-spec`, `hyper-technical-plan`,
 `hyper-execution-plan`, `hyper-execution-plan-review`, `hyper-research`,

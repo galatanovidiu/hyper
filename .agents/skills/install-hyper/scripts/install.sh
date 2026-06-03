@@ -288,7 +288,7 @@ verify_probe_reachable() {
 # The hook command is fail-open: it checks the script exists, runs it, and
 # swallows any error so a missing or broken script can never degrade session
 # start.
-recall_hook_command='{ test -f "$HOME/.claude/skills/hyper/scripts/memory-recall.mjs" && node "$HOME/.claude/skills/hyper/scripts/memory-recall.mjs"; } 2>/dev/null || true'
+recall_hook_command='{ test -f "$HOME/.claude/skills/hyper-memory/scripts/memory-recall.mjs" && node "$HOME/.claude/skills/hyper-memory/scripts/memory-recall.mjs"; } 2>/dev/null || true'
 
 # All JSON reading/mutating happens in node, never bash string-editing, so
 # the rest of settings.json (other SessionStart hooks, permissions, env) is
@@ -316,6 +316,18 @@ const verb = process.argv[2];
 const file = process.env.HYPER_SETTINGS_FILE;
 const command = process.env.HYPER_RECALL_CMD;
 const MATCHERS = ["startup", "resume", "clear"];
+
+// Every command this installer owns: the current command (HYPER_RECALL_CMD)
+// plus every known legacy command string from earlier Hyper versions. A
+// machine that ran an older installer carries a legacy command pointing at a
+// previous script path; normalize must strip those so recall never runs twice.
+// Legacy strings are matched verbatim — keep each one exactly as the version
+// that shipped it wrote it.
+const LEGACY_COMMANDS = [
+  // T70: recall script lived under the hyper skill before the hyper-memory split.
+  '{ test -f "$HOME/.claude/skills/hyper/scripts/memory-recall.mjs" && node "$HOME/.claude/skills/hyper/scripts/memory-recall.mjs"; } 2>/dev/null || true',
+];
+const MANAGED_COMMANDS = command ? [command, ...LEGACY_COMMANDS] : [...LEGACY_COMMANDS];
 
 if (!file) {
   console.error("hook merge: HYPER_SETTINGS_FILE not set");
@@ -359,29 +371,105 @@ function readValidated() {
   return { text, data };
 }
 
-// Does the SessionStart config already carry our command under any matcher?
+// Is the config already normalized? True only when the current command is
+// present under all three matchers AND no managed command (current or legacy)
+// is stale anywhere in the SessionStart config. A legacy command lingering
+// under any matcher makes this false so register re-normalizes and removes it.
 function isRegistered(data) {
+  const groups = data?.hooks?.SessionStart;
+  if (!Array.isArray(groups)) return false;
+  const seenUnderMatcher = new Set();
+  for (const group of groups) {
+    if (!group || !Array.isArray(group.hooks)) continue;
+    const matcherOwned = MATCHERS.includes(group.matcher);
+    for (const h of group.hooks) {
+      if (!h || h.type !== "command") continue;
+      // A legacy managed command present anywhere means the config is stale.
+      if (LEGACY_COMMANDS.includes(h.command)) return false;
+      if (h.command === command && matcherOwned) {
+        seenUnderMatcher.add(group.matcher);
+      }
+    }
+  }
+  return MATCHERS.every((m) => seenUnderMatcher.has(m));
+}
+
+// Is the config already in the exact normalized shape, so register can report
+// "unchanged" and skip the rewrite? Stricter than isRegistered: it also
+// rejects duplicates. True only when the current command appears exactly once
+// under each owned matcher, never under any non-owned matcher, and no legacy
+// command exists anywhere. This is order-insensitive: a config that satisfies
+// these counts but lists the matcher groups in a different order is treated as
+// already normalized and left untouched, so a reorder is never a rewrite.
+// (normalize() is idempotent on any config that passes this check.)
+function isNormalized(data) {
+  const groups = data?.hooks?.SessionStart;
+  if (!Array.isArray(groups)) return false;
+  const countUnderMatcher = new Map();
+  for (const m of MATCHERS) countUnderMatcher.set(m, 0);
+  for (const group of groups) {
+    if (!group || !Array.isArray(group.hooks)) continue;
+    const matcherOwned = MATCHERS.includes(group.matcher);
+    for (const h of group.hooks) {
+      if (!h || h.type !== "command") continue;
+      // Any legacy managed command anywhere means the config is stale.
+      if (LEGACY_COMMANDS.includes(h.command)) return false;
+      if (h.command === command) {
+        // The current command under a non-owned matcher is not normalized.
+        if (!matcherOwned) return false;
+        countUnderMatcher.set(group.matcher, countUnderMatcher.get(group.matcher) + 1);
+      }
+    }
+  }
+  // Exactly one current command under each owned matcher: no missing, no dupes.
+  return MATCHERS.every((m) => countUnderMatcher.get(m) === 1);
+}
+
+// Is any managed command (current or legacy) present anywhere in the
+// SessionStart config? Drives unregister so a legacy-only machine still gets
+// cleaned even though isRegistered (the normalized predicate) returns false.
+function hasManagedCommand(data) {
   const groups = data?.hooks?.SessionStart;
   if (!Array.isArray(groups)) return false;
   for (const group of groups) {
     if (!group || !Array.isArray(group.hooks)) continue;
     for (const h of group.hooks) {
-      if (h && h.type === "command" && h.command === command) return true;
+      if (h && h.type === "command" && MANAGED_COMMANDS.includes(h.command)) return true;
     }
   }
   return false;
 }
 
-// Insert our command under the three matcher groups, reusing an existing
-// group with the same matcher when present. Mutates `data` in place.
-function addHook(data) {
+// Normalize the SessionStart config to exactly the current command under each
+// of the three matcher groups: strip every managed command (current + legacy)
+// from all groups, then add the current command once under startup / resume /
+// clear, reusing an existing group with the same matcher. Leaves every
+// unrelated hook and matcher group in place. Mutates `data` in place.
+function normalize(data) {
   if (!data.hooks || typeof data.hooks !== "object" || Array.isArray(data.hooks)) {
     data.hooks = {};
   }
   if (!Array.isArray(data.hooks.SessionStart)) {
     data.hooks.SessionStart = [];
   }
-  const groups = data.hooks.SessionStart;
+  let groups = data.hooks.SessionStart;
+  // Strip every managed command (current + legacy) from every group.
+  for (const group of groups) {
+    if (!group || !Array.isArray(group.hooks)) continue;
+    group.hooks = group.hooks.filter(
+      (h) => !(h && h.type === "command" && MANAGED_COMMANDS.includes(h.command))
+    );
+  }
+  // Prune matcher groups we own that are now empty, so a leftover legacy-only
+  // group does not survive as a bare { matcher, hooks: [] } shell. Groups we
+  // do not own are never pruned.
+  groups = groups.filter((group) => {
+    if (!group || !Array.isArray(group.hooks)) return true;
+    if (MATCHERS.includes(group.matcher) && group.hooks.length === 0) return false;
+    return true;
+  });
+  data.hooks.SessionStart = groups;
+  // Add the current command once under each owned matcher.
   for (const matcher of MATCHERS) {
     let group = groups.find((g) => g && g.matcher === matcher);
     if (!group) {
@@ -391,19 +479,14 @@ function addHook(data) {
     if (!Array.isArray(group.hooks)) {
       group.hooks = [];
     }
-    const present = group.hooks.some(
-      (h) => h && h.type === "command" && h.command === command
-    );
-    if (!present) {
-      group.hooks.push({ type: "command", command });
-    }
+    group.hooks.push({ type: "command", command });
   }
 }
 
-// Remove only our command from the three matcher groups. Leaves every other
-// hook in place. Drops a matcher group only if it is one of ours AND it
-// becomes empty AND we created it (matcher in MATCHERS with no other hooks).
-// Mutates `data` in place. Returns true when something changed.
+// Remove every managed command (current + legacy) from the SessionStart
+// groups. Leaves every other hook in place. Drops a matcher group only if it
+// is one of ours AND it becomes empty. Mutates `data` in place. Returns true
+// when something changed.
 function removeHook(data) {
   const groups = data?.hooks?.SessionStart;
   if (!Array.isArray(groups)) return false;
@@ -412,7 +495,7 @@ function removeHook(data) {
     if (!group || !Array.isArray(group.hooks)) continue;
     const before = group.hooks.length;
     group.hooks = group.hooks.filter(
-      (h) => !(h && h.type === "command" && h.command === command)
+      (h) => !(h && h.type === "command" && MANAGED_COMMANDS.includes(h.command))
     );
     if (group.hooks.length !== before) changed = true;
   }
@@ -499,11 +582,17 @@ try {
   if (verb === "register") {
     const data = parsed === null ? {} : parsed.data;
     const originalText = parsed === null ? null : parsed.text;
-    if (parsed !== null && isRegistered(data)) {
+    // Fast path: an existing config that is already in the normalized shape is
+    // left exactly as it is on disk — no normalize, no write. This is semantic,
+    // not byte-based: a config that differs only in matcher-group order is
+    // already correct (command active under all three matchers, no dupes, no
+    // legacy) so we report "unchanged" and never rewrite it. A brand-new file
+    // (parsed === null) always falls through to normalize + write.
+    if (parsed !== null && isNormalized(data)) {
       console.log("unchanged");
       process.exit(0);
     }
-    addHook(data);
+    normalize(data);
     safeWrite(data, originalText);
     console.log("registered");
     process.exit(0);
@@ -514,7 +603,7 @@ try {
       console.log("absent");
       process.exit(0);
     }
-    if (!isRegistered(parsed.data)) {
+    if (!hasManagedCommand(parsed.data)) {
       console.log("unchanged");
       process.exit(0);
     }

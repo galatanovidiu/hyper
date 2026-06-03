@@ -106,10 +106,10 @@ algorithm lives in `reference/dashboard.md`.
 
 ## Internal vs user-facing skills
 
-Users invoke eleven Hyper skills directly: `hyper`, `hyper-task`,
+Users invoke twelve Hyper skills directly: `hyper`, `hyper-task`,
 `hyper-backlog`, `hyper-handoff`, `hyper-retro`, `hyper-code-review`,
-`hyper-recipe`, `hyper-iterate`, `hyper-team`, `hyper-short-story`, and
-`hyper-digest`.
+`hyper-recipe`, `hyper-iterate`, `hyper-team`, `hyper-short-story`,
+`hyper-digest`, and `hyper-memory`.
 
 Internal skills are:
 
@@ -351,7 +351,7 @@ by the file's own id). This section appears only when the subtask's
 
 Durable, cross-task project learnings. A folder, not a single file. Created
 when the first entry is recorded; there is no empty placeholder. The discipline
-for what belongs here lives in [reference/memory.md](memory.md).
+for what belongs here lives in [hyper-memory's memory contract](../../hyper-memory/reference/memory.md).
 
 The folder contains:
 

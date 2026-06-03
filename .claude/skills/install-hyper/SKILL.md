@@ -80,13 +80,13 @@ Claude Code is the only target with a `settings.json` hook mechanism. The script
 The registered command is fail-open: it runs the recall script only if it exists and swallows any error, so a missing or broken script can never block session start.
 
 ```text
-{ test -f "$HOME/.claude/skills/hyper/scripts/memory-recall.mjs" && node "$HOME/.claude/skills/hyper/scripts/memory-recall.mjs"; } 2>/dev/null || true
+{ test -f "$HOME/.claude/skills/hyper-memory/scripts/memory-recall.mjs" && node "$HOME/.claude/skills/hyper-memory/scripts/memory-recall.mjs"; } 2>/dev/null || true
 ```
 
 Per operation:
 
-- **`install`** registers the command under three `SessionStart` matcher groups — `startup`, `resume`, `clear`. Registration is idempotent: it keys on the exact command string, so re-running `install` never duplicates the hook. A pre-existing `SessionStart` block (tab color, caffeinate, etc.) is preserved; the recall command is added alongside.
-- **`uninstall`** removes exactly that command from the three groups. Every other `SessionStart` hook and every other settings key is left intact.
+- **`install`** normalizes the recall hook to exactly this command under three `SessionStart` matcher groups — `startup`, `resume`, `clear`. Normalization strips every command this installer manages (the current command plus any known legacy command string from earlier Hyper versions) from all `SessionStart` groups, then adds the current command once under each matcher. This is how a machine that ran an older installer — where the recall script lived at a previous path — is migrated without leaving the old hook behind, so recall never runs twice. Re-running `install` on an already-normalized config makes no change. A pre-existing `SessionStart` block (tab color, caffeinate, etc.) is preserved; the recall command is added alongside.
+- **`uninstall`** removes every command this installer manages (current plus legacy) from the three groups. Every other `SessionStart` hook and every other settings key is left intact.
 - **`status`** prints one line reporting whether the recall hook is registered.
 
 The merge runs in `node` (not bash string-editing) and is fail-safe. It pre-flight-validates the file (if `settings.json` exists but does not parse as JSON, it aborts and touches nothing), uses a content compare-and-swap immediately before the atomic rename (a concurrent edit aborts the write rather than clobbering it), writes a one-time backup only from a validated original (`settings.json.hyper-bak`, never overwritten once present), and writes through a temp file + atomic rename. On invalid input or a concurrent edit it aborts and changes nothing.
