@@ -6,6 +6,41 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and Hyper follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 While Hyper is pre-1.0, the skill contract may change between minor versions.
 
+## [0.2.0] - 2026-06-03
+
+### Changed
+
+- **Entry-point rename (breaking).** The bare `hyper` skill is now the adaptive
+  OODA workflow (`observe -> orient -> decide -> act`) and is the default front
+  door. The structured phased workflow (`intake -> spec -> technical-plan ->
+  execution-plan -> implement -> verify -> docs`) is now `hyper-build`. The old
+  `hyper-iterate` name is removed; use `hyper`. There is no auto-routing — the
+  two entry points are co-equal. The shared platform (state probe, `scripts/`,
+  `reference/`, `templates/`) moves to `hyper-build`, and all consumer skills
+  now import from `../hyper-build/`.
+- **Recall is now agent-driven.** The installer no longer registers a
+  Claude-Code `SessionStart` hook to inject `.hyper/memory/index.md`. `install`
+  and `uninstall` now strip any previously-registered hook (current and legacy
+  command strings) from `~/.claude/settings.json`. Cross-session recall stays
+  available through the agent-driven path: the state probe emits a `learnings`
+  pointer and the entry-point skills read `.hyper/memory/index.md` when it
+  exists. This path is portable across all agents and lets the agent decide
+  when memory is relevant.
+
+### Removed
+
+- Dead register/normalize machinery from the installer's embedded settings-merge
+  program (`isNormalized`, `normalize`, the `register` verb). The JSON-cleanup
+  engine and the `unregister`/`status` verbs are kept so the hook can still be
+  stripped from machines that installed v0.1.0.
+
+### Fixed
+
+- README install instructions pointed at a non-existent clone URL and path.
+  They now reference `github.com/galatanovidiu/hyper` cloned to `~/hyper`.
+
+[0.2.0]: https://github.com/galatanovidiu/hyper/releases/tag/v0.2.0
+
 ## [0.1.0] - 2026-06-03
 
 First public release. Hyper is a lightweight workflow for AI coding agents,
