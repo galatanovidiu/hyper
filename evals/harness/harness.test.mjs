@@ -23,11 +23,11 @@ test("parseFrontmatter handles multi-line values with > literal block", () => {
   assert.match(frontmatter.description, /line/);
 });
 
-test("loadSkill returns hyper-discover body without frontmatter", () => {
-  const skill = loadSkill("hyper-discover");
-  assert.equal(skill.name, "hyper-discover");
+test("loadSkill returns hyper-research body without frontmatter", () => {
+  const skill = loadSkill("hyper-research");
+  assert.equal(skill.name, "hyper-research");
   assert.equal(skill.frontmatter["user-invocable"], false);
-  assert.match(skill.body, /^# hyper-discover/);
+  assert.match(skill.body, /^# hyper-research/);
   assert.equal(/^---/.test(skill.body), false);
 });
 
@@ -64,7 +64,7 @@ test("createSandbox creates task folder with task.md", () => {
     const taskMd = path.join(sandbox.root, sandbox.taskFolderRelative, "task.md");
     assert.ok(fs.existsSync(taskMd), `task.md should exist at ${taskMd}`);
     assert.match(fs.readFileSync(taskMd, "utf8"), /id: T100/);
-    assert.ok(fs.existsSync(path.join(sandbox.root, "skills", "hyper-discover", "SKILL.md")));
+    assert.ok(fs.existsSync(path.join(sandbox.root, "skills", "hyper-research", "SKILL.md")));
     assert.ok(fs.existsSync(path.join(sandbox.root, "CHANGELOG.md")), "CHANGELOG.md stub should exist");
   } finally {
     sandbox.cleanup();
