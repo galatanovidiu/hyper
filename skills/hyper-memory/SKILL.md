@@ -1,12 +1,12 @@
 ---
 name: hyper-memory
 description: >
-  Manages Hyper memory — durable cross-task learnings stored under `.hyper/memory/`. Saves a new learning, lists (recalls) the index, searches entry bodies, and drops an entry. Use when the user says "save this to memory", "remember this", "what's in memory", "recall learnings", "search memory for X", "drop that memory entry", or similar. Decides what is worth keeping using the memory bar before writing. Keywords: hyper, memory, learning, save, recall, search, drop, gotcha, lesson.
+  Manages Hyper memory — durable learnings stored under `.hyper/memory/`. Saves a new learning, lists (recalls) the index, searches entry bodies, and drops an entry. Use when the user says "save this to memory", "remember this", "what's in memory", "recall learnings", "search memory for X", "drop that memory entry", or similar. Decides what is worth keeping using the memory bar before writing. Keywords: hyper, memory, learning, save, recall, search, drop, gotcha, lesson.
 ---
 
 # hyper-memory
 
-Manage `.hyper/memory/`, the store of durable learnings a different future task should know.
+Manage `.hyper/memory/`, the store of durable learnings a different future agent session should know.
 
 This skill runs standalone. It never creates tasks, advances phases, edits backlog, or changes any other state.
 
@@ -40,11 +40,11 @@ Read the user's request and pick exactly one operation. When intent is unclear, 
 
 ## Operation: Save
 
-Record one durable cross-task learning.
+Record one durable learning.
 
 Steps:
 
-1. Apply the bar from `reference/memory.md` §"Bar for adding an entry". Ask the three questions: will this matter to a different task later, would a future agent miss it from the code alone, and is it stable beyond this task. If any answer is no, do not write — say why and stop. Memory biases toward sparseness; a noisy memory file gets ignored.
+1. Apply the bar from `reference/memory.md` §"Bar for adding an entry". Ask the three questions: will this matter to a future agent session, would a future agent miss it from the code alone, and is it stable beyond this session. If any answer is no, do not write — say why and stop.
 2. Ensure the `.hyper/memory/` directory exists, creating `.hyper/` and `.hyper/memory/` if absent. Create nothing else — do not run full Hyper bootstrap; this skill must not create `tasks/` or `archive/`.
 3. Pick the entry's `<Category>` from the contract: `Decision`, `Pattern`, `Lesson`, or `Constraint`.
 4. Compose the entry file `.hyper/memory/<YYYY-MM-DD>-<slug>.md` in the format from `reference/memory.md` §"Entry format":
@@ -53,11 +53,15 @@ Steps:
    ## <ISO date> — <Category>: <short title>
 
    Why: <what led to this>
-   See: T<N>, <file path>
+   See: <file path the learning is about — optional, omit if none>
    <1–2 sentence description>
    ```
 
    `<YYYY-MM-DD>` is today's date; `<slug>` is a short kebab-case label derived from the title. If a file for that date+slug already exists, pick a distinct slug rather than overwriting.
+
+   Keep the entry self-contained — see `reference/memory.md` §"Keep entries self-contained". Never write session-ephemeral identifiers (loop IDs like `L6`, part IDs like `P3`, run modes like `YOLO`, transient session IDs) in any line. The `See:` line is optional: use it only for a durable file path, else omit it.
+
+   Write the entry as an instruction, not prose — imperative voice, short sentences, no narrative. See `reference/memory.md` §"Write instructions, not prose".
 5. Append one index line to `.hyper/memory/index.md` (create the file with a `# Memory Index` heading if it does not exist):
    `- [<title>](<entry-file>) — <one-line hook>`. The hook is a short phrase a future reader scans to decide whether to open the entry.
 6. Report: `Saved memory entry <entry-file>.`

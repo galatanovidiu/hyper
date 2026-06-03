@@ -76,7 +76,7 @@ reading or writing `.hyper/` paths. Read
 - Do not work around a broken plan assumption silently. The plan-conflict
   channel exists so the design phase can revise; bypassing it loses the
   design escalation signal.
-- When a durable cross-task learning surfaces, record it in `.hyper/memory/`
+- When a durable learning surfaces, record it in `.hyper/memory/`
   per the contract in `../hyper-memory/reference/memory.md`, writing the entry
   inline rather than invoking the `hyper-memory` skill.
 
