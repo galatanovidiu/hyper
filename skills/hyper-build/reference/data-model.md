@@ -349,7 +349,7 @@ by the file's own id). This section appears only when the subtask's
 
 ## `.hyper/memory/`
 
-Durable, cross-task project learnings. A folder, not a single file. Created
+Durable project learnings any future agent session may need. A folder, not a single file. Created
 when the first entry is recorded; there is no empty placeholder. The discipline
 for what belongs here lives in [hyper-memory's memory contract](../../hyper-memory/reference/memory.md).
 

@@ -55,7 +55,7 @@ archive the research task, or tell me what to change in research.md.`
 - When the recommendation is settled, append a `## Decisions` entry
   to `dashboard.md` per `../hyper-build/reference/dashboard.md` §Decisions
   log contract, authoring as `research`.
-- When a durable cross-task learning surfaces, record it in
+- When a durable learning surfaces, record it in
   `.hyper/memory/` per the contract in
   `../hyper-memory/reference/memory.md`, writing the entry inline rather
   than invoking the `hyper-memory` skill.

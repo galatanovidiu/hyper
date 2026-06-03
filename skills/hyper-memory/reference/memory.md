@@ -1,6 +1,6 @@
 # Hyper — Memory Discipline
 
-Use `.hyper/memory/` only for things a **different future task** should know.
+Use `.hyper/memory/` only for things a **different future agent session** should know.
 
 ## Storage shape
 
@@ -53,9 +53,9 @@ Those belong in the task artifacts, diff, or commit message — not memory.
 
 Before writing to memory, ask:
 
-1. Will this matter to a different task later?
+1. Will this matter to a future agent session?
 2. Would a future agent be likely to miss it from the code alone?
-3. Is it stable enough that it probably stays true beyond this task?
+3. Is it stable enough that it probably stays true beyond this session?
 
 If any answer is no, do not write it.
 
@@ -67,9 +67,12 @@ Each `.hyper/memory/<YYYY-MM-DD>-<slug>.md` file holds one entry:
 ## <ISO date> — <Category>: <short title>
 
 Why: <what led to this>
-See: T<N>, <file path>
+See: <file path the learning is about — optional, omit if none>
 <1–2 sentence description>
 ```
+
+The `See:` line is optional. Include it only to point at a durable file path the
+entry is about. Omit it entirely when there is no such path.
 
 Categories:
 
@@ -77,6 +80,35 @@ Categories:
 - `Pattern`
 - `Lesson`
 - `Constraint`
+
+### Keep entries self-contained
+
+An entry must make sense to a future agent that knows nothing about the session
+that wrote it.
+
+Never write session-ephemeral identifiers in any line — title, `Why:`, `See:`,
+or body:
+
+- loop IDs (`L6`, `L<N>`) and part IDs (`P3`)
+- run or permission modes (`YOLO`, `autonomous`, `plan mode`)
+- transient task or session IDs that do not persist in the repo
+
+In `Why:`, state the lasting reason — a standing instruction or constraint — not
+the loop or mode that surfaced it.
+
+### Write instructions, not prose
+
+An entry is an instruction a future agent follows, not an essay.
+
+- Use imperative voice: "Branch from fresh `main` before implementing", not "It
+  is generally a good idea to consider branching".
+- Short, plain sentences. One idea each. No narrative or build-up.
+- State the rule directly. Cut hedging, adjectives, and filler.
+- Keep to 1–2 sentences. If it needs more, split the entry or trim it.
+
+Bad: "After a fair amount of back-and-forth we eventually realised that it tends
+to be cleaner if one starts from a freshly pulled main branch."
+Good: "Switch to `main`, pull, then branch. Never implement on `main`."
 
 ## Bias toward sparseness
 
