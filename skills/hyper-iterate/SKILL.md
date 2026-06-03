@@ -46,7 +46,7 @@ Each loop is a folder at `.hyper/loops/L<N>-<slug>/` containing:
 - `loop.md` — the canonical state file. See `templates/loop.md` for the full structure.
 - Optional evidence files (logs, diffs, screenshots, console output) referenced from `## Relevant artifacts`. Use kebab-case names: `cycle3-build-log.txt`, `verify2-2026-05-13.txt`.
 
-The project root is the directory containing `.hyper/`, or the current working directory if `.hyper/` does not exist yet. Create `.hyper/loops/` if missing. Use absolute paths only for transient tool execution when the working directory differs from the project root; keep paths written into `loop.md` and user-facing summaries repo-relative.
+Path resolution uses the probe's `state_root` field (Phase 1 below makes the probe call). This aligns hyper-iterate with the shared state-root rule used by the rest of Hyper. Create `.hyper/loops/` under `state_root` if missing. Use absolute paths only for transient tool execution when the working directory differs from `state_root`; keep paths written into `loop.md` and user-facing summaries repo-relative.
 
 Use the exact section layout shipped in `templates/loop.md`.
 
@@ -62,9 +62,15 @@ Timestamps use `YYYY-MM-DDTHH:MM:SS`.
 
 ## Phase 1 — Load and Route
 
+Call the state probe once at session start:
+
+    node "<skill-base-dir>/../hyper/scripts/state.mjs"
+
+`<skill-base-dir>` is the path printed at skill load as "Base directory for this skill". The probe lives in the sibling `hyper` skill folder — `install-hyper` symlinks all Hyper skills side by side, so `../hyper/scripts/state.mjs` resolves from any sibling skill base. Parse the JSON output; route all subsequent decisions (state root, active loops, next loop id) from its fields. Do not re-scan folders or re-read individual `loop.md` frontmatter for routing or id allocation.
+
 Get the current UTC timestamp in `YYYY-MM-DDTHH:MM:SS` format.
 
-List `.hyper/loops/` if it exists; otherwise treat the project as having no loops yet.
+Use the probe's `active_loops` list as the inventory of loops with `status: active`; if the probe reports no loops, treat the project as having no loops yet.
 
 **Project rules.** Read `.hyper/rules.md` if it exists; treat as normative for the session. If absent, no project rules are in force. On every resume, re-read this file: if its content differs from when the loop was last touched (any prior cycle, decision, or rule reference in `loop.md` is now in tension with the current rules), surface the conflict to the user and append a `## Decisions` entry recording the new ruling before continuing the current cycle.
 
@@ -74,7 +80,7 @@ When the loop needs a required capability from the registry below and no suitabl
 
 1. **Resume by id or path** — user named `L<N>` or gave a path inside `.hyper/loops/`.
 2. **Resume by title** — user named an existing loop clearly.
-3. **Resume the only active loop** — exactly one loop has frontmatter `status: active`.
+3. **Resume the only active loop** — the probe's `active_loops` list contains exactly one entry.
 4. **Ask** — multiple active loops and the target is unclear.
 5. **Create** — otherwise.
 
@@ -86,7 +92,7 @@ Done loops are not reopened. If the user wants to keep going from a done loop, c
 
 **On create:**
 
-1. Scan `.hyper/loops/` for `L<N>-*` folders, take the highest `N`, allocate the next.
+1. Use `next_loop_id` from the probe output.
 2. Pick a short title and kebab-case slug.
 3. Create `loop.md` from the template. Fill `id`, `title`, `status`, `created`, and `updated` immediately from the allocated loop metadata, replace the H1 with the allocated loop id and title, and write a one-time starting snapshot in `## Starting point` (replacing the shipped `- None yet.`). For anything still unknown, keep the placeholder already shipped for that section in `templates/loop.md`; do not invent new placeholder strings.
 4. Authority mode: if the user explicitly grants standing autonomy with "YOLO mode", "decide for me", "no approval interruptions", or equivalent, set `## Authority` `Mode: delegated`; summarize the granted scope in `Delegated authority`, name the proxy skills or agent roles in `Decision proxies`, and append a `## Decisions` entry recording the grant. Otherwise leave `Mode: interactive`, `Delegated authority: none`, and `Decision proxies: none`.

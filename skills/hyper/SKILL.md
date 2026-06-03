@@ -13,9 +13,15 @@ Never implement, test, or review yourself. The phase skills own the work.
 
 ## Before anything else
 
-Resolve the Hyper state root per `reference/state-root.md`.
+Call the state probe once at session start:
 
-Ensure `.hyper/` is bootstrapped per `reference/bootstrap.md` before any write.
+    node "<skill-base-dir>/scripts/state.mjs"
+
+`<skill-base-dir>` is the path printed at skill load as "Base directory for this skill". Parse the JSON output; route all subsequent decisions from its fields (`state_root`, `bootstrapped`, `next_task_id`, `active_tasks`, `archived_tasks`, etc.). Do not re-scan folders or re-read individual `task.md` frontmatter for routing.
+
+The probe implements `reference/state-root.md`; that file is now the probe's contract, not a procedure to walk.
+
+Ensure `.hyper/` is bootstrapped per `reference/bootstrap.md` before any write. Use the probe's `bootstrapped` field as the source of truth.
 
 If `.hyper/rules.md` exists, read it once at session start and treat its
 contents as normative project rules for every phase.
@@ -37,7 +43,14 @@ and point the user to `reference/state-recovery.md`. Do not guess a route.
 
 ## Routing
 
-Walk these checks in order.
+The probe's `active_tasks` array carries every task folder under `.hyper/tasks/` regardless of phase — the field name is historical and matches the folder, not the routing category. Before walking the routing checks below, build the two routing buckets from the probe output:
+
+- `active` = `active_tasks.filter(t => t.category === "active")` — these are the only entries that count as "active" for the routing branches.
+- `deferred` = `active_tasks.filter(t => t.category === "deferred")`.
+
+Terminal entries (`category: terminal`) under `.hyper/tasks/` are anomalies (the folder was not moved to archive). Surface them to the user separately; do not route them as active.
+
+Walk these checks in order, using `active` and `deferred` as defined above.
 
 ### 1. Request is a task id
 
@@ -45,7 +58,7 @@ Jump to **Resume by id**.
 
 ### 2. Reply to an open gate
 
-Scan active tasks for `awaiting != null`.
+Inside `active`, pick entries with `awaiting != null`.
 
 - If exactly one active task has an open gate and the user reply is
   substantive, resume that task and jump to **Dispatch phase**.
@@ -63,19 +76,19 @@ Ask whether to treat this as new work or fold it into the active task.
 
 ### 5. No goal, exactly one active task
 
-Resume it and jump to **Cold-resume check**.
+When `active.length === 1`, resume it and jump to **Cold-resume check**.
 
 ### 6. No goal, multiple active tasks
 
-List them and ask which to continue.
+When `active.length > 1`, list them and ask which to continue.
 
 ### 7. No goal, no active task
 
-If deferred tasks exist, tell the user. Otherwise ask what to work on.
+When `active.length === 0`: if `deferred.length > 0`, tell the user. Otherwise ask what to work on.
 
 ### 8. Goal provided, no active task
 
-Apply `reference/intake-triage.md`.
+When `active.length === 0`, apply `reference/intake-triage.md`.
 
 - If it is direct-handling sized, recommend handling it outside Hyper.
 - If it is backlog-shaped, recommend `hyper-backlog`.
@@ -85,7 +98,7 @@ Apply `reference/intake-triage.md`.
 
 Given `T<N>`:
 
-1. Resolve it under `.hyper/tasks/`, then fall back to `.hyper/archive/`.
+1. Look up the id in the probe's `active_tasks` list, then fall back to `archived_tasks`.
 2. If `phase: done`, report completion and stop.
 3. If `phase: cancelled`, report the cancellation reason and stop.
 4. If `phase: deferred`, set `phase: intake`, save, announce the start, and
@@ -104,7 +117,7 @@ For active tasks with no open gate:
 
 ## Create task
 
-1. Determine the next task id by scanning both `tasks/` and `archive/`.
+1. Use `next_task_id` from the probe output.
 2. Derive a short title and kebab-case slug.
 3. Draft the task body from the user's request, carrying a `## Why` section
    when the request already includes a clear motivation worth preserving.
@@ -165,16 +178,39 @@ per `reference/dashboard.md` before announcing or stopping.
 
 Skip dashboard generation for `scope: code-review`.
 
+### Announce open gates
+
+When the updated task has `awaiting: user-approval`, stop with an approval
+message, not just a status report. Include:
+
+- `T<N>`, the current `phase`, and `awaiting: user-approval`
+- the approval artifact the user should review
+- one `[RECOMMENDED — <reason>]` line per `reference/gates.md`
+- exact resume options: `approve` or `continue` accepts the artifact; a change
+  request revises it
+- what approval does next according to the transition table, including archive
+  when approval completes a research task
+
+Do not rely on file attachment cards or state-probe facts as the approval ask.
+
+When the updated task has `awaiting: user-input`, stop by asking the one open
+question from the phase artifact. Include `T<N>`, the current `phase`, and
+`awaiting: user-input`.
+
+### Continue deterministic transitions
+
+When the updated `phase` is non-terminal and `awaiting: null`, re-enter
+**Dispatch phase** in the same turn. This applies to ordinary phase-complete
+transitions and redirects. Stop only when a gate is open, routing is ambiguous,
+the task is terminal, or the next phase itself returns a user-facing approval
+or input verdict.
+
+Do not ask the user for a bare "continue" on deterministic transitions such as
+`implement -> verify`, `verify -> docs`, `verify -> implement`, or
+`implement -> technical-plan`. The destination phase owns any real question or
+approval gate.
+
 ### Archive on terminal
 
 When a transition sets `phase: done`, archive the task folder per
 `reference/archive.md` before announcing completion.
-
-### Verify checkpoint
-
-The gate contract owns when `implement -> verify` and `verify -> docs` stop for
-a checkpoint prompt. Render the prompt per `reference/gates.md` and stop. For
-`verify -> docs`, the `pass` branch is a fixed string and the `needs-changes`
-branch is a remediation-aware prompt rendered at runtime; for
-`implement -> verify`, the prompt is a single fixed string. The next user
-reply re-dispatches the task into the chosen next step.

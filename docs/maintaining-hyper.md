@@ -76,6 +76,17 @@ These surfaces are the easiest to drift:
    - optional eval hook: `scripts/eval-hooks/validate-iterate-loop.sh`
    - hard gate stays intact: authority -> understanding -> code scan -> findings -> loop plan -> part-level approvals -> cycles
 
+8. **State probe contract**
+   - `skills/hyper/scripts/state.mjs` (the read-only Node ESM probe)
+   - `skills/hyper/reference/state-root.md` (the probe's contract — invocation, output schema, category mapping, errors, env coverage, sub-skill resolution rule)
+   - `skills/hyper/reference/data-model.md` (the id-allocation references that point at the probe)
+   - the four probe-caller skills: `skills/hyper/SKILL.md` (uses `<skill-base-dir>/scripts/state.mjs`), `skills/hyper-task/SKILL.md`, `skills/hyper-backlog/SKILL.md`, `skills/hyper-iterate/SKILL.md` (each uses `<skill-base-dir>/../hyper/scripts/state.mjs`)
+   - the indirect consumers — every other Hyper skill that says "Resolve the Hyper state root per `../hyper/reference/state-root.md`" relies on `state-root.md`'s **Sub-skill resolution** section. If that section is restructured or removed, walk these and update them too: `hyper-intake`, `hyper-spec`, `hyper-technical-plan`, `hyper-execution-plan`, `hyper-execution-plan-review`, `hyper-research`, `hyper-implement`, `hyper-worker`, `hyper-verify`, `hyper-docs`, `hyper-code-review`, `hyper-team`, `hyper-handoff`, `hyper-retro`, `hyper-recipe`
+   - `scripts/validate-hyper.mjs` (presence + schema assertions, including a synthetic-fixture pass that exercises the probe against controlled inputs)
+   - `.claude/skills/install-hyper/scripts/install.sh` and `.agents/skills/install-hyper/scripts/install.sh` (the `verify_probe_reachable` portability check; both files must remain byte-identical; stdout and stderr must stay separated when capturing probe output)
+   - keep the probe **read-only**: no writes, no Git mutations, no new external dependencies
+   - id allocation is **folder-name-canonical**: the probe scans `T<N>-` / `L<N>-` folder names for next-id math, and surfaces frontmatter-id mismatches as `parse_errors` entries
+
 ## When adding or renaming a skill
 
 Do all of these together:

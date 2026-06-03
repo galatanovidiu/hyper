@@ -32,39 +32,38 @@ Every phase dispatch ends with exactly one verdict:
 |---------|---------|--------------|
 | `awaiting-approval` | Artifact written; user approval required. | Set `task.md` `awaiting: user-approval` and stop. |
 | `awaiting-input` | Open question(s) remain, or a user-choice prompt is required. | Set `task.md` `awaiting: user-input` and stop. |
-| `phase-complete` | Phase is done and ready to advance. | Clear `awaiting`, apply the transition table, and apply any checkpoint prompt. |
-| `redirect target: <phase>` | Non-linear transition. | Clear stale `awaiting`, set `phase: <target>`, and re-enter dispatch. For `verify -> implement` and `implement -> technical-plan`, also set `awaiting: user-input`. |
+| `phase-complete` | Phase is done and ready to advance. | Clear `awaiting`, apply the transition table, and re-enter dispatch when the next phase is non-terminal. |
+| `redirect target: <phase>` | Non-linear transition. | Clear stale `awaiting`, set `phase: <target>`, and re-enter dispatch. |
 
 ## Phase transition table
 
 `hyper` applies this table when a phase returns `phase-complete`:
 
-| From phase | Scope / classifier | Next phase | Post-transition checkpoint? |
-|------------|--------------------|------------|-----------------------------|
-| `intake` | `feature`, `bugfix: false` | `spec` | no |
-| `intake` | `feature`, `bugfix: true` | `technical-plan` | no |
-| `intake` | `quick` | `technical-plan` | no |
-| `intake` | `research` | `research` | no |
-| `spec` | `feature` | `technical-plan` | no |
-| `technical-plan` | `feature` | `execution-plan` | no |
-| `technical-plan` | `quick` | `implement` | no |
-| `execution-plan` | `feature` | `implement` | no |
-| `research` | `research` | `done` | no |
-| `implement` | any | `verify` | yes — prompt: `"T<N> implementation complete. Continue to verify?"` |
-| `verify` | `quick` | `done` | no |
-| `verify` | `feature` | `docs` | yes |
-| `docs` | `feature` | `done` | no |
+| From phase | Scope / classifier | Next phase |
+|------------|--------------------|------------|
+| `intake` | `feature`, `bugfix: false` | `spec` |
+| `intake` | `feature`, `bugfix: true` | `technical-plan` |
+| `intake` | `quick` | `technical-plan` |
+| `intake` | `research` | `research` |
+| `spec` | `feature` | `technical-plan` |
+| `technical-plan` | `feature` | `execution-plan` |
+| `technical-plan` | `quick` | `implement` |
+| `execution-plan` | `feature` | `implement` |
+| `research` | `research` | `done` |
+| `implement` | any | `verify` |
+| `verify` | `quick` | `done` |
+| `verify` | `feature` | `docs` |
+| `docs` | `feature` | `done` |
 
 The standalone `scope: code-review` path is not in this table: per the
 ownership split above, `hyper-code-review` owns terminal `phase: done` and the
 archive move directly, so `hyper` never applies a transition for that scope.
 See `hyper-code-review/SKILL.md` §Return contract.
 
-For `verify -> docs`, use:
-
-- if `checks.md` overall is `pass`: `"T<N> verify passed. Continue to docs?"`
-- if overall is `needs-changes`: surface a remediation-aware prompt that offers
-  continue-to-docs, send-back-to-implement, or stop.
+After a phase-complete transition, immediately re-enter dispatch for the next
+phase unless the next phase is terminal. The next phase owns any real
+approval or input gate. Do not ask for a bare "continue" when the transition
+is mechanically determined.
 
 For `redirect`:
 
@@ -72,9 +71,9 @@ For `redirect`:
 |------------|---------|--------------|
 | `execution-plan` | `redirect target: spec` | `phase: spec`, `awaiting: null` |
 | `execution-plan` | `redirect target: technical-plan` | `phase: technical-plan`, `awaiting: null` |
-| `implement` | `redirect target: technical-plan` | `phase: technical-plan`, `awaiting: user-input` |
+| `implement` | `redirect target: technical-plan` | `phase: technical-plan`, `awaiting: null` |
 | `technical-plan` | `redirect target: implement` | `phase: implement`, `awaiting: null` |
-| `verify` | `redirect target: implement` | `phase: implement`, `awaiting: user-input` |
+| `verify` | `redirect target: implement` | `phase: implement`, `awaiting: null` |
 
 ## What counts as a reply
 
@@ -117,6 +116,17 @@ When the open gate is `user-input`:
 - Once all are answered, rename `Open questions` to `Resolved questions` or
   delete the section if redundant.
 
+## User-facing gate messages
+
+When a gate opens, the final user-facing message must be actionable. Include:
+
+- task id, current phase, and `awaiting` label
+- the artifact to review or the one question to answer
+- exact replies that resume the workflow
+- what Hyper does next after each accepted reply
+
+Do not finish with only status, file links, or a gate label.
+
 ## Approval gates
 
 Approval-gated phases are:
@@ -139,19 +149,25 @@ the artifact (a tradeoff resolved, a constraint honored, a risk dropped). If
 the artifact presents alternatives, mark exactly one of them recommended by
 the same rule in "Question serialization" above.
 
-## Remediation gates
+For approval gates, name both approval paths: approval accepts the artifact and
+continues by the transition table; a change request re-dispatches the same
+phase to revise the artifact.
+
+## Remediation redirects
 
 For blocked verify results:
 
 - `hyper-verify` writes `checks.md` and returns `redirect target: implement`
-- `hyper` sets `phase: implement` and `awaiting: user-input`
-- `checks.md` is the remediation source for the next implement dispatch
+- `hyper` sets `phase: implement` and `awaiting: null`
+- `checks.md` is the remediation source for the immediate next implement
+  dispatch
 
 For blocked implement results from plan conflicts:
 
 - `hyper-implement` writes `plan-conflict.md` and returns `redirect target: technical-plan`
-- `hyper` sets `phase: technical-plan` and `awaiting: user-input`
-- `plan-conflict.md` is the remediation source for the next technical-plan dispatch
+- `hyper` sets `phase: technical-plan` and `awaiting: null`
+- `plan-conflict.md` is the remediation source for the immediate next
+  technical-plan dispatch
 
 ## Subtask-level awaiting propagation
 
@@ -169,8 +185,8 @@ For plan-conflict subtasks:
 - `hyper-implement` detects subtasks with `awaiting: plan-conflict`, rolls
   them up into `plan-conflict.md`, and returns `redirect target:
   technical-plan`
-- `hyper` sets `task.md` `phase: technical-plan` and `awaiting: user-input`
-- on the user's reply, `hyper` dispatches `hyper-technical-plan` which reads
+- `hyper` sets `task.md` `phase: technical-plan` and `awaiting: null`
+- `hyper` dispatches `hyper-technical-plan` immediately; that phase reads
   `plan-conflict.md` before revising the plan
 
 ## Never do this

@@ -45,6 +45,11 @@ reading or writing `.hyper/` paths. The data model is in
    codebase or public docs, answer it that way instead of asking.
 7. Return `awaiting-approval`.
 
+When returning `awaiting-approval`, make the approval gate explicit:
+`research.md is ready. [RECOMMENDED — approve because <one-line reason from
+the recommendation and evidence>.] Reply approve or continue to accept it and
+archive the research task, or tell me what to change in research.md.`
+
 ## Rules
 
 - When the recommendation is settled, append a `## Decisions` entry
