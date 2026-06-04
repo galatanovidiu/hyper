@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and Hyper follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 While Hyper is pre-1.0, the skill contract may change between minor versions.
 
+## [0.2.1] - 2026-06-04
+
+### Fixed
+
+- **Memory entries stay self-contained and session-scoped.** The `hyper-memory`
+  contract no longer lets entries leak session-ephemeral identifiers (loop IDs
+  like `L6`, run modes like `YOLO`). Entries must be written as instructions,
+  not prose, and `See:` is an optional durable file path. The audience is
+  reframed from "a different future task" to "any future agent session" across
+  the contract, the skill, and the sibling writers in `hyper-build`,
+  `hyper-implement`, `hyper-research`, `hyper-retro`, `hyper-verify`,
+  `hyper-worker`, and `hyper`.
+
 ## [0.2.0] - 2026-06-03
 
 ### Changed
