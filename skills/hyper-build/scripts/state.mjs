@@ -268,6 +268,7 @@ function collectTaskFolders(stateRoot, dirAbs, kind, parseErrors) {
 function collectLoopFolders(stateRoot, dirAbs, parseErrors) {
   const active = [];
   const folderIds = [];
+  let parsedCount = 0;
   const entries = readDirSafe(dirAbs);
   entries.sort((a, b) => a.name.localeCompare(b.name));
 
@@ -303,6 +304,7 @@ function collectLoopFolders(stateRoot, dirAbs, parseErrors) {
       continue;
     }
 
+    parsedCount += 1;
     const fm = parsed.data;
     // Folder name is canonical for id allocation; surface mismatches.
     const fmIdNum = extractNumericId(fm.id, "L");
@@ -324,7 +326,7 @@ function collectLoopFolders(stateRoot, dirAbs, parseErrors) {
     }
   }
 
-  return { active, folderIds };
+  return { active, folderIds, parsedCount };
 }
 
 function collectBacklog(stateRoot, parseErrors) {
@@ -511,7 +513,7 @@ function main() {
   const successfulFolderRecords =
     activeResult.records.length +
     archivedResult.records.length +
-    loopResult.active.length;
+    loopResult.parsedCount;
   if (totalFolderCandidates > 0 && successfulFolderRecords === 0) {
     process.stderr.write(
       `hyper state probe: every candidate task/loop folder failed to parse (${totalFolderCandidates} candidates)\n`,
