@@ -586,6 +586,33 @@ function setupProbeFixture() {
   return root;
 }
 
+function setupDoneOnlyLoopProbeFixture() {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "hyper-validator-done-loop-"));
+  fs.mkdirSync(path.join(root, ".hyper", "tasks"), { recursive: true });
+  fs.mkdirSync(path.join(root, ".hyper", "archive"), { recursive: true });
+
+  const loopDir = path.join(root, ".hyper", "loops", "L1-done");
+  fs.mkdirSync(loopDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(loopDir, "loop.md"),
+    [
+      "---",
+      "id: L1",
+      "title: Done-only loop fixture",
+      "status: done",
+      "created: 2026-05-20T00:00:00",
+      "updated: 2026-05-22T00:00:00",
+      "---",
+      "",
+      "# fixture",
+      "",
+    ].join("\n"),
+    "utf8",
+  );
+
+  return root;
+}
+
 function teardownProbeFixture(root) {
   try {
     fs.rmSync(root, { recursive: true, force: true });
@@ -734,6 +761,31 @@ function validateStateProbeAgainstFixture() {
   }
 }
 
+function validateStateProbeAgainstDoneOnlyLoopFixture() {
+  const fixtureRoot = setupDoneOnlyLoopProbeFixture();
+  try {
+    const snapshot = runProbe(
+      fixtureRoot,
+      `${STATE_PROBE} (done-only loop fixture ${fixtureRoot})`,
+    );
+    if (!snapshot) return;
+
+    const where = `${STATE_PROBE} done-only loop fixture stdout`;
+    validateStateProbeSchema(snapshot, where);
+    if (snapshot.active_loops.length !== 0) {
+      fail(`${where}: expected no active loops, got ${snapshot.active_loops.length}`);
+    }
+    if (snapshot.next_loop_id !== 2) {
+      fail(`${where}: expected next_loop_id: 2, got ${snapshot.next_loop_id}`);
+    }
+    if (snapshot.parse_errors.length !== 0) {
+      fail(`${where}: expected no parse errors, got ${snapshot.parse_errors.length}`);
+    }
+  } finally {
+    teardownProbeFixture(fixtureRoot);
+  }
+}
+
 function validateStateProbe() {
   if (!ensureFile(STATE_PROBE)) {
     return;
@@ -751,6 +803,7 @@ function validateStateProbe() {
   // once against the repo itself (catches breakage in the deployed
   // state). The fixture pass is the load-bearing schema gate.
   validateStateProbeAgainstFixture();
+  validateStateProbeAgainstDoneOnlyLoopFixture();
 
   const snapshot = runProbe(ROOT, `${STATE_PROBE} (repo)`);
   if (!snapshot) return;
