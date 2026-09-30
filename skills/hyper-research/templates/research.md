@@ -1,21 +1,13 @@
-# Research — T<N>: <title>
+# <Research question>
 
-## Question
+## Answer
+<Bounded conclusion; distinguish inference.>
 
-<Question being answered.>
+## Evidence
+<Claims with direct source links, observed results and relevant dates/revisions.>
 
-## Findings
+## Limits and open questions
+<What the evidence cannot establish.>
 
-- <Finding, with source or file reference when applicable.>
-
-## Alternatives considered
-
-- <Alternative and tradeoff.>
-
-## Recommendation
-
-<Recommended answer or next move.>
-
-## Unknowns / follow-ups
-
-- <Remaining unknown or follow-up.>
+## Decision unblocked
+<What can now be decided; recommendation and tradeoff if needed.>

@@ -10,29 +10,14 @@ While Hyper is pre-1.0, the skill contract may change between minor versions.
 
 ### Changed
 
-- **`hyper` skill rebuilt with less ceremony (breaking for in-flight loops).**
-  Same workflow — align with approval gates, evidence-backed OODA cycles,
-  zoom-out checkpoints, hard verify gate — at half the size (SKILL.md 422 → 192
-  lines, template 222 → 133). The loop file loses its duplicated state:
-  `## Part alignment` merges into `## Parts` (each part block carries status,
-  pressure-test, and approval inline; statuses are now `todo | current |
-  done`), `## Current bar`, `## Bar history`, `## Current focus`, and
-  `## Route shifts` are gone (`route:`-tagged entries land in `## Decisions`;
-  the next move lives in `## Handoff cues`). Approval bookkeeping collapses to
-  one line (`Approved: no | user <ts> | proxy <ts>`), cycle entries shrink
-  from nine fields to five (`Intent / Move / Evidence / Learning / Next`), and
-  `TBD` is the only placeholder. Behavior changes: the pressure test is
-  required only for non-trivial plans (trivial plans record a skip), the
-  pressure-test capability points at `grilling` (the model-invocable skill;
-  `grill-me` is its user-typed launcher and cannot be auto-invoked), the
-  five-line chat block applies at meaningful moments instead of every message,
-  implement-cycle sub-agent dispatch is the default for multi-file slices
-  instead of mandatory for all, per-cycle goal reassessment folds into the
-  zoom-out checkpoints, and loop creation records the starting commit so
-  verify's research-only detection has a real baseline. Done loops written by
-  the old template stay valid — they are never reopened and the frontmatter
-  contract (`id`, `title`, `status: active | done`, `created`, `updated`) is
-  unchanged.
+- Hyper now uses `/hyper` as the single entry point. It selects focused engineering jobs for planning, implementation, research, review and continuation; jobs remain callable by name.
+- Work now lives in explicit `.hyper/sessions/<id>-<slug>/` directories, with shared vocabulary, lasting decisions and review standards under `.hyper/project/`. Existing historical records are preserved; the new suite does not resume the previous loop or fixed-phase contracts.
+- Implementation uses meaningful behavior tests and separate Standards and Spec reviews. Verified in-scope findings can be repaired during an authorized build; standalone reviews remain read-only.
+- Installation links the complete suite and preserves foreign entries. Commits, pushes, publication and retired-link cleanup require separate authorization.
+
+### Removed
+
+- Fixed-phase and loop workflows, their retired job skills, and the runtime state probe. New work uses the router and explicit sessions without aliases or compatibility shims.
 
 ## [0.2.1] - 2026-06-04
 

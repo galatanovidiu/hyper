@@ -1,42 +1,14 @@
 ---
 name: hyper-retro
-description: >
-  Runs a retrospective on recent Hyper work. Captures what worked, what didn't, and what to do differently next time, scoped either to a specific task (writes to the task's retro.md) or to the project overall (appends to .hyper/retro.md). Use when the user wants to reflect after finishing a task, at the end of a working session with multiple tasks done, or when Hyper itself helped or got in the way in an unexpected place. Human-triggered only. Keywords: hyper, retro, retrospective, reflection, lessons learned.
+description: "Proposes targeted improvements from actual work and review evidence. Use when a session or PR should improve future runs. Keywords: retro, recurring feedback, checks."
+user-invocable: false
 ---
 
 # hyper-retro
 
-Capture lessons from Hyper work.
+Read [session contract](../hyper/reference/session.md) before work. Receive an explicit project root, session directory, requested result and authority; if called directly, resolve these using that contract. Return the job result defined there.
 
-Resolve the Hyper state root per `../hyper-build/reference/state-root.md`.
-
-## Scope
-
-- If the user names a task, write or append to that task's `retro.md`, looking
-  in `.hyper/tasks/` first and `.hyper/archive/` second.
-- If no task is named, append to project-level `.hyper/retro.md`.
-
-## Entry shape
-
-```markdown
-## YYYY-MM-DD — <short title>
-
-### What worked
-
-- <Useful behavior or decision.>
-
-### What did not work
-
-- <Friction, failure, or drift.>
-
-### Change for next time
-
-- <Concrete adjustment.>
-```
-
-Keep retros factual and operational. Do not rewrite workflow artifacts during a
-retro unless the user explicitly asks.
-
-When a durable learning surfaces, record it in `.hyper/memory/` per
-the contract in `../hyper-memory/reference/memory.md`, writing the entry inline
-rather than invoking the `hyper-memory` skill.
+1. Read the named session, PR or recent-work evidence; default to the current session. Follow pointers instead of reconstructing already recorded results. Identify repeated mistakes or costly missing information, not hypothetical improvements.
+2. Inspect the existing check commands and their wiring before suggesting a new guardrail. A mechanical mistake belongs in the cheapest deterministic check; a broken/unwired existing check is the finding. Reserve dedicated coding standards for judgments tooling cannot replace.
+3. Assess navigation pointers, information access, tool economy and bloated/no-op instructions. Keep detailed standards in review context. For each proposal, name the observed failure, smallest change, owner and how its value could be verified next time.
+4. Save ranked proposals in `retro.md`. Prefer removing duplication or fixing a current check over new infrastructure. Applying rules, skills, hooks or shared standards requires authorization for those edits; the retrospective itself only proposes them.

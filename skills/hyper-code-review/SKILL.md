@@ -1,81 +1,17 @@
 ---
 name: hyper-code-review
-description: >
-  Reviews a diff through contract-compliance, bug-finding, and standards-compliance passes, then writes a single review block with a pass, needs-changes, or blocked verdict. Works in embedded mode for hyper-verify and standalone mode for direct user review requests. Keywords: hyper, code review, review, bugs, standards, diff, PR review.
+description: "Reviews a pinned change set against standards and the spec. Use when new work or an existing diff needs review. Keywords: review, standards, specification."
+user-invocable: false
 ---
 
 # hyper-code-review
 
-Review code changes for bugs, regressions, contract violations, missing tests,
-and standards problems.
+Read [session contract](../hyper/reference/session.md) before work. Receive an explicit project root, session directory, requested result and authority; if called directly, resolve these using that contract. Return the job result defined there.
 
-Resolve the Hyper state root per `../hyper-build/reference/state-root.md` before
-reading or writing `.hyper/` paths when working inside a Hyper task.
+Read [review contract](reference/review.md) for change-set selection, separate contexts, findings and repairs.
 
-## Modes
-
-### Embedded mode
-
-Used by `hyper-verify`.
-
-Inputs:
-
-- current diff
-- `task.md`
-- feature scope: `02-spec.md`, `03-technical-plan.md`, `04-execution-plan.md`
-- quick scope: `03-technical-plan.md`
-- subtask completion records when present
-
-Output:
-
-- a review block for `checks.md`
-
-### Standalone mode
-
-Used when the user directly asks for a review.
-
-1. Inspect the requested diff, branch, PR, or staged changes.
-2. Create a `scope: code-review` task only when the user wants the review
-   tracked under `.hyper/`. New tracked tasks start with `phase: review`,
-   `scope: code-review`, `awaiting: null`; the `review -> done` transition
-   happens at step 4 below per the `code-review` flow in
-   `../hyper-build/reference/data-model.md`.
-3. Return findings first, ordered by severity, with file and line references.
-4. If tracked, write `checks.md`, set `phase: done`, and archive the folder.
-
-## Review passes
-
-- Contract compliance: does the code match the accepted artifacts or user
-  request?
-- Bug finding: logic errors, edge cases, races, state leaks, security issues,
-  data loss, and behavioral regressions.
-- Test adequacy: missing or weak tests for changed behavior.
-- Standards compliance: project conventions and maintainability issues.
-
-## Verdicts
-
-- `pass` — no blocking findings
-- `needs-changes` — actionable issues must be fixed
-- `blocked` — review cannot be completed with current information
-
-Do not bury findings under a summary. Findings are the primary output.
-
-## Return contract
-
-The return contract differs by mode.
-
-**Embedded mode (invoked by `hyper-verify`).** Return a review block for
-`checks.md` carrying one of the three verdicts above. The block is appended
-to `checks.md` `## review`. No phase-level verdict is returned to `hyper`;
-`hyper-verify` aggregates the review verdict into its own return contract.
-
-**Standalone mode (invoked directly by the user or by `hyper` for a
-`scope: code-review` task).** This skill owns terminal `phase: done` and the
-archive move directly per `../hyper-build/reference/gates.md` ownership split — it
-does not return a phase verdict to `hyper`. After writing `checks.md` and any
-review notes:
-
-- if the task is tracked under `.hyper/`: set `task.md` `phase: done`, clear
-  `awaiting`, and archive the task folder per `../hyper-build/reference/archive.md`
-- if the review is untracked (no `.hyper/` task): return findings inline to
-  the user with no state mutation
+1. Pin the user's requested change set before reviewing. Include relevant uncommitted/untracked work when the request is for a build in progress. For entirely new source, review the explicit new-file set against its requirements; do not recover discarded code. Resolve a supplied base before producing a diff; ask only if the scope cannot be determined.
+2. Identify the originating spec and `.hyper/project/coding-standards.md` or established project standards. If the spec is absent, state that the spec axis is unavailable; if standards are absent, review against the bounded design/test baseline and disclose the missing project-specific standards.
+3. Run Standards and Spec in separate subagents when available and authorized. Give them the same pinned change set but only their own relevant instructions/evidence. Otherwise perform distinct sequential passes and disclose the context limitation.
+4. Verify each finding against the actual behavior and owning requirement. Collect results before applying repairs. Within an authorized build, repair verified in-scope findings sequentially and rerun affected checks; standalone review reports findings unless repairs were requested.
+5. Write `review.md` with separate Standards and Spec outcomes, evidence, repaired findings, unresolved judgments and unavailable checks. Keep neither axis hidden by an aggregate score. Return the reviewed revision/file set and remaining findings; external comments and commits require separate authority.
