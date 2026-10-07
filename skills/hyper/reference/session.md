@@ -48,3 +48,5 @@ Use separate subagents for implementation and standards review when available an
 ## Job return
 
 Return the session path, concrete result, artifact pointers, checks actually run with verdicts, unresolved questions/blockers, and next useful action. State any approval needed for that action. Report unavailable checks explicitly. Mark session work complete only when the requested result and relevant verification are finished; pending publication does not prevent a requested local draft from being complete.
+
+Cite the evidence for every factual claim a result relies on: path and line, command output or a primary source. Mark any other claim unverified; an unverified claim cannot settle a decision or a ticket.

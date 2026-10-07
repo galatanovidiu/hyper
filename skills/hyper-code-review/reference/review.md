@@ -14,7 +14,9 @@ Dispatch independent Standards and Spec reviewers with the pinned changes, their
 
 ## Verify and repair
 
-Reproduce or trace a claimed defect before accepting it. Record judgments separately from proven contract violations. Explain why a finding matters to the requested behavior, not merely how code could look different.
+Reproduce or trace a claimed defect before accepting it. Record judgments separately from proven contract violations.
+
+List each check result that the change set, PR description or session record claims (tests, lint, skips, known or baseline failures). Mark each as reproduced, contradicted or unverified, and report the list. Treat a claimed failure or skip as a finding until it is explained. Explain why a finding matters to the requested behavior, not merely how code could look different.
 
 For an authorized build, serialize repairs of verified in-scope findings after collecting both axes. Do not let parallel reviewers edit the same source. Rerun affected checks and re-review changed requirements; capture the final file hashes/revision so the result describes what will be handed to the human. If the needed fix changes agreed behavior or touches unrelated work, return that decision to the user. For standalone review, write findings and draft comments locally unless repairs were requested.
 
