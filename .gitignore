@@ -5,3 +5,6 @@
 # project and must be tracked.
 !/.claude/
 !/.claude/**
+
+# Local workflow records are not distributed skill source.
+/.hyper/

@@ -1,120 +1,19 @@
 ---
 name: hyper-implement
-description: >
-  Runs the implement phase of a Hyper task. For feature-scope tasks, orchestrates worker execution from 04-execution-plan.md and subtask files; for quick-scope tasks, implements directly from 03-technical-plan.md. If verify sends the task back blocked, runs a remediation pass from checks.md and returns to verify. Use when a Hyper task is in the 'implement' phase. Keywords: hyper, implement, orchestrator, subtasks, remediation, 03-technical-plan.md, 04-execution-plan.md.
+description: "Implements agreed requests, specs or tickets and verifies the resulting behavior."
 user-invocable: false
 ---
 
 # hyper-implement
 
-You are in the **implement** phase. Execute only the approved plan.
+Follow the [session contract](../hyper/reference/session.md).
 
-Resolve the Hyper state root per `../hyper-build/reference/state-root.md` before
-reading or writing `.hyper/` paths. The data model is in
-`../hyper-build/reference/data-model.md`. Worker guardrails are in
-`../hyper-build/reference/worker-guardrails.md`.
+Use the OODA loop—observe, orient, decide, act—and feed each result into the next iteration.
 
-## Inputs
+Implement the agreed behavior in verifiable slices. For ticket work, follow the [ticket graph](../hyper/reference/tickets.md); a small agreed change needs no spec or tickets.
 
-- `task.md`
-- `03-technical-plan.md`
-- `04-execution-plan.md` and subtask files for `scope: feature`
-- `checks.md` when verify redirected back to implementation
+Use `hyper-tdd` at agreed seams where meaningful. Use `hyper-diagnose` first when a bug's cause is uncertain.
 
-## Flow
+Run targeted checks during work and required project checks at completion. Record actual commands, outcomes and unavailable checks in `checks.md` using the [checks template](templates/checks.md).
 
-1. Re-read `task.md`. On re-entry from `redirect target: technical-plan`
-   (detect: prior `plan-conflict.md` was present and the technical-plan
-   revision approved in this re-entry has been read), perform the subtask
-   reset described in `## Re-entry behavior` before continuing.
-2. If `checks.md` exists with a blocking or needs-changes result and this is a
-   remediation dispatch, implement only the remediation described there.
-3. For `scope: quick`, implement directly from `03-technical-plan.md`, run the
-   relevant checks, summarize the work, and return `phase-complete`.
-4. For `scope: feature`, read `04-execution-plan.md` and all subtask files.
-5. If this dispatch is a re-entry on a user reply (the previous return was
-   `awaiting-input` and `task.md` `awaiting` was just cleared by `hyper`),
-   route the reply to the subtask that produced the open question:
-   record the answer under the subtask's `## Open questions` per
-   `../hyper-build/reference/gates.md` §Question serialization, then re-dispatch
-   `hyper-worker` against that subtask. The worker clears its own `awaiting`
-   on resumption per its own Flow. Continue to step 6 only after this
-   routing completes.
-6. Dispatch every ready `status: todo` subtask whose dependencies are done.
-   Use parallel workers only when their `writes` sets are disjoint.
-7. Each worker must invoke the `hyper-worker` skill and receive exactly one
-   subtask file as its authoritative slice.
-8. Scan ready and in-progress subtasks for `awaiting: plan-conflict`. If any
-   are found:
-
-   a. Read each conflicted subtask's `## Plan conflict` section.
-   b. Write `plan-conflict.md` at the task folder root, aggregating every
-      conflict under `## Conflicts` with one entry per subtask
-      (`raised_by: <subtask-id>`).
-   c. Choose `## Recommended re-slicing` (`none` | `partial` | `full`) based
-      on whether the conflicts touch the slicing assumptions in
-      `04-execution-plan.md`. Default to `partial` when uncertain.
-   d. Return `redirect target: technical-plan`.
-
-   Plan-conflict rollup takes precedence over `awaiting-input` propagation in
-   the same dispatch. If both signals are present, the orchestrator rolls up
-   plan conflicts first; the user-input subtasks remain blocked and will
-   resume after the technical-plan revision.
-
-9. If any subtask blocks on user input (and no plan conflict was rolled up
-   above), return `awaiting-input`.
-10. When all subtasks are `done`, return `phase-complete`.
-
-## Rules
-
-- When a load-bearing orchestration choice is settled at any scope
-  (a conflict-driven re-slicing recommendation, a worker-blocker
-  escalation that changes the slicing assumptions, a remediation that
-  expands scope beyond `checks.md` findings, a quick-scope opt-out
-  from a documented `checks.md` remediation), append a `## Decisions`
-  entry to `dashboard.md` per `../hyper-build/reference/dashboard.md`
-  §Decisions log contract, authoring as `implement`.
-- When a durable learning surfaces, record it in
-  `.hyper/memory/` per the contract in
-  `../hyper-memory/reference/memory.md`, writing the entry inline rather
-  than invoking the `hyper-memory` skill.
-
-## Feature orchestration rules
-
-- Do not edit implementation files yourself for feature-scope work unless you
-  are performing a verify remediation that is too small to dispatch safely.
-- Treat `writes` as a hard ownership boundary.
-- Do not dispatch a subtask until all ids in `depends` are `done`.
-- Do not re-dispatch a `done` subtask.
-- If a completed early subtask changes a shared API or parameter name, scan
-  remaining subtask files for downstream drift before dispatching the next
-  dependent slice.
-
-## Re-entry behavior
-
-When the task re-enters `implement` after a `redirect target: technical-plan`
-cycle:
-
-1. Read the revised `03-technical-plan.md`. It must contain an `##
-   Invalidated subtasks` section listing subtask ids whose prior `done` state
-   was invalidated by the revision.
-2. For each id in `## Invalidated subtasks`:
-   - reset the subtask file's `status` to `todo`
-   - clear its `awaiting` (set to `null`)
-   - leave the subtask's `## Completion` text in place (it documents what was
-     done; future workers may reference it during re-implementation)
-3. Delete the task-folder `plan-conflict.md`. The redirect is closed; the
-   revised technical plan is the new source of truth.
-4. Resume normal dispatch.
-
-This is the only path through which `hyper-implement` writes to subtask
-files' `status` or `awaiting` fields.
-
-## Return contract
-
-- `awaiting-input` — at least one subtask is blocked on a user answer
-- `redirect target: technical-plan` — at least one subtask raised a plan
-  conflict, or the orchestrator detected one; `plan-conflict.md` has been
-  written
-- `phase-complete` — implementation or remediation is complete and ready for
-  verify
+Finish with `hyper-code-review`, passing the pinned changes, spec, separate standards sources and repair authority. Repair verified in-scope findings and rerun affected checks before returning the local result.

@@ -1,141 +1,30 @@
 # Maintaining Hyper
 
-This guide is for humans editing the Hyper repo itself.
+Edit `skills/` as the portable source. Install the whole suite together so sibling references remain usable. Human explanations, upstream attribution, test infrastructure and local wrappers belong to maintainer surfaces.
 
-## Validate the suite locally
+For a new or renamed job, update the router's named invocation and README inventory. Keep model invocation enabled, mark jobs `user-invocable: false`, and use a bounded job result. Contract ownership is documented in the [authoring invariants](../.claude/skills/review-hyper-skills/reference/authoring-invariants.md); structural inventory checks live in `scripts/validate-hyper.mjs`.
 
-Run:
+Local install/review wrappers under `.claude/skills/` and `.agents/skills/` mirror byte for byte. Update both. These wrappers are not included in global installation. Use `scripts/install-hyper.sh` directly or through the install wrapper; no second installer implementation exists.
+
+## Verification
 
 ```bash
 node scripts/validate-hyper.mjs
+node --test scripts/*.test.mjs
+bash -n scripts/install-hyper.sh
+shellcheck scripts/install-hyper.sh skills/hyper-wizard/templates/wizard.sh skills/hyper-diagnose/templates/hitl-repro.sh
 ```
 
-The validator checks a small set of structural contracts:
+Run the installed instruction-authoring validator on changed instruction files when available. Structural tests mutate disposable copies to show that real packaging errors are rejected; installer tests exercise public operations against temporary targets with `HYPER_INSTALL_TARGETS`.
 
-- shipped `skills/*/SKILL.md` files have parseable frontmatter
-- Hyper user-facing vs internal skill expectations match the shipped suite
-- internal Hyper skills keep `user-invocable: false`
-- referenced `templates/` and `reference/` files exist
-- named skill handoffs point to real shipped skills
-- README and the Hyper data model still describe the current skill inventory
-- `hyper` keeps its loop frontmatter, required sections, authority and
-  approval-gate sections, resume buckets, intent vocabulary, and
-  no-task-artifact boundary aligned across the skill, template, README, and
-  data model
+Use [behavior scenarios](../evals/README.md) for representative instruction cases. Save the actual trace, artifacts and scoring under the selected session's `evidence/`. A source walkthrough is useful evidence of contract coverage, but it cannot establish that an agent followed those instructions in a new context.
 
-It is intentionally lightweight. Keep doing real `/hyper` dry runs in a
-throwaway project for workflow changes.
+## Installation boundaries
 
-## Most fragile contracts
+`status` is read-only; missing links are reported but are not errors. `install` preflights all current suite destinations, then creates missing links and the `hyper-LICENSE` notice link. Conflicting files, folders and foreign/dangling links stop installation before writes. Matching links are left intact. Filesystem or permission errors may still leave a partial install; rerunning fills only missing links.
 
-These surfaces are the easiest to drift:
+The default destinations are the user Agents, Claude and Codex skill directories. Override with newline-separated absolute paths for an isolated test or a different host. The script does not alter host settings, run workflows, remove retired names or support a global uninstall. Precise installed-link cleanup needs separate authorization. A host must honor `user-invocable` for the intended slash-menu presentation; verify discovery there if claiming live menu behavior.
 
-1. **Skill inventory and counts**
-   - README
-   - `skills/hyper-build/reference/data-model.md`
-   - `scripts/validate-hyper.mjs`
+## Provenance
 
-2. **Gate protocol and transitions**
-   - `skills/hyper-build/SKILL.md`
-   - phase skills that set gates
-   - `skills/hyper-build/reference/gates.md`
-   - README example flows
-
-3. **Phase and artifact naming**
-   - `intake`, `spec`, `technical-plan`, `execution-plan`, `research`
-   - `01-intake.md`
-   - `02-spec.md`
-   - `03-technical-plan.md`
-   - `04-execution-plan.md`
-   - `05-execution-plan-review.md`
-
-4. **Execution-plan review contract**
-   - `skills/hyper-execution-plan-review/SKILL.md`
-   - `skills/hyper-execution-plan-review/templates/05-execution-plan-review.md`
-   - `skills/hyper-execution-plan/SKILL.md`
-   - `skills/hyper-build/reference/data-model.md`
-
-5. **Worker-guardrails contract**
-   - `skills/hyper-build/reference/worker-guardrails.md`
-   - `skills/hyper-worker/SKILL.md`
-   - `skills/hyper-code-review/SKILL.md`
-   - dispatcher skills that mention the reference in their dispatch prompt
-
-6. **`checks.md` contract**
-   - `skills/hyper-verify/SKILL.md`
-   - `skills/hyper-docs/SKILL.md`
-   - `skills/hyper-verify/templates/checks.md`
-   - `skills/hyper-build/reference/data-model.md`
-
-7. **`hyper` loop contract**
-   - `skills/hyper/SKILL.md`
-   - `skills/hyper/templates/loop.md`
-   - `skills/hyper-build/reference/data-model.md`
-   - README loop examples and wording
-   - `scripts/validate-hyper.mjs`
-   - optional eval hook: `scripts/eval-hooks/validate-iterate-loop.sh`
-   - hard gate stays intact: authority -> understanding -> code scan -> findings -> loop plan -> part-level approvals -> cycles
-
-8. **State probe contract**
-   - `skills/hyper-build/scripts/state.mjs` (the read-only Node ESM probe)
-   - `skills/hyper-build/reference/state-root.md` (the probe's contract — invocation, output schema, category mapping, errors, env coverage, sub-skill resolution rule)
-   - `skills/hyper-build/reference/data-model.md` (the id-allocation references that point at the probe)
-   - the five probe-caller skills: `skills/hyper-build/SKILL.md` (uses `<skill-base-dir>/scripts/state.mjs`), `skills/hyper-task/SKILL.md`, `skills/hyper-backlog/SKILL.md`, `skills/hyper/SKILL.md`, `skills/hyper-memory/SKILL.md` (each uses `<skill-base-dir>/../hyper-build/scripts/state.mjs`)
-   - the indirect consumers — every other Hyper skill that says "Resolve the Hyper state root per `../hyper-build/reference/state-root.md`" relies on `state-root.md`'s **Sub-skill resolution** section. If that section is restructured or removed, walk these and update them too: `hyper-intake`, `hyper-spec`, `hyper-technical-plan`, `hyper-execution-plan`, `hyper-execution-plan-review`, `hyper-research`, `hyper-implement`, `hyper-worker`, `hyper-verify`, `hyper-docs`, `hyper-code-review`, `hyper-team`, `hyper-handoff`, `hyper-retro`, `hyper-recipe`
-   - `scripts/validate-hyper.mjs` (presence + schema assertions, including a synthetic-fixture pass that exercises the probe against controlled inputs)
-   - `.claude/skills/install-hyper/scripts/install.sh` and `.agents/skills/install-hyper/scripts/install.sh` (the `verify_probe_reachable` portability check; both files must remain byte-identical; stdout and stderr must stay separated when capturing probe output)
-   - keep the probe **read-only**: no writes, no Git mutations, no new external dependencies
-   - id allocation is **folder-name-canonical**: the probe scans `T<N>-` / `L<N>-` folder names for next-id math, and surfaces frontmatter-id mismatches as `parse_errors` entries
-
-## When adding or renaming a skill
-
-Do all of these together:
-
-1. add or rename the folder under `skills/`
-2. update README
-3. update `skills/hyper-build/reference/data-model.md` if the workflow or state model changed
-4. update `scripts/validate-hyper.mjs`
-5. run `node scripts/validate-hyper.mjs`
-6. grep for stale skill names and stale artifact names
-
-## When changing the data model
-
-Treat `skills/hyper-build/reference/data-model.md` as authoritative. At minimum,
-check:
-
-- `hyper-build`
-- `hyper-task`
-- `hyper-backlog`
-- `hyper-intake`
-- `hyper-spec`
-- `hyper-technical-plan`
-- `hyper-execution-plan`
-- `hyper-execution-plan-review`
-- `hyper-research`
-- `hyper-implement`
-- `hyper-worker`
-- `hyper-verify`
-- `hyper-docs`
-- `hyper-handoff`
-- `hyper-retro`
-- `hyper-recipe`
-- `hyper`
-- `hyper-short-story`
-- `hyper-memory`
-
-## Repairing example drift
-
-Typical offenders:
-
-- sample phase flows
-- approval-gate wording in README
-- task-folder examples
-- task artifact lists
-- sample `checks.md` or review artifacts
-
-## Human docs vs skill docs
-
-- README and `docs/` are for humans.
-- `skills/**/SKILL.md` and `skills/**/reference/*.md` are for agents.
-- User-visible changes still require human-facing docs; agent-facing skill
-  source does not satisfy the docs phase by itself.
+Read [source mapping](source-mapping.md) for the pinned upstream inputs and policy adaptations. Preserve supplied Learnings/Transcripts, Git history and unrelated `.hyper/` records. Fresh-build validation concerns the newly authored source; do not resurrect discarded implementations to audit them.
