@@ -1,12 +1,12 @@
 ---
 name: hyper-design
-description: "Finds deepening opportunities and compares module interfaces. Use when architecture, locality or testability causes friction. Keywords: deep modules, seam, design twice."
+description: "Finds module-deepening opportunities and compares interfaces when architecture, locality or testability causes friction."
 user-invocable: false
 ---
 
 # hyper-design
 
-Read [session contract](../hyper/reference/session.md) before work. Receive an explicit project root, session directory, requested result and authority; if called directly, resolve these using that contract. Return the job result defined there.
+Follow the [session contract](../hyper/reference/session.md).
 
 Read [design vocabulary](reference/vocabulary.md) for module, interface, depth, seam, adapter, leverage and locality; read [deepening](reference/deepening.md) when assessing dependencies and replacement coverage.
 

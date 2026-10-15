@@ -1,15 +1,15 @@
 ---
 name: hyper
-description: "Routes project work to focused jobs and continues an explicit work session. Use when planning, building, researching, reviewing or resuming work through Hyper. Keywords: hyper, session, engineering."
+description: "Routes Hyper work to the job that advances the requested result and continues its explicit session."
 user-invocable: true
 ---
 
 # Hyper
 
-Read [session contract](reference/session.md) for root selection, artifact paths, authority, invocation and job returns. Read [ticket graph](reference/tickets.md) when selecting or continuing ticket work.
+Follow the [session contract](reference/session.md). Read the [ticket graph](reference/tickets.md) when selecting or continuing ticket work.
 
-1. Determine the requested outcome from the user's instruction and current context. Honor a named job. Resolve the project root and session according to the contract; read only the records relevant to this piece of work.
-2. Record the agreed goal and authority. Choose the job that directly advances the outcome. Ask a focused question only when intent, session identity or a blocking decision cannot be inferred.
+1. Determine the requested result, honor a named job and resolve the root/session. Read relevant records and record the agreed goal and authority. Ask only when intent, session identity or a blocking decision cannot be inferred.
+2. Select the job that directly advances the result.
 
 | Intent | Job |
 | --- | --- |
@@ -30,6 +30,5 @@ Read [session contract](reference/session.md) for root selection, artifact paths
 | Continue in another chat | `hyper-handoff` |
 | Find a route through a large uncertain effort | `hyper-wayfinder` |
 
-3. Invoke the selected job by name with explicit root, session, inputs, requested result and allowed actions. For a compound request, coordinate only the necessary jobs: a known small fix can go straight to implementation; a review request goes straight to review; research can end with an answer. A planning request ends with its plan unless implementation was also authorized.
-4. Read each job return and update the session with useful pointers, verification and next action. Continue necessary authorized work until the requested result is complete or genuine missing input blocks it. A job completion is not automatically the end of a compound request.
-5. Report the concrete result, verification limits and pending approvals. Do not create a fixed sequence of artifacts or a mandatory retrospective merely because other jobs exist.
+3. Invoke the selected job with the contract's inputs and authority. Coordinate only jobs needed for a compound request; a known small fix can go straight to implementation. A planning request ends with its plan unless implementation is authorized.
+4. Read job returns, update the session and continue authorized work until the requested result is complete or missing input blocks it. Report the result, verification limits and pending approvals. Create artifacts and retrospectives only when they advance the request.

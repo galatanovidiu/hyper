@@ -1,12 +1,12 @@
 ---
 name: hyper-plan
-description: "Breaks a spec into verifiable tracer-bullet tickets. Use when agreed work needs build slices and dependencies. Keywords: plan, tickets, frontier."
+description: "Splits agreed work into verifiable tracer-bullet tickets with real dependencies."
 user-invocable: false
 ---
 
 # hyper-plan
 
-Read [session contract](../hyper/reference/session.md) before work. Receive an explicit project root, session directory, requested result and authority; if called directly, resolve these using that contract. Return the job result defined there.
+Follow the [session contract](../hyper/reference/session.md).
 
 Read [ticket graph](../hyper/reference/tickets.md) for lifecycle and [ticket template](templates/ticket.md) for each file.
 

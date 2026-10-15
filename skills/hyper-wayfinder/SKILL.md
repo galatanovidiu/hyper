@@ -1,12 +1,12 @@
 ---
 name: hyper-wayfinder
-description: "Maps decisions for work too uncertain to specify in one context. Use when a large destination still has unresolved questions. Keywords: wayfinding, decision map, fog."
+description: "Maps unresolved decisions for a large effort whose route is still uncertain."
 user-invocable: false
 ---
 
 # hyper-wayfinder
 
-Read [session contract](../hyper/reference/session.md) before work. Receive an explicit project root, session directory, requested result and authority; if called directly, resolve these using that contract. Return the job result defined there.
+Follow the [session contract](../hyper/reference/session.md).
 
 Read [ticket graph](../hyper/reference/tickets.md) and [map template](templates/map.md). Use the shared [ticket template](../hyper-plan/templates/ticket.md) for decision tickets.
 

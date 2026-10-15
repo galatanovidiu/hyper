@@ -19,8 +19,16 @@ async function edit(root, file, replace) {
 }
 
 test('the complete new suite validates', async () => assert.deepEqual((await validate(root)).errors, []));
+test('concise descriptions validate without prescribed trigger labels', async t => {
+  const dir = await fixture(t);
+  await edit(dir, 'skills/hyper-spec/SKILL.md', s => s.replace(/^description: .+$/m, 'description: "Turns agreed requirements into a behavior specification."'));
+  assert.deepEqual((await validate(dir)).errors, []);
+});
 test('packaging regressions fail through the validator public interface', async t => {
   const cases = [
+    ['empty description', 'skills/hyper-spec/SKILL.md', s => s.replace(/^description: .+$/m, 'description: "  "'), 'description must be a non-empty string'],
+    ['non-string description', 'skills/hyper-spec/SKILL.md', s => s.replace(/^description: .+$/m, 'description: 42'), 'description must be a non-empty string'],
+    ['oversized description', 'skills/hyper-spec/SKILL.md', s => s.replace(/^description: .+$/m, 'description: '+JSON.stringify('x'.repeat(1025))), 'at most 1024 characters'],
     ['visible job', 'skills/hyper-spec/SKILL.md', s => s.replace('user-invocable: false', 'user-invocable: true'), 'incorrect invocation visibility'],
     ['disabled job', 'skills/hyper-spec/SKILL.md', s => s.replace('user-invocable: false', 'disable-model-invocation: true\nuser-invocable: false'), 'model invocation'],
     ['broken reference', 'skills/hyper-spec/SKILL.md', s => s.replace('(templates/spec.md)', '(templates/missing.md)'), 'broken bundled reference'],

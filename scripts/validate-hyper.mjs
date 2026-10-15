@@ -34,7 +34,7 @@ export async function validate(root) {
       const descriptionRaw = front[1].match(/^description: (.+)$/m)?.[1];
       let description;
       try { description = JSON.parse(descriptionRaw); } catch { fail(file, 'description must be a JSON-quoted YAML string'); }
-      if (!description || description.length > 1024 || !description.includes('Use when') || !description.includes('Keywords:')) fail(file, 'incomplete description');
+      if (typeof description !== 'string' || !description.trim() || description.length > 1024) fail(file, 'description must be a non-empty string of at most 1024 characters');
       const visibility = front[1].match(/^user-invocable: (.+)$/m)?.[1];
       if (visibility === 'true') visible++;
       if (visibility !== (name === 'hyper' ? 'true' : 'false')) fail(file, 'incorrect invocation visibility');

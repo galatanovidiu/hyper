@@ -1,14 +1,14 @@
 ---
 name: hyper-tdd
-description: "Builds meaningful behavior tests through agreed public seams. Use when implementing test-first or choosing regression coverage. Keywords: TDD, red green, tests."
+description: "Develops behavior test-first at agreed public seams and selects meaningful regression coverage."
 user-invocable: false
 ---
 
 # hyper-tdd
 
-Read [session contract](../hyper/reference/session.md) before work. Receive an explicit project root, session directory, requested result and authority; if called directly, resolve these using that contract. Return the job result defined there.
+Follow the [session contract](../hyper/reference/session.md).
 
-Read [test quality](reference/tests.md) and [mocking](reference/mocking.md) before each cycle. Invoke `hyper-design` for seam vocabulary when the interface shape is in question.
+Read [test quality](reference/tests.md) when choosing coverage and [mocking](reference/mocking.md) when substituting dependencies. Consult [design vocabulary](../hyper-design/reference/vocabulary.md) for seam terminology; use `hyper-design` when actual interface exploration is needed.
 
 1. Name the public interface and behaviors under test. Use already agreed seams, or confirm them before writing tests. Inspect existing coverage so this work adds a missing contract rather than another copy.
 2. Write one behavior test with independently derived expected outcomes. Run it and observe red for the intended missing/broken behavior; a setup error does not establish red.
