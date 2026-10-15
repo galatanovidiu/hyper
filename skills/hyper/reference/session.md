@@ -1,6 +1,6 @@
 # Work sessions
 
-Use strategic programming instead of tactical programming.
+Use strategic programming instead of tactical programming: prefer the change that makes a class of problem impossible or observable over the patch that clears today's symptom. Before choosing a method, name what a leading practitioner would use, the rawest source material available and the external check that confirms the result; prefer that over a convenient approximation.
 
 ## Select the root and work
 
